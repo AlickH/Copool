@@ -1,6 +1,6 @@
 import Foundation
 
-enum AppError: LocalizedError {
+enum AppError: LocalizedError, Sendable {
     case fileNotFound(String)
     case invalidData(String)
     case io(String)

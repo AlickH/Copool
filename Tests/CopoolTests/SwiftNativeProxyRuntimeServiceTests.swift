@@ -319,6 +319,39 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         XCTAssertNotNil(error)
     }
 
+    func testPayloadOversizeDetectionFromContentLengthHeader() {
+        let oversized = ProxyRuntimeLimits.maxInboundRequestBytes + 1
+        let raw = """
+        POST /v1/responses HTTP/1.1\r
+        Host: 127.0.0.1\r
+        Content-Length: \(oversized)\r
+        Content-Type: application/json\r
+        \r
+        {}
+        """
+        let buffer = Data(raw.utf8)
+        XCTAssertTrue(SimpleHTTPServer.isPayloadOversized(buffer: buffer))
+    }
+
+    func testPayloadOversizeDetectionFromBufferedBytes() {
+        let buffer = Data(repeating: 65, count: ProxyRuntimeLimits.maxInboundRequestBytes + 1)
+        XCTAssertTrue(SimpleHTTPServer.isPayloadOversized(buffer: buffer))
+    }
+
+    func testPayloadOversizeDoesNotTriggerUnderLimit() {
+        let allowed = ProxyRuntimeLimits.maxInboundRequestBytes - 128
+        let raw = """
+        POST /v1/responses HTTP/1.1\r
+        Host: 127.0.0.1\r
+        Content-Length: \(allowed)\r
+        Content-Type: application/json\r
+        \r
+        {}
+        """
+        let buffer = Data(raw.utf8)
+        XCTAssertFalse(SimpleHTTPServer.isPayloadOversized(buffer: buffer))
+    }
+
     private func parseJSON(_ data: Data) throws -> [String: Any] {
         let object = try JSONSerialization.jsonObject(with: data)
         return object as? [String: Any] ?? [:]
@@ -337,8 +370,16 @@ private final class MockStoreRepository: AccountsStoreRepository, @unchecked Sen
 private final class MockAuthRepository: AuthRepository, @unchecked Sendable {
     func readCurrentAuth() throws -> JSONValue { .null }
     func readCurrentAuthOptional() throws -> JSONValue? { nil }
+    func readAuth(from url: URL) throws -> JSONValue {
+        _ = url
+        return .null
+    }
     func writeCurrentAuth(_ auth: JSONValue) throws {}
     func removeCurrentAuth() throws {}
+    func makeChatGPTAuth(from tokens: ChatGPTOAuthTokens) throws -> JSONValue {
+        _ = tokens
+        return .null
+    }
     func extractAuth(from auth: JSONValue) throws -> ExtractedAuth {
         ExtractedAuth(accountID: "acct", accessToken: "token", email: nil, planType: nil, teamName: nil)
     }

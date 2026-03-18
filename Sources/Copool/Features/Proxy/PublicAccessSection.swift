@@ -18,31 +18,37 @@ struct PublicAccessSection: View {
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
-            Text(L10n.tr("proxy.section.public_access"))
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Text(L10n.tr("proxy.section.public_access"))
+                    .font(.headline)
 
-            CollapseChevronButton(isExpanded: model.cloudflaredExpanded) {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    model.cloudflaredSectionExpanded.toggle()
+                Spacer(minLength: 0)
+
+                CollapseChevronButton(isExpanded: model.cloudflaredExpanded) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        model.cloudflaredSectionExpanded.toggle()
+                    }
                 }
             }
 
-            Spacer(minLength: 0)
+            HStack(spacing: 10) {
+                Text(L10n.tr("proxy.toggle.enable_public_access"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
 
-            Text(L10n.tr("proxy.toggle.enable_public_access"))
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
 
-            PublicAccessSwitchPill(
-                isOn: Binding(
-                    get: { model.publicAccessEnabled },
-                    set: { value in
-                        model.publicAccessEnabled = value
-                        Task { await model.setPublicAccessEnabled(value) }
-                    }
+                PublicAccessSwitchPill(
+                    isOn: Binding(
+                        get: { model.publicAccessEnabled },
+                        set: { value in
+                            model.publicAccessEnabled = value
+                            Task { await model.setPublicAccessEnabled(value) }
+                        }
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -71,7 +77,7 @@ struct PublicAccessSection: View {
                 Button("proxy.public.install_action") {
                     Task { await model.installCloudflared() }
                 }
-                .buttonStyle(.frostedCapsule(prominent: true))
+                .liquidGlassActionButtonStyle(prominent: true)
                 .disabled(model.loading)
             }
             .padding(12)
@@ -146,7 +152,7 @@ struct PublicAccessSection: View {
                             set: { model.cloudflaredNamedInput.apiToken = $0 }
                         )
                     )
-                    .textFieldStyle(.roundedBorder)
+                    .frostedRoundedInput()
                     .disabled(!model.canEditCloudflaredInput)
                 }
             )
@@ -161,7 +167,7 @@ struct PublicAccessSection: View {
                             set: { model.cloudflaredNamedInput.accountID = $0 }
                         )
                     )
-                    .textFieldStyle(.roundedBorder)
+                    .frostedRoundedInput()
                     .disabled(!model.canEditCloudflaredInput)
                 }
             )
@@ -176,7 +182,7 @@ struct PublicAccessSection: View {
                             set: { model.cloudflaredNamedInput.zoneID = $0 }
                         )
                     )
-                    .textFieldStyle(.roundedBorder)
+                    .frostedRoundedInput()
                     .disabled(!model.canEditCloudflaredInput)
                 }
             )
@@ -191,7 +197,7 @@ struct PublicAccessSection: View {
                             set: { model.cloudflaredNamedInput.hostname = $0 }
                         )
                     )
-                    .textFieldStyle(.roundedBorder)
+                    .frostedRoundedInput()
                     .disabled(!model.canEditCloudflaredInput)
                 }
             )
@@ -199,6 +205,45 @@ struct PublicAccessSection: View {
     }
 
     private var toolbar: some View {
+        #if os(iOS)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                Text(L10n.tr("proxy.toggle.use_http2"))
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                PublicAccessSwitchPill(
+                    isOn: Binding(
+                        get: { model.cloudflaredUseHTTP2 },
+                        set: { model.cloudflaredUseHTTP2 = $0 }
+                    )
+                )
+                .disabled(!model.canEditCloudflaredInput)
+            }
+
+            HStack(spacing: 8) {
+                Button("proxy.public.refresh_status") {
+                    Task { await model.refreshCloudflared() }
+                }
+                .liquidGlassActionButtonStyle()
+                .disabled(model.loading)
+
+                if model.cloudflaredStatus.running {
+                    Button("proxy.public.stop_action", role: .destructive) {
+                        Task { await model.stopCloudflared() }
+                    }
+                    .liquidGlassActionButtonStyle(prominent: true, tint: .red)
+                    .disabled(model.loading)
+                } else {
+                    Button("proxy.public.start_action") {
+                        Task { await model.startCloudflared() }
+                    }
+                    .liquidGlassActionButtonStyle(prominent: true)
+                    .disabled(!model.canStartCloudflared)
+                }
+            }
+        }
+        #else
         HStack(spacing: 10) {
             HStack(spacing: 10) {
                 Text(L10n.tr("proxy.toggle.use_http2"))
@@ -219,31 +264,29 @@ struct PublicAccessSection: View {
                 Button("proxy.public.refresh_status") {
                     Task { await model.refreshCloudflared() }
                 }
-                .buttonStyle(.frostedCapsule())
+                .liquidGlassActionButtonStyle()
                 .disabled(model.loading)
 
                 if model.cloudflaredStatus.running {
                     Button("proxy.public.stop_action", role: .destructive) {
                         Task { await model.stopCloudflared() }
                     }
-                    .buttonStyle(.frostedCapsule(prominent: true, tint: .red))
+                    .liquidGlassActionButtonStyle(prominent: true, tint: .red)
                     .disabled(model.loading)
                 } else {
                     Button("proxy.public.start_action") {
                         Task { await model.startCloudflared() }
                     }
-                    .buttonStyle(.frostedCapsule(prominent: true))
+                    .liquidGlassActionButtonStyle(prominent: true)
                     .disabled(!model.canStartCloudflared)
                 }
             }
         }
+        #endif
     }
 
     private var statusGrid: some View {
-        LazyVGrid(
-            columns: [GridItem(.adaptive(minimum: LayoutRules.proxyPublicStatusCardMinWidth), spacing: 10)],
-            spacing: 10
-        ) {
+        LazyVStack(spacing: 10) {
             PublicAccessInfoCard(
                 title: L10n.tr("proxy.public.status_title"),
                 headline: model.cloudflaredStatus.running ? L10n.tr("proxy.status.running") : L10n.tr("proxy.status.stopped"),
@@ -313,11 +356,7 @@ private struct PublicAccessSwitchPill: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(.regularMaterial, in: Capsule())
-        .overlay {
-            Capsule()
-                .stroke(Color.secondary.opacity(0.24), lineWidth: 1)
-        }
+        .frostedCapsuleSurface(prominent: isOn, tint: isOn ? .accentColor : nil)
     }
 }
 
@@ -344,11 +383,7 @@ private struct PublicAccessModeCard: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding(12)
-            .background(selected ? Color.accentColor.opacity(0.10) : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(selected ? Color.accentColor.opacity(0.36) : Color.secondary.opacity(0.18), lineWidth: 1)
-            }
+            .glassSelectableCard(selected: selected, cornerRadius: 12)
         }
         .buttonStyle(.plain)
         .background {
@@ -385,7 +420,7 @@ private struct PublicAccessInfoCard: View {
                 Spacer(minLength: 0)
                 if let onCopy {
                     Button("common.copy", action: onCopy)
-                        .buttonStyle(.frostedCapsule())
+                        .liquidGlassActionButtonStyle()
                         .disabled(!canCopy)
                 }
             }
@@ -400,7 +435,7 @@ private struct PublicAccessInfoCard: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 118, alignment: .topLeading)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
         .padding(12)
         .cardSurface(cornerRadius: 12)
     }

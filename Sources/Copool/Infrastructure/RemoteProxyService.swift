@@ -1,6 +1,7 @@
 import Foundation
 import OSLog
 
+#if os(macOS)
 actor RemoteProxyService: RemoteProxyServiceProtocol {
     private let logger = Logger(subsystem: "Copool", category: "RemoteProxyService")
     private let repoRoot: URL?
@@ -350,7 +351,6 @@ actor RemoteProxyService: RemoteProxyServiceProtocol {
     private func remoteSettingsObject(from settings: AppSettings) -> [String: Any] {
         [
             "launchAtStartup": settings.launchAtStartup,
-            "trayUsageDisplayMode": settings.trayUsageDisplayMode.rawValue,
             "launchCodexAfterSwitch": settings.launchCodexAfterSwitch,
             "syncOpencodeOpenaiAuth": settings.syncOpencodeOpenaiAuth,
             "restartEditorsOnSwitch": settings.restartEditorsOnSwitch,
@@ -366,12 +366,26 @@ actor RemoteProxyService: RemoteProxyServiceProtocol {
         switch AppLocale.resolve(locale) {
         case .simplifiedChinese:
             return "zh-CN"
+        case .traditionalChinese:
+            return "zh-TW"
         case .english:
             return "en-US"
         case .japanese:
             return "ja-JP"
         case .korean:
             return "ko-KR"
+        case .french:
+            return "fr-FR"
+        case .german:
+            return "de-DE"
+        case .italian:
+            return "it-IT"
+        case .spanish:
+            return "es-ES"
+        case .russian:
+            return "ru-RU"
+        case .dutch:
+            return "nl-NL"
         }
     }
 
@@ -821,3 +835,48 @@ private struct BuildAttempt {
     let label: String
     let command: [String]
 }
+#else
+actor RemoteProxyService: RemoteProxyServiceProtocol {
+    init(repoRoot: URL?, sourceAccountStorePath: URL, sourceAuthPath: URL, fileManager: FileManager = .default) {
+        _ = repoRoot
+        _ = sourceAccountStorePath
+        _ = sourceAuthPath
+        _ = fileManager
+    }
+
+    func status(server: RemoteServerConfig) async -> RemoteProxyStatus {
+        RemoteProxyStatus(
+            installed: false,
+            serviceInstalled: false,
+            running: false,
+            enabled: false,
+            serviceName: "codex-tools-proxyd-\(server.id).service",
+            pid: nil,
+            baseURL: "http://\(server.host):\(server.listenPort)/v1",
+            apiKey: nil,
+            lastError: PlatformCapabilities.unsupportedOperationMessage
+        )
+    }
+
+    func deploy(server: RemoteServerConfig) async throws -> RemoteProxyStatus {
+        _ = server
+        throw AppError.io(PlatformCapabilities.unsupportedOperationMessage)
+    }
+
+    func start(server: RemoteServerConfig) async throws -> RemoteProxyStatus {
+        _ = server
+        throw AppError.io(PlatformCapabilities.unsupportedOperationMessage)
+    }
+
+    func stop(server: RemoteServerConfig) async throws -> RemoteProxyStatus {
+        _ = server
+        throw AppError.io(PlatformCapabilities.unsupportedOperationMessage)
+    }
+
+    func readLogs(server: RemoteServerConfig, lines: Int) async throws -> String {
+        _ = server
+        _ = lines
+        throw AppError.io(PlatformCapabilities.unsupportedOperationMessage)
+    }
+}
+#endif

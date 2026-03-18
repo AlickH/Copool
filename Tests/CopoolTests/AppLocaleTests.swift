@@ -10,7 +10,13 @@ final class AppLocaleTests: XCTestCase {
     }
 
     func testResolveFallsBackToEnglish() {
-        XCTAssertEqual(AppLocale.resolve("fr-FR"), .english)
+        XCTAssertEqual(AppLocale.resolve("pt-BR"), .english)
         XCTAssertEqual(AppLocale.resolve(""), .english)
+    }
+
+    func testPreferredUsesFirstSupportedSystemLanguage() {
+        XCTAssertEqual(AppLocale.preferred(from: ["fr-FR", "ja-JP", "en-US"]), .french)
+        XCTAssertEqual(AppLocale.preferred(from: ["de-DE", "en-GB"]), .german)
+        XCTAssertEqual(AppLocale.preferred(from: ["zh-CN", "en-US"]), .simplifiedChinese)
     }
 }

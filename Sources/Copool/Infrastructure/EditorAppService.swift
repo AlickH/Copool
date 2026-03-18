@@ -100,6 +100,10 @@ final class EditorAppService: EditorAppServiceProtocol, @unchecked Sendable {
     }
 
     private func detectBundlePath(for spec: EditorSpec) -> URL? {
+        #if os(iOS)
+        _ = spec
+        return nil
+        #else
         let home = FileManager.default.homeDirectoryForCurrentUser
         for bundle in spec.bundleNames {
             let systemPath = URL(fileURLWithPath: "/Applications").appendingPathComponent(bundle)
@@ -112,6 +116,7 @@ final class EditorAppService: EditorAppServiceProtocol, @unchecked Sendable {
             }
         }
         return nil
+        #endif
     }
 
     private func forceKillProcesses(_ processNames: [String]) {

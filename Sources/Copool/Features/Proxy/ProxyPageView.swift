@@ -2,6 +2,9 @@ import SwiftUI
 #if canImport(AppKit)
 import AppKit
 #endif
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct ProxyPageView: View {
     @ObservedObject var model: ProxyPageModel
@@ -9,15 +12,36 @@ struct ProxyPageView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: LayoutRules.sectionSpacing) {
+                if model.usesRemoteMacControl, model.showsRemoteControlCallout {
+                    remoteControlCalloutSection
+                }
                 apiProxySection
-                remoteSection
-                cloudflaredSection
+                remoteCapabilitySection
+                publicCapabilitySection
             }
             .padding(LayoutRules.pagePadding)
         }
         .scrollIndicators(.hidden)
         .task {
             await model.load()
+        }
+    }
+
+    private var remoteControlCalloutSection: some View {
+        SectionCard(
+            title: L10n.tr("proxy.callout.remote_control.title"),
+            headerTrailing: {
+                CloseGlassButton {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        model.dismissRemoteControlCallout()
+                    }
+                }
+            }
+        ) {
+            Text(L10n.tr("proxy.callout.remote_control.message"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -69,21 +93,12 @@ struct ProxyPageView: View {
             Circle()
                 .fill(model.proxyStatus.running ? Color.mint : Color.gray)
                 .frame(width: 7, height: 7)
-            Text(
-                L10n.tr(
-                    "proxy.status_line_format",
-                    model.proxyStatus.running ? L10n.tr("proxy.status.running") : L10n.tr("proxy.status.stopped")
-                )
-            )
+            Text(model.proxyStatus.running ? L10n.tr("proxy.status.running") : L10n.tr("proxy.status.stopped"))
         }
         .font(.subheadline.weight(.medium))
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
-        .background(.ultraThinMaterial, in: Capsule())
-        .overlay {
-            Capsule()
-                .stroke(Color.secondary.opacity(0.24), lineWidth: 1)
-        }
+        .frostedCapsuleSurface()
     }
 
     private func metricPill(_ text: String) -> some View {
@@ -91,11 +106,7 @@ struct ProxyPageView: View {
             .font(.subheadline.weight(.medium))
             .padding(.horizontal, 12)
             .padding(.vertical, 7)
-            .background(.ultraThinMaterial, in: Capsule())
-            .overlay {
-                Capsule()
-                    .stroke(Color.secondary.opacity(0.24), lineWidth: 1)
-            }
+            .frostedCapsuleSurface()
     }
 
     private var proxyHeroContent: some View {
@@ -110,20 +121,20 @@ struct ProxyPageView: View {
                 Button("proxy.action.refresh_status") {
                     Task { await model.refreshStatus() }
                 }
-                .buttonStyle(.frostedCapsule())
+                .liquidGlassActionButtonStyle()
                 .disabled(model.loading)
 
                 if model.proxyStatus.running {
                     Button("proxy.action.stop_api_proxy", role: .destructive) {
                         Task { await model.stopProxy() }
                     }
-                    .buttonStyle(.frostedCapsule(prominent: true))
+                    .liquidGlassActionButtonStyle(prominent: true)
                     .disabled(model.loading)
                 } else {
                     Button("proxy.action.start_api_proxy") {
                         Task { await model.startProxy() }
                     }
-                    .buttonStyle(.frostedCapsule(prominent: true))
+                    .liquidGlassActionButtonStyle(prominent: true)
                     .disabled(model.loading)
                 }
             }
@@ -185,7 +196,7 @@ struct ProxyPageView: View {
                 Button("common.refresh") {
                     Task { await model.refreshAPIKey() }
                 }
-                .buttonStyle(.frostedCapsule())
+                .liquidGlassActionButtonStyle()
                 .disabled(model.loading)
             }
 
@@ -199,18 +210,19 @@ struct ProxyPageView: View {
     }
 
     private var remoteSection: some View {
-        SectionCard(title: L10n.tr("proxy.section.remote_servers")) {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("proxy.remote.description")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer(minLength: 0)
-                    Button("proxy.action.add_server") {
-                        Task { await model.addRemoteServer() }
-                    }
-                    .buttonStyle(.frostedCapsule(prominent: true))
+        SectionCard(
+            title: L10n.tr("proxy.section.remote_servers"),
+            headerTrailing: {
+                Button("proxy.action.add_server") {
+                    Task { await model.addRemoteServer() }
                 }
+                .liquidGlassActionButtonStyle(prominent: true)
+            }
+        ) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("proxy.remote.description")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
 
                 if model.remoteServers.isEmpty {
                     EmptyStateView(
@@ -244,6 +256,38 @@ struct ProxyPageView: View {
         PublicAccessSection(model: model, onCopy: copyToPasteboard)
     }
 
+    @ViewBuilder
+    private var remoteCapabilitySection: some View {
+        if model.canManageRemoteServers {
+            remoteSection
+        } else {
+            infoOnlyFeatureSection(
+                title: L10n.tr("proxy.section.remote_servers"),
+                message: L10n.tr("proxy.remote.unavailable_message")
+            )
+        }
+    }
+
+    @ViewBuilder
+    private var publicCapabilitySection: some View {
+        if model.canManagePublicTunnel {
+            cloudflaredSection
+        } else {
+            infoOnlyFeatureSection(
+                title: L10n.tr("proxy.section.public_access"),
+                message: L10n.tr("proxy.public.unavailable_message")
+            )
+        }
+    }
+
+    private func infoOnlyFeatureSection(title: String, message: String) -> some View {
+        SectionCard(title: title) {
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private func detailCard<Trailing: View>(
         title: String,
         value: String,
@@ -259,7 +303,7 @@ struct ProxyPageView: View {
                 Spacer(minLength: 0)
                 trailing()
                 Button("common.copy", action: onCopy)
-                    .buttonStyle(.frostedCapsule())
+                    .liquidGlassActionButtonStyle()
                     .disabled(!canCopy)
             }
             Text(value)
@@ -301,6 +345,8 @@ struct ProxyPageView: View {
         #if canImport(AppKit)
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(value, forType: .string)
+        #elseif canImport(UIKit)
+        UIPasteboard.general.string = value
         #endif
     }
 }
@@ -372,7 +418,10 @@ private struct RemoteServerRow: View {
                     .font(.caption.weight(.semibold))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background((status?.running == true ? Color.green : Color.gray).opacity(0.2), in: Capsule())
+                    .frostedCapsuleSurface(
+                        prominent: status?.running == true,
+                        tint: status?.running == true ? .green : .gray
+                    )
             }
 
             if isExpanded {
@@ -384,27 +433,27 @@ private struct RemoteServerRow: View {
                 ) {
                     labeledField(title: "Name") {
                         TextField("tokyo-01", text: $draft.label)
-                            .textFieldStyle(.roundedBorder)
+                            .frostedRoundedInput()
                     }
                     labeledField(title: "Host") {
                         TextField("1.2.3.4", text: $draft.host)
-                            .textFieldStyle(.roundedBorder)
+                            .frostedRoundedInput()
                     }
                     labeledField(title: "SSH Port") {
                         TextField("22", value: $draft.sshPort, format: .number.grouping(.never))
-                            .textFieldStyle(.roundedBorder)
+                            .frostedRoundedInput()
                     }
                     labeledField(title: "SSH User") {
                         TextField("root", text: $draft.sshUser)
-                            .textFieldStyle(.roundedBorder)
+                            .frostedRoundedInput()
                     }
                     labeledField(title: "Deploy Dir") {
                         TextField("/opt/codex-tools", text: $draft.remoteDir)
-                            .textFieldStyle(.roundedBorder)
+                            .frostedRoundedInput()
                     }
                     labeledField(title: "Proxy Port") {
                         TextField("8787", value: $draft.listenPort, format: .number.grouping(.never))
-                            .textFieldStyle(.roundedBorder)
+                            .frostedRoundedInput()
                     }
                 }
 
@@ -424,26 +473,25 @@ private struct RemoteServerRow: View {
                             set: { draft.privateKey = $0 }
                         ))
                         .font(.caption.monospaced())
+                        .scrollContentBackground(.hidden)
                         .frame(minHeight: 120)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 6)
-                        .background {
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .fill(Color.secondary.opacity(0.14))
-                        }
+                        .frostedRoundedSurface(cornerRadius: 8)
                     case "password":
                         SecureField("SSH password", text: Binding(
                             get: { draft.password ?? "" },
                             set: { draft.password = $0 }
                         ))
-                        .textFieldStyle(.roundedBorder)
+                        .frostedRoundedInput()
                     default:
                         HStack(spacing: 8) {
                             TextField("~/.ssh/id_ed25519", text: Binding(
                                 get: { draft.identityFile ?? "" },
                                 set: { draft.identityFile = $0 }
                             ))
-                            .textFieldStyle(.roundedBorder)
+                            .frostedRoundedInput()
+                            #if canImport(AppKit)
                             Button {
                                 if let path = chooseIdentityFilePath() {
                                     draft.identityFile = path
@@ -451,8 +499,9 @@ private struct RemoteServerRow: View {
                             } label: {
                                 Image(systemName: "folder")
                             }
-                            .buttonStyle(.frostedCapsule())
+                            .liquidGlassActionButtonStyle()
                             .help("Choose key file")
+                            #endif
                         }
                     }
                 }
@@ -472,7 +521,7 @@ private struct RemoteServerRow: View {
                     }
                 }
                 .scrollIndicators(.hidden)
-                .buttonStyle(.frostedCapsule())
+                .liquidGlassActionButtonStyle()
 
                 LazyVGrid(
                     columns: [
@@ -514,7 +563,7 @@ private struct RemoteServerRow: View {
                         Button("common.copy") {
                             copy(logs)
                         }
-                        .buttonStyle(.frostedCapsule())
+                        .liquidGlassActionButtonStyle()
                         .disabled((logs ?? "").isEmpty)
                     }
 
@@ -601,7 +650,7 @@ private struct RemoteServerRow: View {
                 Button("common.copy") {
                     copy(canCopy ? value : nil)
                 }
-                .buttonStyle(.frostedCapsule())
+                .liquidGlassActionButtonStyle()
                 .disabled(!canCopy)
             }
             Text(value)
@@ -621,6 +670,8 @@ private struct RemoteServerRow: View {
         #if canImport(AppKit)
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(value, forType: .string)
+        #elseif canImport(UIKit)
+        UIPasteboard.general.string = value
         #endif
     }
 

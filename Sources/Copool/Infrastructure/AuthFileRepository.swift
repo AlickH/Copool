@@ -23,6 +23,10 @@ final class AuthFileRepository: AuthRepository, @unchecked Sendable {
         return try readJSONValue(from: paths.codexAuthPath)
     }
 
+    func readAuth(from url: URL) throws -> JSONValue {
+        try readJSONValue(from: url)
+    }
+
     func writeCurrentAuth(_ auth: JSONValue) throws {
         let parentDirectory = paths.codexAuthPath.deletingLastPathComponent()
         try fileManager.createDirectory(at: parentDirectory, withIntermediateDirectories: true)
@@ -44,6 +48,33 @@ final class AuthFileRepository: AuthRepository, @unchecked Sendable {
             return
         }
         try fileManager.removeItem(at: paths.codexAuthPath)
+    }
+
+    func makeChatGPTAuth(from tokens: ChatGPTOAuthTokens) throws -> JSONValue {
+        let claims = try decodeJWTPayload(tokens.idToken)
+        let accountID = claims["https://api.openai.com/auth"]?["chatgpt_account_id"]?.stringValue
+
+        var tokenObject: [String: JSONValue] = [
+            "access_token": .string(tokens.accessToken),
+            "refresh_token": .string(tokens.refreshToken),
+            "id_token": .string(tokens.idToken)
+        ]
+
+        if let accountID, !accountID.isEmpty {
+            tokenObject["account_id"] = .string(accountID)
+        }
+
+        var root: [String: JSONValue] = [
+            "auth_mode": .string("chatgpt"),
+            "last_refresh": .string(Self.makeLastRefreshTimestamp()),
+            "tokens": .object(tokenObject)
+        ]
+
+        if let apiKey = tokens.apiKey, !apiKey.isEmpty {
+            root["OPENAI_API_KEY"] = .string(apiKey)
+        }
+
+        return .object(root)
     }
 
     func extractAuth(from auth: JSONValue) throws -> ExtractedAuth {
@@ -223,6 +254,12 @@ final class AuthFileRepository: AuthRepository, @unchecked Sendable {
 
         return findFirstString(in: claims, candidateKeys: keyCandidates, allowPersonal: false)
             ?? findFirstString(in: auth, candidateKeys: keyCandidates, allowPersonal: false)
+    }
+
+    private static func makeLastRefreshTimestamp() -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter.string(from: Date())
     }
 
     private func string(atPath path: [String], in root: JSONValue?) -> String? {

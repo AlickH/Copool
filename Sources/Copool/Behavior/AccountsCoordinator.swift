@@ -1,42 +1,84 @@
 import Foundation
-import CryptoKit
 
 actor AccountsCoordinator {
+    private enum UsageRefreshPolicy {
+        static let minimumRefreshIntervalSeconds: Int64 = 25
+
+        static func shouldRefresh(_ snapshot: UsageSnapshot?, now: Int64) -> Bool {
+            guard let snapshot else { return true }
+            return now - snapshot.fetchedAt >= minimumRefreshIntervalSeconds
+        }
+    }
+
+    private enum UsageRefreshExecutionMode {
+        case parallel
+        case serial
+    }
+
     private let storeRepository: AccountsStoreRepository
     private let authRepository: AuthRepository
     private let usageService: UsageService
+    private let chatGPTOAuthLoginService: ChatGPTOAuthLoginServiceProtocol
     private let codexCLIService: CodexCLIServiceProtocol
     private let editorAppService: EditorAppServiceProtocol
     private let opencodeAuthSyncService: OpencodeAuthSyncServiceProtocol
     private let dateProvider: DateProviding
+    private let runtimePlatform: RuntimePlatform
 
     init(
         storeRepository: AccountsStoreRepository,
         authRepository: AuthRepository,
         usageService: UsageService,
+        chatGPTOAuthLoginService: ChatGPTOAuthLoginServiceProtocol,
         codexCLIService: CodexCLIServiceProtocol,
         editorAppService: EditorAppServiceProtocol,
         opencodeAuthSyncService: OpencodeAuthSyncServiceProtocol,
-        dateProvider: DateProviding = SystemDateProvider()
+        dateProvider: DateProviding = SystemDateProvider(),
+        runtimePlatform: RuntimePlatform = PlatformCapabilities.currentPlatform
     ) {
         self.storeRepository = storeRepository
         self.authRepository = authRepository
         self.usageService = usageService
+        self.chatGPTOAuthLoginService = chatGPTOAuthLoginService
         self.codexCLIService = codexCLIService
         self.editorAppService = editorAppService
         self.opencodeAuthSyncService = opencodeAuthSyncService
         self.dateProvider = dateProvider
+        self.runtimePlatform = runtimePlatform
     }
 
     func listAccounts() throws -> [AccountSummary] {
         let store = try storeRepository.loadStore()
         let currentAccountID = authRepository.currentAuthAccountID()
-        return mapToSummaries(store: store, currentAccountID: currentAccountID)
+        return store.accountSummaries(currentAccountID: currentAccountID)
     }
 
     @discardableResult
     func importCurrentAuthAccount(customLabel: String?) async throws -> AccountSummary {
         let authJSON = try authRepository.readCurrentAuth()
+        return try await importAccount(authJSON: authJSON, customLabel: customLabel)
+    }
+
+    @discardableResult
+    func importAccountFile(from url: URL, customLabel: String?, setAsCurrent: Bool) async throws -> AccountSummary {
+        let didAccess = url.startAccessingSecurityScopedResource()
+        defer {
+            if didAccess {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        let authJSON = try authRepository.readAuth(from: url)
+        if setAsCurrent {
+            if runtimePlatform == .macOS {
+                try authRepository.writeCurrentAuth(authJSON)
+            }
+        }
+        return try await importAccount(authJSON: authJSON, customLabel: customLabel)
+    }
+
+    @discardableResult
+    private func importAccount(authJSON: JSONValue, customLabel: String?) async throws -> AccountSummary {
         let extracted = try authRepository.extractAuth(from: authJSON)
 
         var usage: UsageSnapshot?
@@ -117,7 +159,7 @@ actor AccountsCoordinator {
             throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
         }
 
-        try authRepository.writeCurrentAuth(account.authJSON)
+        try updateCurrentAccountProjection(authJSON: account.authJSON)
     }
 
     func switchAccountAndApplySettings(id: String, workspacePath: String? = nil) throws -> SwitchAccountExecutionResult {
@@ -126,31 +168,12 @@ actor AccountsCoordinator {
             throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
         }
 
-        try authRepository.writeCurrentAuth(account.authJSON)
-
-        var result = SwitchAccountExecutionResult.idle
-        let settings = store.settings
-
-        if settings.syncOpencodeOpenaiAuth {
-            do {
-                try opencodeAuthSyncService.syncFromCodexAuth(account.authJSON)
-                result.opencodeSynced = true
-            } catch {
-                result.opencodeSyncError = error.localizedDescription
-            }
-        }
-
-        if settings.restartEditorsOnSwitch {
-            let restart = editorAppService.restartSelectedApps(settings.restartEditorTargets)
-            result.restartedEditorApps = restart.restarted
-            result.editorRestartError = restart.error
-        }
-
-        if settings.launchCodexAfterSwitch {
-            result.usedFallbackCLI = try codexCLIService.launchApp(workspacePath: workspacePath)
-        }
-
-        return result
+        try updateCurrentAccountProjection(authJSON: account.authJSON)
+        return try applySwitchSideEffects(
+            for: account,
+            settings: store.settings,
+            workspacePath: workspacePath
+        )
     }
 
     func smartSwitch() throws -> (AccountSummary, SwitchAccountExecutionResult)? {
@@ -170,49 +193,70 @@ actor AccountsCoordinator {
     }
 
     func addAccountViaLogin(customLabel: String?, timeoutSeconds: TimeInterval = 10 * 60) async throws -> AccountSummary {
-        let backupAuth = try authRepository.readCurrentAuthOptional()
-        let baselineFingerprint = fingerprint(of: backupAuth)
-
-        defer {
-            try? restoreAuth(backupAuth)
-        }
-
-        try codexCLIService.launchLogin()
-
-        let deadline = Date().addingTimeInterval(timeoutSeconds)
-        while Date() < deadline {
-            try await Task.sleep(for: .milliseconds(2500))
-            let currentAuth = try authRepository.readCurrentAuthOptional()
-            guard let currentAuth else { continue }
-            let currentFingerprint = fingerprint(of: currentAuth)
-            guard currentFingerprint != baselineFingerprint else { continue }
-            return try await importCurrentAuthAccount(customLabel: customLabel)
-        }
-
-        throw AppError.io(L10n.tr("error.accounts.add_account_timeout"))
+        let tokens = try await chatGPTOAuthLoginService.signInWithChatGPT(timeoutSeconds: timeoutSeconds)
+        let authJSON = try authRepository.makeChatGPTAuth(from: tokens)
+        return try await importAccount(authJSON: authJSON, customLabel: customLabel)
     }
 
     func refreshAllUsage() async throws -> [AccountSummary] {
+        try await refreshAllUsage(using: .parallel, force: false)
+    }
+
+    func refreshAllUsageSerially() async throws -> [AccountSummary] {
+        try await refreshAllUsage(using: .serial, force: false)
+    }
+
+    func refreshAllUsage(force: Bool) async throws -> [AccountSummary] {
+        try await refreshAllUsage(using: .parallel, force: force)
+    }
+
+    func refreshAllUsageSerially(force: Bool) async throws -> [AccountSummary] {
+        try await refreshAllUsage(using: .serial, force: force)
+    }
+
+    private func refreshAllUsage(using mode: UsageRefreshExecutionMode, force: Bool) async throws -> [AccountSummary] {
         let now = dateProvider.unixSecondsNow()
         let snapshot = try storeRepository.loadStore()
+        let authRepository = self.authRepository
+        let usageService = self.usageService
 
-        var refreshedAccounts: [StoredAccount] = []
-        refreshedAccounts.reserveCapacity(snapshot.accounts.count)
+        let refreshedAccounts: [StoredAccount]
+        switch mode {
+        case .parallel:
+            refreshedAccounts = await withTaskGroup(of: StoredAccount.self, returning: [StoredAccount].self) { group in
+                for account in snapshot.accounts {
+                    group.addTask {
+                        await Self.refreshAccount(
+                            account,
+                            now: now,
+                            forceRefresh: force,
+                            authRepository: authRepository,
+                            usageService: usageService
+                        )
+                    }
+                }
 
-        for var account in snapshot.accounts {
-            do {
-                let extracted = try authRepository.extractAuth(from: account.authJSON)
-                let usage = try await usageService.fetchUsage(accessToken: extracted.accessToken, accountID: extracted.accountID)
-                account.usage = usage
-                account.usageError = nil
-                account.planType = extracted.planType ?? account.planType
-                account.teamName = extracted.teamName
-                account.email = extracted.email ?? account.email
-            } catch {
-                account.usageError = error.localizedDescription
+                var refreshedAccounts: [StoredAccount] = []
+                refreshedAccounts.reserveCapacity(snapshot.accounts.count)
+                for await account in group {
+                    refreshedAccounts.append(account)
+                }
+                return refreshedAccounts
             }
-            account.updatedAt = now
-            refreshedAccounts.append(account)
+        case .serial:
+            var sequentialAccounts: [StoredAccount] = []
+            sequentialAccounts.reserveCapacity(snapshot.accounts.count)
+            for account in snapshot.accounts {
+                let refreshed = await Self.refreshAccount(
+                    account,
+                    now: now,
+                    forceRefresh: force,
+                    authRepository: authRepository,
+                    usageService: usageService
+                )
+                sequentialAccounts.append(refreshed)
+            }
+            refreshedAccounts = sequentialAccounts
         }
 
         var latest = try storeRepository.loadStore()
@@ -237,52 +281,98 @@ actor AccountsCoordinator {
 
         try storeRepository.saveStore(latest)
 
-        return mapToSummaries(store: latest, currentAccountID: authRepository.currentAuthAccountID())
+        return latest.accountSummaries(currentAccountID: authRepository.currentAuthAccountID())
     }
 
-    private func mapToSummaries(store: AccountsStore, currentAccountID: String?) -> [AccountSummary] {
-        store.accounts.map { toSummary($0, currentAccountID: currentAccountID) }
+    private static func refreshAccount(
+        _ account: StoredAccount,
+        now: Int64,
+        forceRefresh: Bool,
+        authRepository: AuthRepository,
+        usageService: UsageService
+    ) async -> StoredAccount {
+        var account = account
+        guard forceRefresh || UsageRefreshPolicy.shouldRefresh(account.usage, now: now) else {
+            return account
+        }
+
+        do {
+            let extracted = try authRepository.extractAuth(from: account.authJSON)
+            let usage = try await usageService.fetchUsage(
+                accessToken: extracted.accessToken,
+                accountID: extracted.accountID
+            )
+            account.usage = usage
+            account.usageError = nil
+            account.planType = extracted.planType ?? account.planType
+            account.teamName = extracted.teamName
+            account.email = extracted.email ?? account.email
+        } catch {
+            account.usageError = error.localizedDescription
+        }
+
+        account.updatedAt = now
+        return account
     }
 
     private func toSummary(_ account: StoredAccount, currentAccountID: String?) -> AccountSummary {
-        AccountSummary(
-            id: account.id,
-            label: account.label,
-            email: account.email,
-            accountID: account.accountID,
-            planType: account.planType,
-            teamName: account.teamName,
-            teamAlias: account.teamAlias,
-            addedAt: account.addedAt,
-            updatedAt: account.updatedAt,
-            usage: account.usage,
-            usageError: account.usageError,
-            isCurrent: currentAccountID == account.accountID
+        AccountsStore(accounts: [account]).accountSummaries(currentAccountID: currentAccountID)[0]
+    }
+
+    private func updateCurrentAccountProjection(authJSON: JSONValue) throws {
+        let extracted = try authRepository.extractAuth(from: authJSON)
+        var store = try storeRepository.loadStore()
+        guard store.accounts.contains(where: { $0.accountID == extracted.accountID }) else {
+            throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
+        }
+
+        store.currentSelection = CurrentAccountSelection(
+            accountID: extracted.accountID,
+            selectedAt: dateProvider.unixMillisecondsNow(),
+            sourceDeviceID: runtimePlatform == .macOS ? "macos-local" : "ios-local"
         )
-    }
+        try storeRepository.saveStore(store)
 
-    private func restoreAuth(_ backupAuth: JSONValue?) throws {
-        if let backupAuth {
-            try authRepository.writeCurrentAuth(backupAuth)
-        } else {
-            try authRepository.removeCurrentAuth()
-        }
-    }
-
-    private func fingerprint(of auth: JSONValue?) -> String? {
-        guard let auth else { return nil }
-        let object = auth.toAny()
-        guard JSONSerialization.isValidJSONObject(object),
-              let data = try? JSONSerialization.data(withJSONObject: object, options: [.sortedKeys]) else {
-            return nil
-        }
-        let digest = SHA256.hash(data: data)
-        return digest.map { String(format: "%02x", $0) }.joined()
+        guard runtimePlatform == .macOS else { return }
+        try authRepository.writeCurrentAuth(authJSON)
     }
 
     private func normalizeTeamAlias(_ alias: String?) -> String? {
         guard let alias else { return nil }
         let trimmed = alias.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private func applySwitchSideEffects(
+        for account: StoredAccount,
+        settings: AppSettings,
+        workspacePath: String?
+    ) throws -> SwitchAccountExecutionResult {
+        var result = SwitchAccountExecutionResult.idle
+
+        if settings.syncOpencodeOpenaiAuth {
+            do {
+                try opencodeAuthSyncService.syncFromCodexAuth(account.authJSON)
+                result.opencodeSynced = true
+            } catch {
+                result.opencodeSyncError = error.localizedDescription
+            }
+        }
+
+        guard runtimePlatform == .macOS else {
+            return result
+        }
+
+        if settings.restartEditorsOnSwitch {
+            let restart = editorAppService.restartSelectedApps(settings.restartEditorTargets)
+            result.restartedEditorApps = restart.restarted
+            result.editorRestartError = restart.error
+        }
+
+        if settings.launchCodexAfterSwitch {
+            result.usedFallbackCLI = try codexCLIService.launchApp(workspacePath: workspacePath)
+        }
+
+        return result
     }
 }

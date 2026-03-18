@@ -1,6 +1,8 @@
 import Foundation
+#if os(macOS)
 #if canImport(Darwin)
 import Darwin
+#endif
 #endif
 
 struct CommandResult {
@@ -9,6 +11,7 @@ struct CommandResult {
     var stderr: String
 }
 
+#if os(macOS)
 enum CommandRunner {
     private static let systemSearchPaths = [
         "/opt/homebrew/bin",
@@ -186,3 +189,43 @@ enum CommandRunner {
             .filter { !$0.isEmpty }
     }
 }
+#else
+enum CommandRunner {
+    @discardableResult
+    static func run(
+        _ launchPath: String,
+        arguments: [String] = [],
+        environment: [String: String]? = nil,
+        currentDirectory: URL? = nil,
+        timeout: TimeInterval? = nil
+    ) throws -> CommandResult {
+        _ = launchPath
+        _ = arguments
+        _ = environment
+        _ = currentDirectory
+        _ = timeout
+        throw AppError.io(PlatformCapabilities.unsupportedOperationMessage)
+    }
+
+    static func runChecked(
+        _ launchPath: String,
+        arguments: [String] = [],
+        environment: [String: String]? = nil,
+        currentDirectory: URL? = nil,
+        timeout: TimeInterval? = nil,
+        errorPrefix: String
+    ) throws -> CommandResult {
+        _ = launchPath
+        _ = arguments
+        _ = environment
+        _ = currentDirectory
+        _ = timeout
+        throw AppError.io("\(errorPrefix): \(PlatformCapabilities.unsupportedOperationMessage)")
+    }
+
+    static func resolveExecutable(_ name: String) -> String? {
+        _ = name
+        return nil
+    }
+}
+#endif

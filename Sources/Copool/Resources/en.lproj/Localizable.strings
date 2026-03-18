@@ -6,6 +6,7 @@
 "common.remove" = "Remove";
 "common.copy" = "Copy";
 "common.refresh" = "Refresh";
+"common.close" = "Close";
 "common.refresh_usage" = "Refresh usage";
 "common.refreshing" = "Refreshing...";
 "common.start" = "Start";
@@ -20,14 +21,29 @@
 "settings.launch_at_startup" = "Launch at startup";
 "settings.launch_codex_after_switch" = "Launch Codex after switch";
 "settings.auto_start_api_proxy" = "Auto start API proxy";
+"settings.section.deployment" = "Deployment";
+"settings.deployment_mode" = "Mode";
+"settings.deployment_mode.local_device" = "Local device";
+"settings.deployment_mode.backend_service" = "Backend-managed";
+"settings.deployment_mode.hint" = "On iOS, remote deployment and public tunnel controls can be delegated to your backend service.";
 "settings.section.language" = "Language";
 "settings.language" = "Language";
 "language.english" = "English";
 "language.simplified_chinese" = "Simplified Chinese";
+"language.traditional_chinese" = "Traditional Chinese";
 "language.japanese" = "Japanese";
 "language.korean" = "Korean";
+"language.french" = "French";
+"language.german" = "German";
+"language.italian" = "Italian";
+"language.spanish" = "Spanish";
+"language.russian" = "Russian";
+"language.dutch" = "Dutch";
 "settings.section.tray" = "Tray";
 "settings.status_bar_display" = "Status bar display";
+"settings.status_bar_display.remaining" = "Remaining";
+"settings.status_bar_display.used" = "Used";
+"settings.status_bar_display.hidden" = "Hidden";
 "tray.remaining" = "Remaining";
 "tray.used" = "Used";
 "tray.hidden" = "Hidden";
@@ -36,6 +52,7 @@
 "settings.sync_opencode_openai_auth" = "Sync opencode OpenAI auth";
 "settings.restart_editors_on_switch" = "Restart editors on switch";
 "settings.editor_restart_target" = "Editor restart target";
+"settings.section.capability_matrix" = "Capability Matrix";
 "settings.section.remote_servers_json" = "Remote Servers JSON";
 "settings.remote_servers_hint" = "Maintain an array of `RemoteServerConfig`.";
 "settings.save_remote_servers" = "Save remote servers";
@@ -50,10 +67,13 @@
 "accounts.action.importing" = "Importing...";
 "accounts.action.add_account" = "Add account";
 "accounts.action.waiting_for_login" = "Waiting for login...";
+"accounts.loading.message" = "Loading accounts...";
+"accounts.action.quick_actions" = "Quick actions";
 "accounts.action.collapse_all" = "Collapse all cards";
 "accounts.action.expand_all" = "Expand all cards";
 "accounts.empty.title" = "No accounts";
-"accounts.empty.message.no_accounts" = "No accounts yet. Import ~/.codex/auth.json first.";
+"accounts.empty.message.no_accounts" = "No accounts yet. Add or import an account to get started.";
+"accounts.empty.message.enable_icloud" = "Turn on iCloud in system settings first. Synced accounts will appear here automatically.";
 "accounts.error.load_failed" = "Failed to load accounts";
 "accounts.card.current" = "CURRENT";
 "accounts.card.team.set_name" = "Set team name";
@@ -70,6 +90,7 @@
 "accounts.notice.imported_format" = "Account imported: %@";
 "accounts.notice.imported_new_format" = "New account imported: %@";
 "accounts.notice.usage_refreshed" = "Usage refreshed";
+"accounts.notice.accounts_refreshed" = "Accounts refreshed";
 "accounts.notice.account_deleted" = "Account deleted";
 "accounts.notice.team_name_updated" = "Team name updated";
 "accounts.notice.no_switch_target" = "No account available for switching";
@@ -82,7 +103,25 @@
 "accounts.notice.editor_restart_failed_format" = "Editor restart failed: %@";
 "accounts.notice.editor_restarted_format" = "Editors restarted: %@";
 
+"capability.account_import_current_auth.title" = "Import current auth";
+"capability.account_import_current_auth.detail" = "Reads auth from app storage and imports the account snapshot.";
+"capability.account_add_via_login.title" = "Add account via login";
+"capability.account_add_via_login.detail" = "Requires Codex CLI login flow.";
+"capability.local_api_proxy.title" = "Local API proxy";
+"capability.local_api_proxy.detail" = "Runs local /v1 proxy routing and account switching.";
+"capability.remote_server_management.title" = "Remote server management";
+"capability.remote_server_management.detail" = "Deploy/start/stop proxyd through SSH/SCP.";
+"capability.public_tunnel.title" = "Public tunnel";
+"capability.public_tunnel.detail" = "Manage cloudflared quick/named tunnels.";
+"capability.launch_at_startup.title" = "Launch at startup";
+"capability.launch_at_startup.detail" = "Registers app launch at system login.";
+"capability.status.available" = "Available";
+"capability.status.backend_managed" = "Backend-managed";
+"capability.status.unavailable" = "Unavailable";
+
 "proxy.section.api_proxy" = "API Proxy";
+"proxy.callout.remote_control.title" = "Mac Remote Control";
+"proxy.callout.remote_control.message" = "This page only controls the API Proxy running on macOS. Keep Copool running on your Mac so it can receive commands and publish fresh status.";
 "proxy.status.running" = "Running";
 "proxy.status.stopped" = "Stopped";
 "proxy.status_line_format" = "Status: %@";
@@ -101,11 +140,17 @@
 "proxy.info.no_request_matched" = "No request matched yet";
 "proxy.info.active_account_hint" = "The currently used account will appear after the first request";
 "proxy.section.remote_servers" = "Remote Servers";
+"proxy.section.remote_servers_backend" = "Remote Servers (Backend-managed)";
 "proxy.remote.description" = "Deploy and manage API proxy nodes on remote Linux servers over SSH.";
+"proxy.remote.backend_managed_message" = "Remote deployment is delegated to your backend service. Keep this mode for status visibility and operational consistency across iOS clients.";
+"proxy.remote.unavailable_message" = "Remote SSH/SCP management is unavailable on iOS local-device mode. Switch to backend-managed mode or use Copool on macOS.";
 "proxy.action.add_server" = "Add server";
 "proxy.remote.empty.title" = "No remote servers yet";
 "proxy.remote.empty.message" = "Add a Linux server first, then upload proxyd and start it remotely.";
 "proxy.section.public_access" = "Public Access";
+"proxy.section.public_access_backend" = "Public Access (Backend-managed)";
+"proxy.public.backend_managed_message" = "Public tunnel operations are delegated to your backend service. Configure cloudflared on the server side and keep this app for account and proxy controls.";
+"proxy.public.unavailable_message" = "cloudflared management is unavailable on iOS local-device mode. Switch to backend-managed mode or use Copool on macOS.";
 "proxy.toggle.enable_public_access" = "Enable public access with cloudflared";
 "proxy.switch.on" = "On";
 "proxy.switch.off" = "Off";
@@ -173,7 +218,7 @@
 "error.app.repo_root_not_found" = "Unable to locate repository root (missing src-tauri/proxyd/Cargo.toml).";
 "error.accounts.account_not_found_for_update" = "Target account for update was not found";
 "error.accounts.account_not_found_for_switch" = "Target account for switch was not found";
-"error.accounts.add_account_timeout" = "Timed out waiting for new account authorization. Complete codex login and retry.";
+"error.accounts.add_account_timeout" = "Timed out waiting for browser sign-in to complete. Try again.";
 
 "error.store.read_failed_format" = "Failed to read account store: %@";
 "error.store.serialize_failed_format" = "Failed to serialize account store: %@";
@@ -186,6 +231,7 @@
 "error.usage.invalid_response" = "invalid response";
 
 "error.http_server.invalid_port_format" = "Invalid port: %@";
+"error.http_server.request_too_large_format" = "Request payload exceeds the limit (%@)";
 "error.shell.timeout_format" = "Command timed out (%@s): %@";
 "error.shell.run_failed_format" = "Command execution failed: %@: %@";
 "error.update.github_api_invalid_response" = "Update check failed: invalid GitHub API response";
@@ -208,6 +254,16 @@
 "error.codex_cli.launch_app_open_failed" = "Failed to launch Codex.app";
 "error.codex_cli.launch_app_fallback_failed_format" = "Codex.app not found, and codex app fallback failed: %@";
 "error.codex_cli.executable_not_found" = "codex executable not found. Install Codex CLI or add it to PATH.";
+"error.oauth.browser_open_failed" = "Failed to open the browser sign-in page";
+"error.oauth.callback_server_start_failed" = "Failed to start the local sign-in callback service";
+"error.oauth.callback_state_mismatch" = "Sign-in callback validation failed. Try again.";
+"error.oauth.callback_missing_code" = "Missing authorization code in sign-in callback";
+"error.oauth.callback_failed_format" = "Sign-in failed: %@";
+"error.oauth.request_cancelled" = "Sign-in was cancelled";
+"error.oauth.token_exchange_failed_format" = "Token exchange failed: %@";
+"error.oauth.api_key_exchange_failed" = "Failed to obtain the OpenAI API key";
+"error.oauth.authorize_url_invalid" = "The sign-in URL is invalid";
+"error.oauth.workspace_mismatch_format" = "The signed-in workspace does not match the required workspace: %@";
 "error.startup.enable_failed_format" = "Failed to enable launch at startup: %@";
 "error.startup.disable_failed_format" = "Failed to disable launch at startup: %@";
 
@@ -288,8 +344,10 @@
 "error.proxy_runtime.retry.auth_failed_format" = "Authentication failed: %@";
 "error.proxy_runtime.retry.permission_denied_format" = "Permission denied: %@";
 "error.proxy_runtime.no_error_detail" = "No detailed error message returned";
+"error.proxy_runtime.upstream_response_too_large_format" = "Upstream response exceeded the limit (%@). Narrow the request or disable stream mode.";
 "error.proxy_runtime.summary.quota_format" = "quota exceeded %@";
 "error.proxy_runtime.summary.rate_format" = "rate limited %@";
 "error.proxy_runtime.summary.model_format" = "model restricted %@";
 "error.proxy_runtime.summary.auth_format" = "auth failed %@";
 "error.proxy_runtime.summary.permission_format" = "permission denied %@";
+"error.remote.logs_unavailable" = "Remote logs are temporarily unavailable. Try again shortly.";

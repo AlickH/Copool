@@ -1,9 +1,62 @@
 import SwiftUI
 
 struct AccountsPageView: View {
+    @State private var areCardsPresented = false
+    @State private var didRunInitialCardEntrance = false
+
     @ObservedObject var model: AccountsPageModel
+    let currentLocale: AppLocale
+    let onSelectLocale: (AppLocale) -> Void
+
+    init(
+        model: AccountsPageModel,
+        currentLocale: AppLocale,
+        onSelectLocale: @escaping (AppLocale) -> Void
+    ) {
+        self.model = model
+        self.currentLocale = currentLocale
+        self.onSelectLocale = onSelectLocale
+        let hasResolvedInitialState = model.hasResolvedInitialState
+        _areCardsPresented = State(initialValue: hasResolvedInitialState)
+        _didRunInitialCardEntrance = State(initialValue: hasResolvedInitialState)
+    }
 
     var body: some View {
+        platformLayout
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .task {
+            await model.loadIfNeeded()
+        }
+        .onAppear {
+            triggerInitialCardEntranceIfNeeded(for: contentAccountCount)
+        }
+        .onChange(of: contentAccountCount) { _, newValue in
+            triggerInitialCardEntranceIfNeeded(for: newValue)
+        }
+    }
+
+    @ViewBuilder
+    private var platformLayout: some View {
+        #if os(iOS)
+        GeometryReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    contentView
+                }
+                .padding(.top, LayoutRules.iOSAccountsContentTopPadding(safeAreaTop: proxy.safeAreaInsets.top))
+                .padding(.bottom, LayoutRules.iOSAccountsContentBottomPadding(safeAreaBottom: proxy.safeAreaInsets.bottom))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .scrollIndicators(.hidden)
+            .ignoresSafeArea(edges: [.top, .bottom])
+            .refreshable {
+                await model.refreshUsage()
+            }
+            .toolbar {
+                iOSAccountsToolbar
+            }
+        }
+        #else
         VStack(alignment: .leading, spacing: LayoutRules.sectionSpacing) {
             actionBar
                 .padding(.horizontal, LayoutRules.pagePadding)
@@ -18,11 +71,71 @@ struct AccountsPageView: View {
             .scrollIndicators(.hidden)
         }
         .padding(.top, LayoutRules.pagePadding)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .task {
-            await model.loadIfNeeded()
+        #endif
+    }
+
+    #if os(iOS)
+    @ToolbarContentBuilder
+    private var iOSAccountsToolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            LanguageMenuButton(
+                currentLocale: currentLocale,
+                onSelectLocale: onSelectLocale
+            ) {
+                ToolbarIconLabel(systemImage: "globe")
+            }
+        }
+
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                Task { await model.addAccountViaLogin() }
+            } label: {
+                ToolbarIconLabel(systemImage: "plus")
+            }
+            .disabled(!model.canAddAccountAction)
+            .accessibilityLabel(
+                Text(
+                    model.isAdding
+                        ? L10n.tr("accounts.action.waiting_for_login")
+                        : L10n.tr("accounts.action.add_account")
+                )
+            )
+        }
+
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                Task { await model.refreshUsage() }
+            } label: {
+                ToolbarIconLabel(
+                    systemImage: "arrow.trianglehead.clockwise.rotate.90",
+                    isSpinning: model.isRefreshing,
+                    opticalScale: LayoutRules.toolbarRefreshIconOpticalScale
+                )
+            }
+            .disabled(!model.canRefreshUsageAction)
+            .accessibilityLabel(Text("common.refresh_usage"))
+        }
+
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    model.toggleAllAccountsCollapsed()
+                }
+            } label: {
+                ToolbarIconLabel(
+                    systemImage: model.areAllAccountsCollapsed ? "chevron.down" : "chevron.up"
+                )
+            }
+            .accessibilityLabel(
+                Text(
+                    model.areAllAccountsCollapsed
+                        ? L10n.tr("accounts.action.expand_all")
+                        : L10n.tr("accounts.action.collapse_all")
+                )
+            )
         }
     }
+    #endif
 
     private var actionBar: some View {
         HStack(spacing: LayoutRules.listRowSpacing) {
@@ -34,8 +147,8 @@ struct AccountsPageView: View {
                         Label(model.isImporting ? L10n.tr("accounts.action.importing") : L10n.tr("accounts.action.import_current_auth"), systemImage: "square.and.arrow.down")
                             .lineLimit(1)
                     }
-                    .disabled(model.isImporting || model.isAdding)
-                    .buttonStyle(.frostedCapsule(prominent: true, density: .compact))
+                    .disabled(!model.canImportCurrentAuthAction)
+                    .copoolActionButtonStyle(prominent: true, density: .compact)
 
                     Button {
                         Task { await model.addAccountViaLogin() }
@@ -43,8 +156,8 @@ struct AccountsPageView: View {
                         Label(model.isAdding ? L10n.tr("accounts.action.waiting_for_login") : L10n.tr("accounts.action.add_account"), systemImage: "plus")
                             .lineLimit(1)
                     }
-                    .disabled(model.isImporting || model.isAdding)
-                    .buttonStyle(.frostedCapsule(prominent: true, density: .compact))
+                    .disabled(!model.canAddAccountAction)
+                    .copoolActionButtonStyle(prominent: true, density: .compact)
 
                     Button {
                         Task { await model.smartSwitch() }
@@ -52,16 +165,20 @@ struct AccountsPageView: View {
                         Label("accounts.action.smart_switch", systemImage: "wand.and.stars")
                             .lineLimit(1)
                     }
-                    .buttonStyle(.frostedCapsule(prominent: true, density: .compact))
-                    .disabled(model.isImporting || model.isAdding || model.switchingAccountID != nil)
+                    .copoolActionButtonStyle(prominent: true, density: .compact)
+                    .disabled(!model.canSmartSwitchAction)
 
                     Button {
                         Task { await model.refreshUsage() }
                     } label: {
-                        Image(systemName: model.isRefreshing ? "arrow.triangle.2.circlepath.circle.fill" : "arrow.clockwise")
+                        ToolbarIconLabel(
+                            systemImage: "arrow.trianglehead.clockwise.rotate.90",
+                            isSpinning: model.isRefreshing,
+                            opticalScale: LayoutRules.toolbarRefreshIconOpticalScale
+                        )
                     }
-                    .disabled(model.isRefreshing || model.isAdding)
-                    .buttonStyle(.frostedCapsule(prominent: true, tint: .mint, density: .compact))
+                    .disabled(!model.canRefreshUsageAction)
+                    .copoolActionButtonStyle(prominent: true, tint: .mint, density: .compact)
                 }
             }
             .scrollIndicators(.hidden)
@@ -86,7 +203,7 @@ struct AccountsPageView: View {
     private var contentView: some View {
         switch model.state {
         case .loading:
-            ProgressView()
+            ProgressView(L10n.tr("accounts.loading.message"))
                 .frame(maxWidth: .infinity, minHeight: 180)
         case .empty(let message):
             EmptyStateView(title: L10n.tr("accounts.empty.title"), message: message)
@@ -102,7 +219,7 @@ struct AccountsPageView: View {
                 alignment: .leading,
                 spacing: LayoutRules.accountsRowSpacing
             ) {
-                ForEach(accounts) { account in
+                ForEach(Array(accounts.enumerated()), id: \.element.id) { index, account in
                     AccountCardView(
                         account: account,
                         isCollapsed: model.isAccountCollapsed(account.id),
@@ -110,7 +227,12 @@ struct AccountsPageView: View {
                         onSwitch: { Task { await model.switchAccount(id: account.id) } },
                         onDelete: { Task { await model.deleteAccount(id: account.id) } }
                     )
+                    .copoolCardEntrance(index: index, isPresented: areCardsPresented)
+                    #if os(iOS)
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+                    #else
                     .frame(width: isOverviewMode ? LayoutRules.accountsCollapsedCardWidth : LayoutRules.accountsCardWidth)
+                    #endif
                 }
             }
             .padding(.horizontal, LayoutRules.pagePadding)
@@ -118,7 +240,31 @@ struct AccountsPageView: View {
         }
     }
 
+    private var contentAccountCount: Int? {
+        guard case .content(let accounts) = model.state else { return nil }
+        return accounts.count
+    }
+
+    private func triggerInitialCardEntranceIfNeeded(for count: Int?) {
+        guard count != nil, !didRunInitialCardEntrance else { return }
+        didRunInitialCardEntrance = true
+        areCardsPresented = true
+    }
+
     private func accountGridColumns(isOverviewMode: Bool) -> [GridItem] {
+        #if os(iOS)
+        let columnCount = isOverviewMode
+            ? LayoutRules.iOSAccountsCollapsedColumns
+            : LayoutRules.iOSAccountsExpandedColumns
+        return Array(
+            repeating: GridItem(
+                .flexible(minimum: 0, maximum: .infinity),
+                spacing: LayoutRules.accountsRowSpacing,
+                alignment: .top
+            ),
+            count: columnCount
+        )
+        #else
         if isOverviewMode {
             return Array(
                 repeating: GridItem(
@@ -135,9 +281,33 @@ struct AccountsPageView: View {
                 .fixed(LayoutRules.accountsCardWidth),
                 spacing: LayoutRules.accountsRowSpacing,
                 alignment: .top
-            ),
+                ),
             count: LayoutRules.accountsExpandedColumns
         )
+        #endif
+    }
+}
+
+private struct CardEntranceModifier: ViewModifier {
+    let index: Int
+    let isPresented: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(isPresented ? 1 : 0)
+            .offset(y: isPresented ? 0 : 22)
+            .scaleEffect(isPresented ? 1 : 0.985)
+            .animation(
+                .spring(response: 0.5, dampingFraction: 0.86)
+                    .delay(min(0.28, Double(index) * 0.035)),
+                value: isPresented
+            )
+    }
+}
+
+private extension View {
+    func copoolCardEntrance(index: Int, isPresented: Bool) -> some View {
+        modifier(CardEntranceModifier(index: index, isPresented: isPresented))
     }
 }
 
@@ -149,6 +319,7 @@ private struct AccountCardView: View {
     let onDelete: () -> Void
     @Environment(\.locale) private var locale
     @State private var isHoveringCollapsedSwitch = false
+    @State private var isCollapsedSwitchOverlayPresented = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: isCollapsed ? 8 : 8) {
@@ -175,9 +346,13 @@ private struct AccountCardView: View {
                     Button(role: .destructive, action: onDelete) {
                         Image(systemName: "trash")
                     }
-                    .buttonStyle(.frostedCapsule(prominent: true, tint: .red))
+                    .copoolActionButtonStyle(
+                        prominent: true,
+                        tint: .red,
+                        density: .compact,
+                        iOSStyle: .liquidGlass
+                    )
                     .tint(.red)
-                    .controlSize(.small)
                 }
             }
 
@@ -211,8 +386,7 @@ private struct AccountCardView: View {
         }
         .padding(isCollapsed ? 8 : 10)
         .cardSurface(
-            cornerRadius: 12,
-            tint: account.isCurrent ? toneColor.opacity(0.12) : nil
+            cornerRadius: 12
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -231,8 +405,12 @@ private struct AccountCardView: View {
                             .font(.system(size: 14, weight: .semibold))
                     }
                 }
-                .buttonStyle(.frostedCapsule(prominent: true, tint: .mint))
-                .controlSize(.small)
+                .copoolActionButtonStyle(
+                    prominent: true,
+                    tint: .mint,
+                    density: .compact,
+                    iOSStyle: .liquidGlass
+                )
                 .disabled(switching)
                 .accessibilityLabel(Text(L10n.tr("accounts.card.switch_to_this")))
                 .padding(8)
@@ -240,32 +418,36 @@ private struct AccountCardView: View {
         }
         .overlay {
             if collapsedSwitchOverlayVisible {
-                Button {
-                    onSwitch()
-                } label: {
-                    VStack(spacing: 8) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(.regularMaterial)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(Color.secondary.opacity(0.22), lineWidth: 1)
+                        }
+                        .onTapGesture {
+                            dismissCollapsedSwitchOverlay()
+                        }
+
+                    Button {
+                        onSwitch()
+                    } label: {
                         if switching {
                             ProgressView()
                                 .controlSize(.small)
-                                .scaleEffect(1.15)
                         } else {
-                            Image(systemName: "arrow.left.arrow.right.circle.fill")
-                                .font(.system(size: 28, weight: .semibold))
+                            Label(L10n.tr("accounts.card.switch_to_this"), systemImage: "arrow.left.arrow.right.circle.fill")
+                                .lineLimit(1)
                         }
-                        Text(L10n.tr("accounts.card.switch_to_this"))
-                            .font(.subheadline.weight(.semibold))
                     }
-                    .foregroundStyle(.primary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(Color.secondary.opacity(0.22), lineWidth: 1)
-                    }
+                    .copoolActionButtonStyle(
+                        prominent: true,
+                        tint: .mint,
+                        density: .compact,
+                        iOSStyle: .liquidGlass
+                    )
+                    .disabled(switching)
                 }
-                .buttonStyle(.plain)
-                .disabled(switching)
-                .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .transition(.opacity)
             }
         }
@@ -278,14 +460,45 @@ private struct AccountCardView: View {
                 isHoveringCollapsedSwitch = hovering
             }
         }
+        #if os(iOS)
+        .onLongPressGesture(minimumDuration: 0.35) {
+            guard canRevealCollapsedSwitchOverlay else { return }
+            withAnimation(.easeInOut(duration: 0.16)) {
+                isCollapsedSwitchOverlayPresented = true
+            }
+        }
+        #endif
+        .onChange(of: isCollapsed) { _, collapsed in
+            if !collapsed {
+                dismissCollapsedSwitchOverlay()
+            }
+        }
+        .onChange(of: account.isCurrent) { _, isCurrent in
+            if isCurrent {
+                dismissCollapsedSwitchOverlay()
+            }
+        }
     }
 
     private var canHoverSwitchOverlay: Bool {
+        #if os(macOS)
         isCollapsed && !account.isCurrent
+        #else
+        false
+        #endif
+    }
+
+    private var canRevealCollapsedSwitchOverlay: Bool {
+        isCollapsed && !account.isCurrent && !switching
     }
 
     private var collapsedSwitchOverlayVisible: Bool {
-        canHoverSwitchOverlay && (isHoveringCollapsedSwitch || switching)
+        guard isCollapsed && !account.isCurrent else { return false }
+        #if os(iOS)
+        return isCollapsedSwitchOverlayPresented || switching
+        #else
+        return isHoveringCollapsedSwitch || switching
+        #endif
     }
 
     private var compactUsageSection: some View {
@@ -395,23 +608,10 @@ private struct AccountCardView: View {
     }
 
     private func usageBar(usedPercent: Double, tint: Color) -> some View {
-        GeometryReader { geometry in
-            let totalWidth = geometry.size.width
-            let ratio = max(0, min(1, usedPercent / 100))
-            let fillWidth = totalWidth * ratio
-
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.secondary.opacity(0.2))
-
-                if fillWidth > 0 {
-                    Capsule()
-                        .fill(tint)
-                        .frame(width: fillWidth)
-                }
-            }
-        }
-        .frame(height: 6)
+        LiquidProgressBar(
+            progress: usedPercent / 100,
+            tint: tint
+        )
     }
 
     private func percent(_ value: Double) -> String {
@@ -425,6 +625,13 @@ private struct AccountCardView: View {
         formatter.dateStyle = .short
         formatter.timeStyle = .medium
         return formatter.string(from: Date(timeIntervalSince1970: TimeInterval(epoch)))
+    }
+
+    private func dismissCollapsedSwitchOverlay() {
+        guard isCollapsedSwitchOverlayPresented else { return }
+        withAnimation(.easeInOut(duration: 0.16)) {
+            isCollapsedSwitchOverlayPresented = false
+        }
     }
 }
 
@@ -444,14 +651,11 @@ private struct CompactUsageRing: View {
 
     var body: some View {
         ZStack {
-            Circle()
-                .stroke(Color.secondary.opacity(0.2), lineWidth: 6)
-            if progress > 0 {
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(tint, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-            }
+            LiquidProgressRing(
+                progress: progress,
+                tint: tint,
+                lineWidth: 7
+            )
             VStack(spacing: 1) {
                 Text(percentText)
                     .font(.system(size: 10, weight: .bold))
@@ -461,6 +665,6 @@ private struct CompactUsageRing: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .frame(width: 52, height: 52)
+        .frame(width: 54, height: 54)
     }
 }

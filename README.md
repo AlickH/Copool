@@ -47,6 +47,31 @@ Open `Copool.xcodeproj` in Xcode and run the `Copool` scheme.
 
 使用 Xcode 打开 `Copool.xcodeproj`，运行 `Copool` scheme。
 
+## Helper Scripts / 辅助脚本
+
+The repository also includes a standalone batch checker for the public endpoints used by `team.654301.xyz`.
+
+仓库还包含一个独立的批量查询脚本，可封装 `team.654301.xyz` 当前公开前端所调用的接口。
+
+```bash
+python3 scripts/team654301_batch_check.py status --file scripts/team654301_codes.example.txt
+python3 scripts/team654301_batch_check.py warranty --code Z-EXAMPLECODE0001 --format json
+python3 scripts/team654301_batch_check.py status <<'EOF'
+Z-EXAMPLECODE0001
+Z-EXAMPLECODE0002
+EOF
+```
+
+Notes:
+- The site currently exposes single-code endpoints only; this script batches by looping locally.
+- `status` calls `/api/status/`, and `warranty` calls `/api/warranty/activate/`.
+- Prefer small delays between requests to avoid hammering the upstream service.
+
+说明：
+- 站点当前公开的是单卡密接口；此脚本通过本地循环实现批量查询。
+- `status` 对应 `/api/status/`，`warranty` 对应 `/api/warranty/activate/`。
+- 建议保留少量请求间隔，避免对上游服务造成压力。
+
 ## Project Structure / 项目结构
 
 - `Sources/Copool/App`: scene composition and app bootstrap

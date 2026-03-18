@@ -6,3 +6,5 @@ enum ViewState<Value> {
     case content(Value)
     case error(message: String)
 }
+
+extension ViewState: Equatable where Value: Equatable {}

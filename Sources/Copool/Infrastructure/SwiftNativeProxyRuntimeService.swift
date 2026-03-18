@@ -348,8 +348,23 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("Keep-Alive", forHTTPHeaderField: "Connection")
 
-        let (responseBody, response) = try await URLSession.shared.data(for: request)
+        let (responseBytes, response) = try await URLSession.shared.bytes(for: request)
         let statusCode = (response as? HTTPURLResponse)?.statusCode ?? 500
+        var responseBody = Data()
+        responseBody.reserveCapacity(64 * 1024)
+
+        for try await byte in responseBytes {
+            responseBody.append(byte)
+            if responseBody.count > ProxyRuntimeLimits.maxUpstreamResponseBytes {
+                throw AppError.network(
+                    L10n.tr(
+                        "error.proxy_runtime.upstream_response_too_large_format",
+                        ProxyRuntimeLimits.limitDescription(for: ProxyRuntimeLimits.maxUpstreamResponseBytes)
+                    )
+                )
+            }
+        }
+
         if statusCode == 200 {
             try? authRepository.writeCurrentAuth(candidate.authJSON)
         }
@@ -1468,7 +1483,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
     }
 
     private func readChatGPTBaseURLFromConfig() -> String? {
-        guard let raw = try? String(contentsOf: paths.codexConfigPath), !raw.isEmpty else {
+        guard let raw = try? String(contentsOf: paths.codexConfigPath, encoding: .utf8), !raw.isEmpty else {
             return nil
         }
 
@@ -1546,7 +1561,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
             return nil
         }
 
-        let text = try String(contentsOf: paths.proxyDaemonKeyPath)
+        let text = try String(contentsOf: paths.proxyDaemonKeyPath, encoding: .utf8)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return text.isEmpty ? nil : text
     }

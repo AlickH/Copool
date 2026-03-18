@@ -6,6 +6,7 @@
 "common.remove" = "删除";
 "common.copy" = "复制";
 "common.refresh" = "刷新";
+"common.close" = "关闭";
 "common.refresh_usage" = "刷新用量";
 "common.refreshing" = "刷新中...";
 "common.start" = "启动";
@@ -20,14 +21,29 @@
 "settings.launch_at_startup" = "开机启动";
 "settings.launch_codex_after_switch" = "切换后启动 Codex";
 "settings.auto_start_api_proxy" = "自动启动 API 代理";
+"settings.section.deployment" = "部署模式";
+"settings.deployment_mode" = "模式";
+"settings.deployment_mode.local_device" = "本机执行";
+"settings.deployment_mode.backend_service" = "后端托管";
+"settings.deployment_mode.hint" = "在 iOS 上，可将远程部署和公网隧道控制委托给后端服务。";
 "settings.section.language" = "语言";
 "settings.language" = "语言";
 "language.english" = "English";
-"language.simplified_chinese" = "中文";
+"language.simplified_chinese" = "简体中文";
+"language.traditional_chinese" = "繁體中文";
 "language.japanese" = "日本語";
 "language.korean" = "한국어";
+"language.french" = "Français";
+"language.german" = "Deutsch";
+"language.italian" = "Italiano";
+"language.spanish" = "Español";
+"language.russian" = "Русский";
+"language.dutch" = "Nederlands";
 "settings.section.tray" = "托盘";
 "settings.status_bar_display" = "状态栏显示";
+"settings.status_bar_display.remaining" = "剩余";
+"settings.status_bar_display.used" = "已用";
+"settings.status_bar_display.hidden" = "隐藏";
 "tray.remaining" = "剩余额度";
 "tray.used" = "已用额度";
 "tray.hidden" = "隐藏";
@@ -36,6 +52,7 @@
 "settings.sync_opencode_openai_auth" = "同步 opencode OpenAI 授权";
 "settings.restart_editors_on_switch" = "切换账号后重启编辑器";
 "settings.editor_restart_target" = "编辑器重启目标";
+"settings.section.capability_matrix" = "能力清单";
 "settings.section.remote_servers_json" = "远程服务器 JSON";
 "settings.remote_servers_hint" = "维护 `RemoteServerConfig` 数组。";
 "settings.save_remote_servers" = "保存远程服务器";
@@ -50,10 +67,13 @@
 "accounts.action.importing" = "导入中...";
 "accounts.action.add_account" = "添加账号";
 "accounts.action.waiting_for_login" = "等待登录完成...";
+"accounts.loading.message" = "正在加载账号...";
+"accounts.action.quick_actions" = "快捷操作";
 "accounts.action.collapse_all" = "收起全部卡片";
 "accounts.action.expand_all" = "展开全部卡片";
 "accounts.empty.title" = "暂无账号";
-"accounts.empty.message.no_accounts" = "暂无账号，请先导入 ~/.codex/auth.json";
+"accounts.empty.message.no_accounts" = "暂无账号，请添加或导入账号";
+"accounts.empty.message.enable_icloud" = "请先在系统设置中开启 iCloud，同步账号后这里会自动显示";
 "accounts.error.load_failed" = "账号加载失败";
 "accounts.card.current" = "当前";
 "accounts.card.team.set_name" = "设置团队名称";
@@ -70,6 +90,7 @@
 "accounts.notice.imported_format" = "已导入账号：%@";
 "accounts.notice.imported_new_format" = "新账号已导入：%@";
 "accounts.notice.usage_refreshed" = "用量刷新完成";
+"accounts.notice.accounts_refreshed" = "账号已刷新";
 "accounts.notice.account_deleted" = "账号已删除";
 "accounts.notice.team_name_updated" = "团队名称已更新";
 "accounts.notice.no_switch_target" = "暂无可切换账号";
@@ -82,7 +103,25 @@
 "accounts.notice.editor_restart_failed_format" = "编辑器重启失败：%@";
 "accounts.notice.editor_restarted_format" = "已重启编辑器：%@";
 
+"capability.account_import_current_auth.title" = "导入当前授权";
+"capability.account_import_current_auth.detail" = "从应用存储读取认证并导入账号快照。";
+"capability.account_add_via_login.title" = "登录新增账号";
+"capability.account_add_via_login.detail" = "依赖 Codex CLI 登录流程。";
+"capability.local_api_proxy.title" = "本地 API 代理";
+"capability.local_api_proxy.detail" = "本地运行 /v1 代理路由和账号切换。";
+"capability.remote_server_management.title" = "远程服务器管理";
+"capability.remote_server_management.detail" = "通过 SSH/SCP 部署、启动、停止 proxyd。";
+"capability.public_tunnel.title" = "公网隧道";
+"capability.public_tunnel.detail" = "管理 cloudflared 快速/命名隧道。";
+"capability.launch_at_startup.title" = "开机启动";
+"capability.launch_at_startup.detail" = "在系统登录时自动启动应用。";
+"capability.status.available" = "可用";
+"capability.status.backend_managed" = "后端托管";
+"capability.status.unavailable" = "不可用";
+
 "proxy.section.api_proxy" = "API 代理";
+"proxy.callout.remote_control.title" = "Mac 远程控制";
+"proxy.callout.remote_control.message" = "此页面仅用于远程控制 macOS 上运行的 API Proxy。请保持 Mac 端 Copool 处于运行状态，以便接收控制命令并同步最新状态。";
 "proxy.status.running" = "运行中";
 "proxy.status.stopped" = "已停止";
 "proxy.status_line_format" = "状态：%@";
@@ -101,14 +140,20 @@
 "proxy.info.no_request_matched" = "尚无请求命中";
 "proxy.info.active_account_hint" = "首个请求后会显示当前使用账号";
 "proxy.section.remote_servers" = "远程服务器";
+"proxy.section.remote_servers_backend" = "远程服务器（后端托管）";
 "proxy.remote.description" = "通过 SSH 在远程 Linux 服务器上部署和管理 API 代理节点。";
+"proxy.remote.backend_managed_message" = "远程部署操作由后端服务托管执行。建议保持该模式，以便 iOS 客户端统一查看状态并保持操作一致。";
+"proxy.remote.unavailable_message" = "iOS 本机执行模式不支持 SSH/SCP 远程管理。请切换到后端托管模式，或在 macOS 版 Copool 中执行。";
 "proxy.action.add_server" = "添加服务器";
 "proxy.remote.empty.title" = "暂无远程服务器";
 "proxy.remote.empty.message" = "请先添加 Linux 服务器，再上传 proxyd 并远程启动。";
 "proxy.section.public_access" = "公网访问";
+"proxy.section.public_access_backend" = "公网访问（后端托管）";
+"proxy.public.backend_managed_message" = "公网隧道操作由后端服务托管执行。请在服务端配置 cloudflared，本应用继续用于账号与代理控制。";
+"proxy.public.unavailable_message" = "iOS 本机执行模式不支持 cloudflared 管理。请切换到后端托管模式，或在 macOS 版 Copool 中执行。";
 "proxy.toggle.enable_public_access" = "启用 cloudflared 公网访问";
-"proxy.switch.on" = "On";
-"proxy.switch.off" = "Off";
+"proxy.switch.on" = "开启";
+"proxy.switch.off" = "关闭";
 "proxy.field.named_tunnel_hostname_placeholder" = "命名隧道域名（可选）";
 "proxy.toggle.use_http2" = "使用 HTTP/2";
 "proxy.public.callout.start_local_first_title" = "先启动本地代理";
@@ -173,7 +218,7 @@
 "error.app.repo_root_not_found" = "无法定位仓库根目录，缺少 src-tauri/proxyd/Cargo.toml";
 "error.accounts.account_not_found_for_update" = "找不到要更新的账号";
 "error.accounts.account_not_found_for_switch" = "找不到要切换的账号";
-"error.accounts.add_account_timeout" = "等待新账号授权超时，请完成 codex login 后重试";
+"error.accounts.add_account_timeout" = "等待浏览器登录完成超时，请重试";
 
 "error.store.read_failed_format" = "读取账号存储失败: %@";
 "error.store.serialize_failed_format" = "序列化账号存储失败: %@";
@@ -186,6 +231,7 @@
 "error.usage.invalid_response" = "响应无效";
 
 "error.http_server.invalid_port_format" = "无效端口: %@";
+"error.http_server.request_too_large_format" = "请求体超过大小限制（%@）";
 "error.shell.timeout_format" = "命令执行超时（%@秒）：%@";
 "error.shell.run_failed_format" = "执行命令失败: %@: %@";
 "error.update.github_api_invalid_response" = "检查更新失败：GitHub API 响应异常";
@@ -208,6 +254,16 @@
 "error.codex_cli.launch_app_open_failed" = "启动 Codex.app 失败";
 "error.codex_cli.launch_app_fallback_failed_format" = "未检测到 Codex.app，且通过 codex app 启动失败: %@";
 "error.codex_cli.executable_not_found" = "未找到 codex 可执行文件。请先安装 Codex CLI，或将其所在目录加入 PATH。";
+"error.oauth.browser_open_failed" = "无法打开浏览器登录页";
+"error.oauth.callback_server_start_failed" = "无法启动本地登录回调服务";
+"error.oauth.callback_state_mismatch" = "登录回调校验失败，请重试";
+"error.oauth.callback_missing_code" = "登录回调缺少授权码";
+"error.oauth.callback_failed_format" = "登录失败：%@";
+"error.oauth.request_cancelled" = "登录已取消";
+"error.oauth.token_exchange_failed_format" = "登录令牌交换失败：%@";
+"error.oauth.api_key_exchange_failed" = "获取 OpenAI API Key 失败";
+"error.oauth.authorize_url_invalid" = "登录地址无效";
+"error.oauth.workspace_mismatch_format" = "登录结果不属于要求的工作区：%@";
 "error.startup.enable_failed_format" = "开启开机启动失败: %@";
 "error.startup.disable_failed_format" = "关闭开机启动失败: %@";
 
@@ -236,7 +292,7 @@
 "error.cloudflared.api_response_decode_failed_format" = "%@（解析 Cloudflare 响应失败）";
 "error.cloudflared.api_response_empty_format" = "%@（Cloudflare 返回结果为空）";
 "error.cloudflared.api_unknown_error" = "未知错误";
-"error.cloudflared.api_request_failed_format" = "%@: %@";
+"error.cloudflared.api_request_failed_format" = "Cloudflare API 请求失败（%@）：%@";
 "error.cloudflared.create_log_dir_failed_format" = "创建 cloudflared 日志目录失败：%@";
 "error.cloudflared.create_log_file_failed" = "初始化 cloudflared 日志文件失败";
 
@@ -288,8 +344,10 @@
 "error.proxy_runtime.retry.auth_failed_format" = "鉴权失败：%@";
 "error.proxy_runtime.retry.permission_denied_format" = "权限不足：%@";
 "error.proxy_runtime.no_error_detail" = "未返回具体错误信息";
+"error.proxy_runtime.upstream_response_too_large_format" = "上游响应超过大小限制（%@），请缩小请求范围或关闭流式输出。";
 "error.proxy_runtime.summary.quota_format" = "额度用完 %@ 个";
 "error.proxy_runtime.summary.rate_format" = "频率限制 %@ 个";
 "error.proxy_runtime.summary.model_format" = "模型受限 %@ 个";
 "error.proxy_runtime.summary.auth_format" = "鉴权失败 %@ 个";
 "error.proxy_runtime.summary.permission_format" = "权限不足 %@ 个";
+"error.remote.logs_unavailable" = "暂时无法获取远程日志，请稍后重试";

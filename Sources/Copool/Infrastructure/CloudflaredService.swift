@@ -1,5 +1,6 @@
 import Foundation
 
+#if os(macOS)
 actor CloudflaredService: CloudflaredServiceProtocol {
     private static let cloudflareAPIBaseURL = "https://api.cloudflare.com/client/v4"
 
@@ -313,7 +314,7 @@ actor CloudflaredService: CloudflaredServiceProtocol {
     }
 
     private func parseQuickTunnelPublicURL(from logFile: URL) -> String? {
-        guard let raw = try? String(contentsOf: logFile) else { return nil }
+        guard let raw = try? String(contentsOf: logFile, encoding: .utf8) else { return nil }
 
         return raw.split(whereSeparator: \.isWhitespace).compactMap { segment -> String? in
             guard segment.contains("trycloudflare.com") else { return nil }
@@ -537,3 +538,38 @@ private struct NamedTunnelCreateResult: Decodable {
 }
 
 private struct EmptyCloudflareResult: Codable {}
+#else
+actor CloudflaredService: CloudflaredServiceProtocol {
+    init(paths: FileSystemPaths, fileManager: FileManager = .default, session: URLSession = .shared) {
+        _ = paths
+        _ = fileManager
+        _ = session
+    }
+
+    func status() async -> CloudflaredStatus {
+        CloudflaredStatus(
+            installed: false,
+            binaryPath: nil,
+            running: false,
+            tunnelMode: nil,
+            publicURL: nil,
+            customHostname: nil,
+            useHTTP2: false,
+            lastError: PlatformCapabilities.unsupportedOperationMessage
+        )
+    }
+
+    func install() async throws -> CloudflaredStatus {
+        throw AppError.io(PlatformCapabilities.unsupportedOperationMessage)
+    }
+
+    func start(_ input: StartCloudflaredTunnelInput) async throws -> CloudflaredStatus {
+        _ = input
+        throw AppError.io(PlatformCapabilities.unsupportedOperationMessage)
+    }
+
+    func stop() async -> CloudflaredStatus {
+        await status()
+    }
+}
+#endif

@@ -82,7 +82,7 @@ final class DefaultUsageService: UsageService, @unchecked Sendable {
     }
 
     private func resolveChatGPTBaseOrigin() -> String {
-        guard let raw = try? String(contentsOf: configPath), !raw.isEmpty else {
+        guard let raw = try? String(contentsOf: configPath, encoding: .utf8), !raw.isEmpty else {
             return "https://chatgpt.com"
         }
 

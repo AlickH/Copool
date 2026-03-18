@@ -1,23 +1,7 @@
 import Foundation
 
+#if os(macOS)
 final class CodexCLIService: CodexCLIServiceProtocol, @unchecked Sendable {
-    func launchLogin() throws {
-        let codexPath = try findCodexCLIPath()
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: codexPath)
-        process.arguments = ["login"]
-        process.standardInput = nil
-        process.standardOutput = nil
-        process.standardError = nil
-        process.environment = mergedPathEnvironment(for: codexPath)
-
-        do {
-            try process.run()
-        } catch {
-            throw AppError.io(L10n.tr("error.codex_cli.launch_login_failed_format", error.localizedDescription))
-        }
-    }
-
     /// Returns `true` when it falls back to `codex app`.
     func launchApp(workspacePath: String?) throws -> Bool {
         forceStopRunningCodex()
@@ -199,3 +183,11 @@ final class CodexCLIService: CodexCLIServiceProtocol, @unchecked Sendable {
         return URL(fileURLWithPath: path)
     }
 }
+#else
+final class CodexCLIService: CodexCLIServiceProtocol, @unchecked Sendable {
+    func launchApp(workspacePath: String?) throws -> Bool {
+        _ = workspacePath
+        throw AppError.io(PlatformCapabilities.unsupportedOperationMessage)
+    }
+}
+#endif

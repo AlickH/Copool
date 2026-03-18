@@ -66,10 +66,6 @@ final class SettingsPageModel: ObservableObject {
         Task { await update(AppSettingsPatch(locale: value)) }
     }
 
-    func setTrayUsageDisplayMode(_ mode: TrayUsageDisplayMode) {
-        Task { await update(AppSettingsPatch(trayUsageDisplayMode: mode)) }
-    }
-
     func setSyncOpencodeOpenaiAuth(_ value: Bool) {
         Task { await update(AppSettingsPatch(syncOpencodeOpenaiAuth: value)) }
     }

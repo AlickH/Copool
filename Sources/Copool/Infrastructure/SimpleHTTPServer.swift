@@ -3,7 +3,9 @@ import Network
 
 struct HTTPRequest {
     var method: String
+    var target: String
     var path: String
+    var queryItems: [URLQueryItem]
     var headers: [String: String]
     var body: Data
 }
@@ -81,6 +83,18 @@ final class SimpleHTTPServer: @unchecked Sendable {
                 working.append(data)
             }
 
+            if Self.isPayloadOversized(buffer: working) {
+                let response = HTTPResponse.text(
+                    statusCode: 413,
+                    text: L10n.tr(
+                        "error.http_server.request_too_large_format",
+                        ProxyRuntimeLimits.limitDescription(for: ProxyRuntimeLimits.maxInboundRequestBytes)
+                    )
+                )
+                self.send(response: response, on: connection)
+                return
+            }
+
             if let request = Self.parseRequest(from: working) {
                 Task {
                     let response = await self.handler(request)
@@ -127,7 +141,10 @@ final class SimpleHTTPServer: @unchecked Sendable {
         }
 
         let method = String(requestParts[0]).uppercased()
-        let path = String(requestParts[1]).split(separator: "?").first.map(String.init) ?? "/"
+        let target = String(requestParts[1])
+        let components = URLComponents(string: target)
+        let path = components?.path.isEmpty == false ? (components?.path ?? "/") : (target.split(separator: "?").first.map(String.init) ?? "/")
+        let queryItems = components?.queryItems ?? []
 
         var headers: [String: String] = [:]
         for line in lines.dropFirst() {
@@ -145,7 +162,46 @@ final class SimpleHTTPServer: @unchecked Sendable {
         }
 
         let body = contentLength == 0 ? Data() : data.subdata(in: bodyStart..<expectedEnd)
-        return HTTPRequest(method: method, path: path, headers: headers, body: body)
+        return HTTPRequest(
+            method: method,
+            target: target,
+            path: path,
+            queryItems: queryItems,
+            headers: headers,
+            body: body
+        )
+    }
+
+    static func isPayloadOversized(buffer: Data) -> Bool {
+        if buffer.count > ProxyRuntimeLimits.maxInboundRequestBytes {
+            return true
+        }
+        if let contentLength = extractContentLength(from: buffer),
+           contentLength > ProxyRuntimeLimits.maxInboundRequestBytes {
+            return true
+        }
+        return false
+    }
+
+    private static func extractContentLength(from data: Data) -> Int? {
+        guard let headerRange = data.range(of: Data("\r\n\r\n".utf8)) else {
+            return nil
+        }
+
+        let headerData = data.subdata(in: 0..<headerRange.lowerBound)
+        guard let headerText = String(data: headerData, encoding: .utf8) else {
+            return nil
+        }
+
+        for line in headerText.split(separator: "\r\n", omittingEmptySubsequences: false).dropFirst() {
+            guard let index = line.firstIndex(of: ":") else { continue }
+            let name = line[..<index].trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard name == "content-length" else { continue }
+            let value = line[line.index(after: index)...].trimmingCharacters(in: .whitespacesAndNewlines)
+            return Int(value)
+        }
+
+        return nil
     }
 
     private static func encode(response: HTTPResponse) -> Data {
@@ -171,6 +227,7 @@ final class SimpleHTTPServer: @unchecked Sendable {
         case 200: return "OK"
         case 400: return "Bad Request"
         case 401: return "Unauthorized"
+        case 413: return "Payload Too Large"
         case 404: return "Not Found"
         case 429: return "Too Many Requests"
         case 500: return "Internal Server Error"

@@ -2,6 +2,7 @@ import Foundation
 
 enum AppTab: String, CaseIterable, Identifiable {
     case accounts
+    case inviteTool
     case proxy
     case settings
 
@@ -11,7 +12,26 @@ enum AppTab: String, CaseIterable, Identifiable {
 struct AccountsStore: Codable, Equatable {
     var version: Int = 1
     var accounts: [StoredAccount] = []
+    var currentSelection: CurrentAccountSelection?
     var settings: AppSettings = .defaultValue
+}
+
+struct CurrentAccountSelection: Codable, Equatable {
+    var accountID: String
+    var selectedAt: Int64
+    var sourceDeviceID: String
+}
+
+struct CurrentAccountSelectionPullResult: Equatable, Sendable {
+    var didUpdateSelection: Bool
+    var changedCurrentAccount: Bool
+    var accountID: String?
+
+    static let noChange = CurrentAccountSelectionPullResult(
+        didUpdateSelection: false,
+        changedCurrentAccount: false,
+        accountID: nil
+    )
 }
 
 struct StoredAccount: Codable, Equatable, Identifiable {
@@ -71,6 +91,37 @@ struct AccountSummary: Equatable, Identifiable {
     }
 }
 
+extension AccountsStore {
+    func accountSummaries(currentAccountID: String?) -> [AccountSummary] {
+        let resolvedCurrentAccountID = resolvedCurrentAccountID(fallbackAuthAccountID: currentAccountID)
+
+        return accounts.map { account in
+            AccountSummary(
+                id: account.id,
+                label: account.label,
+                email: account.email,
+                accountID: account.accountID,
+                planType: account.planType,
+                teamName: account.teamName,
+                teamAlias: account.teamAlias,
+                addedAt: account.addedAt,
+                updatedAt: account.updatedAt,
+                usage: account.usage,
+                usageError: account.usageError,
+                isCurrent: resolvedCurrentAccountID == account.accountID
+            )
+        }
+    }
+
+    private func resolvedCurrentAccountID(fallbackAuthAccountID: String?) -> String? {
+        if let selection = currentSelection?.accountID,
+           accounts.contains(where: { $0.accountID == selection }) {
+            return selection
+        }
+        return fallbackAuthAccountID
+    }
+}
+
 struct UsageSnapshot: Codable, Equatable {
     var fetchedAt: Int64
     var planType: String?
@@ -99,10 +150,11 @@ struct ExtractedAuth: Equatable {
     var teamName: String?
 }
 
-enum TrayUsageDisplayMode: String, Codable, CaseIterable {
-    case remaining
-    case used
-    case hidden
+struct ChatGPTOAuthTokens: Equatable, Sendable {
+    var accessToken: String
+    var refreshToken: String
+    var idToken: String
+    var apiKey: String?
 }
 
 enum EditorAppID: String, Codable, CaseIterable, Identifiable {
@@ -154,7 +206,6 @@ struct RemoteServerConfig: Codable, Equatable, Identifiable {
 
 struct AppSettings: Codable, Equatable {
     var launchAtStartup: Bool
-    var trayUsageDisplayMode: TrayUsageDisplayMode
     var launchCodexAfterSwitch: Bool
     var autoSmartSwitch: Bool
     var syncOpencodeOpenaiAuth: Bool
@@ -166,7 +217,6 @@ struct AppSettings: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case launchAtStartup
-        case trayUsageDisplayMode
         case launchCodexAfterSwitch
         case autoSmartSwitch
         case syncOpencodeOpenaiAuth
@@ -179,7 +229,6 @@ struct AppSettings: Codable, Equatable {
 
     init(
         launchAtStartup: Bool,
-        trayUsageDisplayMode: TrayUsageDisplayMode,
         launchCodexAfterSwitch: Bool,
         autoSmartSwitch: Bool,
         syncOpencodeOpenaiAuth: Bool,
@@ -190,7 +239,6 @@ struct AppSettings: Codable, Equatable {
         locale: String
     ) {
         self.launchAtStartup = launchAtStartup
-        self.trayUsageDisplayMode = trayUsageDisplayMode
         self.launchCodexAfterSwitch = launchCodexAfterSwitch
         self.autoSmartSwitch = autoSmartSwitch
         self.syncOpencodeOpenaiAuth = syncOpencodeOpenaiAuth
@@ -206,7 +254,6 @@ struct AppSettings: Codable, Equatable {
         let fallback = AppSettings.defaultValue
 
         launchAtStartup = try container.decodeIfPresent(Bool.self, forKey: .launchAtStartup) ?? fallback.launchAtStartup
-        trayUsageDisplayMode = try container.decodeIfPresent(TrayUsageDisplayMode.self, forKey: .trayUsageDisplayMode) ?? fallback.trayUsageDisplayMode
         launchCodexAfterSwitch = try container.decodeIfPresent(Bool.self, forKey: .launchCodexAfterSwitch) ?? fallback.launchCodexAfterSwitch
         autoSmartSwitch = try container.decodeIfPresent(Bool.self, forKey: .autoSmartSwitch) ?? fallback.autoSmartSwitch
         syncOpencodeOpenaiAuth = try container.decodeIfPresent(Bool.self, forKey: .syncOpencodeOpenaiAuth) ?? fallback.syncOpencodeOpenaiAuth
@@ -222,7 +269,6 @@ struct AppSettings: Codable, Equatable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(launchAtStartup, forKey: .launchAtStartup)
-        try container.encode(trayUsageDisplayMode, forKey: .trayUsageDisplayMode)
         try container.encode(launchCodexAfterSwitch, forKey: .launchCodexAfterSwitch)
         try container.encode(autoSmartSwitch, forKey: .autoSmartSwitch)
         try container.encode(syncOpencodeOpenaiAuth, forKey: .syncOpencodeOpenaiAuth)
@@ -233,23 +279,23 @@ struct AppSettings: Codable, Equatable {
         try container.encode(locale, forKey: .locale)
     }
 
-    static let defaultValue = AppSettings(
-        launchAtStartup: false,
-        trayUsageDisplayMode: .remaining,
-        launchCodexAfterSwitch: true,
-        autoSmartSwitch: false,
-        syncOpencodeOpenaiAuth: false,
-        restartEditorsOnSwitch: false,
-        restartEditorTargets: [],
-        autoStartApiProxy: false,
-        remoteServers: [],
-        locale: AppLocale.simplifiedChinese.identifier
-    )
+    static var defaultValue: AppSettings {
+        AppSettings(
+            launchAtStartup: false,
+            launchCodexAfterSwitch: true,
+            autoSmartSwitch: false,
+            syncOpencodeOpenaiAuth: false,
+            restartEditorsOnSwitch: false,
+            restartEditorTargets: [],
+            autoStartApiProxy: false,
+            remoteServers: [],
+            locale: AppLocale.systemDefault.identifier
+        )
+    }
 }
 
 struct AppSettingsPatch {
     var launchAtStartup: Bool? = nil
-    var trayUsageDisplayMode: TrayUsageDisplayMode? = nil
     var launchCodexAfterSwitch: Bool? = nil
     var autoSmartSwitch: Bool? = nil
     var syncOpencodeOpenaiAuth: Bool? = nil
@@ -260,7 +306,7 @@ struct AppSettingsPatch {
     var locale: String? = nil
 }
 
-struct ApiProxyStatus: Equatable {
+struct ApiProxyStatus: Codable, Equatable {
     var running: Bool
     var port: Int?
     var apiKey: String?
@@ -287,21 +333,21 @@ enum CloudflaredTunnelMode: String, Codable, CaseIterable {
     case named
 }
 
-struct StartCloudflaredTunnelInput: Equatable {
+struct StartCloudflaredTunnelInput: Codable, Equatable {
     var apiProxyPort: Int
     var useHTTP2: Bool
     var mode: CloudflaredTunnelMode
     var named: NamedCloudflaredTunnelInput?
 }
 
-struct NamedCloudflaredTunnelInput: Equatable {
+struct NamedCloudflaredTunnelInput: Codable, Equatable {
     var apiToken: String
     var accountID: String
     var zoneID: String
     var hostname: String
 }
 
-struct CloudflaredStatus: Equatable {
+struct CloudflaredStatus: Codable, Equatable {
     var installed: Bool
     var binaryPath: String?
     var running: Bool
@@ -323,7 +369,7 @@ struct CloudflaredStatus: Equatable {
     )
 }
 
-struct RemoteProxyStatus: Equatable {
+struct RemoteProxyStatus: Codable, Equatable {
     var installed: Bool
     var serviceInstalled: Bool
     var running: Bool
@@ -333,6 +379,57 @@ struct RemoteProxyStatus: Equatable {
     var baseURL: String
     var apiKey: String?
     var lastError: String?
+}
+
+struct ProxyControlSnapshot: Codable, Equatable {
+    var syncedAt: Int64
+    var sourceDeviceID: String
+    var proxyStatus: ApiProxyStatus
+    var preferredProxyPort: Int?
+    var autoStartProxy: Bool
+    var cloudflaredStatus: CloudflaredStatus
+    var cloudflaredTunnelMode: CloudflaredTunnelMode
+    var cloudflaredNamedInput: NamedCloudflaredTunnelInput
+    var cloudflaredUseHTTP2: Bool
+    var publicAccessEnabled: Bool
+    var remoteServers: [RemoteServerConfig]
+    var remoteStatuses: [String: RemoteProxyStatus]
+    var remoteLogs: [String: String]
+    var lastHandledCommandID: String?
+    var lastCommandError: String?
+}
+
+enum ProxyControlCommandKind: String, Codable {
+    case refreshStatus
+    case startProxy
+    case stopProxy
+    case refreshAPIKey
+    case setAutoStartProxy
+    case installCloudflared
+    case startCloudflared
+    case stopCloudflared
+    case refreshCloudflared
+    case addRemoteServer
+    case saveRemoteServer
+    case removeRemoteServer
+    case refreshRemote
+    case deployRemote
+    case startRemote
+    case stopRemote
+    case readRemoteLogs
+}
+
+struct ProxyControlCommand: Codable, Equatable, Identifiable {
+    var id: String
+    var createdAt: Int64
+    var sourceDeviceID: String
+    var kind: ProxyControlCommandKind
+    var preferredProxyPort: Int?
+    var autoStartProxy: Bool?
+    var cloudflaredInput: StartCloudflaredTunnelInput?
+    var remoteServer: RemoteServerConfig?
+    var remoteServerID: String?
+    var logLines: Int?
 }
 
 struct PendingUpdateInfo: Equatable {

@@ -65,6 +65,18 @@ final class OpencodeAuthSyncService: OpencodeAuthSyncServiceProtocol, @unchecked
             return [URL(fileURLWithPath: custom)]
         }
 
+        #if os(iOS)
+        let appSupportBase = (try? FileManager.default.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )) ?? FileManager.default.temporaryDirectory
+        let fallback = appSupportBase
+            .appendingPathComponent("opencode", isDirectory: true)
+            .appendingPathComponent("auth.json", isDirectory: false)
+        return [fallback]
+        #else
         var candidates: [URL] = []
         let env = ProcessInfo.processInfo.environment
         let home = FileManager.default.homeDirectoryForCurrentUser
@@ -93,6 +105,7 @@ final class OpencodeAuthSyncService: OpencodeAuthSyncServiceProtocol, @unchecked
 
         let existing = unique.filter { FileManager.default.fileExists(atPath: $0.path) }
         return existing.isEmpty ? (unique.first.map { [$0] } ?? []) : existing
+        #endif
     }
 
     private func extractTokens(from authJSON: JSONValue) throws -> OAuthTokens {
