@@ -53,6 +53,17 @@ For local desktop development from the Windows app folder:
 npm run tauri dev
 ```
 
+To build a Windows installer from `apps/windows-desktop/`:
+
+```bash
+npm run tauri build
+```
+
+The packaged Windows outputs are generated at:
+
+- `apps/windows-desktop/src-tauri/target/release/bundle/nsis/Copool Windows_1.0.5_x64-setup.exe`
+- `apps/windows-desktop/src-tauri/target/release/bundle/msi/Copool Windows_1.0.5_x64_en-US.msi`
+
 ## Repo Layout
 
 - `Sources/Copool/`: Apple-platform app code
