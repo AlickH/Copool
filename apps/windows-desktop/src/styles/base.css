@@ -1,0 +1,298 @@
+* {
+  box-sizing: border-box;
+}
+
+.shell {
+  height: 100dvh;
+  min-height: 100vh;
+  padding: 16px 18px calc(env(safe-area-inset-bottom, 0px) + 18px);
+  color: var(--ink);
+  background:
+    radial-gradient(72% 60% at 6% 0%, var(--glow-hot) 0%, transparent 58%),
+    radial-gradient(64% 52% at 95% 6%, var(--glow-cool) 0%, transparent 54%),
+    radial-gradient(58% 48% at 50% 32%, var(--glow-neutral) 0%, transparent 68%),
+    linear-gradient(180deg, var(--shell-top) 0%, var(--shell-mid) 48%, var(--shell-bottom) 100%);
+  position: relative;
+  overflow: hidden;
+  transition: background 220ms ease, color 220ms ease;
+}
+
+.shell::before,
+.shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.shell::before {
+  background:
+    radial-gradient(44% 38% at 18% 14%, var(--shell-glow-a), transparent 72%),
+    radial-gradient(36% 30% at 84% 12%, var(--shell-glow-b), transparent 72%),
+    radial-gradient(52% 44% at 56% 86%, var(--shell-glow-c), transparent 78%);
+  filter: blur(26px);
+  opacity: 0.9;
+}
+
+.shell::after {
+  content: none;
+}
+
+.ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.07;
+  background-image:
+    repeating-linear-gradient(
+      -38deg,
+      var(--ambient-line) 0,
+      var(--ambient-line) 1px,
+      transparent 1px,
+      transparent 14px
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 35%);
+  mix-blend-mode: soft-light;
+}
+
+.panel {
+  position: relative;
+  z-index: 1;
+  width: min(1360px, 100%);
+  height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px);
+  min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px);
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.panel::before {
+  content: none;
+}
+
+.topbar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 24px 6px 24px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 78%, var(--surface-tint) 22%);
+  cursor: default;
+}
+
+.kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font: 700 0.68rem/1.2 "IBM Plex Sans", sans-serif;
+  color: var(--brand-cool);
+}
+
+.topbar h1 {
+  margin: 0;
+  font: 650 1.02rem/1.2 var(--font-ui);
+  letter-spacing: -0.02em;
+}
+
+.brandLine {
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  outline: none;
+  position: static;
+  isolation: auto;
+  overflow: visible;
+  transform: none;
+  filter: none;
+  transition: none;
+  box-shadow: none;
+}
+
+.brandLine::before {
+  content: none;
+}
+
+.brandLine:hover {
+  transform: none;
+  filter: none;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.brandLine:hover::before {
+  opacity: 0;
+  transform: none;
+}
+
+.brandLine:focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-color: transparent;
+  background: transparent;
+}
+
+.brandLine h1 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.appLogo {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 0;
+  box-shadow: none;
+}
+
+.topDragRegion {
+  min-width: 0;
+  min-height: 34px;
+  height: 100%;
+  user-select: none;
+  cursor: grab;
+}
+
+.topDragRegion:active {
+  cursor: grabbing;
+}
+
+.topActions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  cursor: default;
+}
+
+.smartSwitchButton {
+  min-width: 124px;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font: 600 0.84rem/1 var(--font-ui);
+  letter-spacing: -0.01em;
+}
+
+.iconButton {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editorPicker.languagePicker {
+  width: 132px;
+  min-width: 132px;
+}
+
+.editorPicker.languagePicker .editorPickerTrigger {
+  min-height: 44px;
+  padding-right: 34px;
+}
+
+.iconGlyph {
+  width: 21px;
+  height: 21px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.iconGlyph.isSpinning {
+  animation: iconSpin 900ms linear infinite;
+}
+
+
+.viewStage {
+  margin-top: 24px;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.viewStage > * {
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.viewStage > *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.accountsPage {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 20px;
+  align-content: stretch;
+  overflow: hidden;
+}
+
+.accountsHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes iconSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}

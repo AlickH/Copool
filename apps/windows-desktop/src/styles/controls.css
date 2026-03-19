@@ -1,0 +1,684 @@
+.settingsOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay-scrim);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 160ms ease both;
+}
+
+.settingsDialog {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--import-bg);
+  padding: 16px;
+  box-shadow: var(--panel-shadow);
+  animation: riseIn 220ms ease both;
+}
+
+.settingsDialog::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.settingsPage {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 6px 0 28px;
+  box-shadow: none;
+}
+
+.settingsShell {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.addAuthDialog {
+  width: min(760px, 100%);
+}
+
+.addAccountTabs {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.addAccountTab {
+  border-radius: 16px;
+  padding: 14px 16px;
+  text-align: left;
+  display: grid;
+  gap: 6px;
+  background: var(--tab-surface);
+}
+
+.addAccountTab strong {
+  font: 700 0.9rem/1.15 "IBM Plex Sans", sans-serif;
+}
+
+.addAccountTab.isActive {
+  border-color: color-mix(in srgb, var(--brand-hot) 56%, var(--brand-cool) 44%);
+  background: var(--tab-active-surface);
+  box-shadow: inset 0 1px var(--surface-highlight-soft);
+}
+
+.addAccountPanel {
+  margin-top: 16px;
+  display: grid;
+  gap: 14px;
+}
+
+.addOauthCard,
+.addUploadCard {
+  border: 1px dashed var(--line);
+  border-radius: 20px;
+  padding: 20px 18px;
+  min-height: 280px;
+  background: var(--feature-card-surface);
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.addOauthCard strong,
+.addUploadSummary strong {
+  font: 700 1rem/1.2 "IBM Plex Sans", sans-serif;
+}
+
+.addOauthCard p,
+.addUploadSummary p {
+  margin: 0;
+  color: var(--subtle);
+  font: 400 0.84rem/1.45 "IBM Plex Sans", sans-serif;
+}
+
+.addOauthPrimary,
+.addUploadPrimary {
+  min-width: 220px;
+  justify-self: center;
+}
+
+.addOauthSpinner {
+  width: 20px;
+  height: 20px;
+}
+
+.addUploadPickerRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.addUploadSummary {
+  display: grid;
+  gap: 6px;
+}
+
+.addAuthState {
+  margin-top: 14px;
+  border-top: 1px dashed var(--line);
+  padding-top: 14px;
+}
+
+.addAuthTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.addAuthTitleRow strong {
+  font: 700 0.98rem/1.2 "IBM Plex Sans", sans-serif;
+}
+
+.addAuthSpinner {
+  width: 16px;
+  height: 16px;
+}
+
+.addAuthState p {
+  margin: 8px 0 0;
+  color: var(--subtle);
+  font: 400 0.84rem/1.45 "IBM Plex Sans", sans-serif;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.updateOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--overlay-scrim-strong);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 140ms ease both;
+}
+
+.updateDialog {
+  width: min(700px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  border: 1px solid var(--update-border);
+  border-radius: 16px;
+  background: var(--update-bg);
+  padding: 14px;
+  box-shadow: var(--panel-shadow);
+  animation: riseIn 220ms ease both;
+}
+
+.updateDialog::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.settingsHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 4px 6px;
+}
+
+.settingsHeader h2 {
+  margin: 0;
+  font: 650 1.08rem/1.2 var(--font-ui);
+  letter-spacing: -0.02em;
+}
+
+.settingsGroup {
+  border: 1px solid color-mix(in srgb, var(--line) 84%, var(--surface-tint) 16%);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--import-bg) 72%, var(--surface-tint) 28%);
+  box-shadow:
+    0 10px 22px rgba(28, 43, 68, 0.05),
+    inset 0 1px var(--surface-highlight);
+  overflow: hidden;
+}
+
+.settingsGroupAction {
+  width: min(420px, 100%);
+}
+
+.settingRow {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  padding: 0 16px;
+}
+
+.settingsGroup .settingRow + .settingRow {
+  border-top: 1px solid color-mix(in srgb, var(--line) 78%, var(--surface-tint) 22%);
+}
+
+.settingRowCompact {
+  min-height: 50px;
+}
+
+.settingRowNested {
+  background: color-mix(in srgb, var(--body-bg) 14%, var(--surface-tint) 86%);
+}
+
+.settingRowNested .settingMeta strong {
+  color: var(--subtle);
+  font-weight: 600;
+}
+
+.settingMeta strong {
+  display: block;
+  font: 600 0.84rem/1.2 var(--font-ui);
+  letter-spacing: -0.01em;
+}
+
+.settingMetaInline {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.settingInlineValue {
+  color: var(--subtle);
+  font: 600 0.76rem/1.35 var(--font-mono);
+}
+
+.settingLink {
+  min-width: 0;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.settingLink:hover,
+.settingLink:focus-visible {
+  color: color-mix(in srgb, var(--ink) 76%, var(--brand-cool) 24%);
+}
+
+.settingLink:focus-visible {
+  outline: none;
+}
+
+.settingLinkIcon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.settingActionGroup {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.settingLinkLabel {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font: 600 0.78rem/1.25 var(--font-mono);
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+}
+
+.modeGroup {
+  display: inline-flex;
+  gap: 2px;
+  flex-wrap: nowrap;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, var(--surface-tint) 14%);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--meta-bg) 58%, transparent);
+}
+
+.editorPicker {
+  width: min(250px, 100%);
+  min-width: 190px;
+  position: relative;
+}
+
+.editorPickerTrigger {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, var(--surface-tint) 14%);
+  background: color-mix(in srgb, var(--meta-bg) 58%, transparent);
+  padding: 6px 30px 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow:
+    0 1px 2px rgba(18, 36, 62, 0.04),
+    inset 0 1px var(--surface-highlight-soft);
+}
+
+.editorPickerValue {
+  min-height: 18px;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.editorPickerLabel {
+  color: var(--ink);
+  font: 600 0.76rem/1.2 var(--font-ui);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editorPickerPlaceholder {
+  color: var(--subtle);
+  font: 500 0.76rem/1.2 var(--font-ui);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editorChevron {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: translateY(-50%);
+  transition: transform 160ms ease, opacity 160ms ease;
+  opacity: 0.9;
+}
+
+.editorPicker.isOpen .editorChevron {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.editorPickerMenu {
+  position: fixed;
+  z-index: 120;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px;
+  background: var(--import-bg);
+  max-height: 220px;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  box-shadow:
+    0 10px 26px rgba(18, 40, 71, 0.18),
+    inset 0 1px var(--surface-highlight-soft);
+  display: grid;
+  gap: 6px;
+}
+
+.editorPickerMenu::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.editorOption {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editorOption::before {
+  display: none;
+}
+
+.editorOption:hover {
+  transform: none;
+  filter: none;
+  border-color: var(--line);
+  background: var(--surface-hover-bg);
+}
+
+.editorOption.isSelected {
+  border-color: var(--button-ghost-border);
+  background: var(--surface-selected-bg);
+}
+
+.editorOptionLabel {
+  font: 600 0.76rem/1.2 var(--font-ui);
+  text-align: center;
+}
+
+.editorPicker.isDisabled {
+  opacity: 0.72;
+}
+
+.themeSwitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--line) 84%, var(--brand-cool) 16%);
+  border-radius: 999px;
+  padding: 4px 8px 4px 6px;
+  background: color-mix(in srgb, var(--button-ghost-bg) 70%, transparent);
+  cursor: pointer;
+  user-select: none;
+}
+
+.themeSwitch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.themeSwitchTrack {
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--surface-switch-track);
+  border: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  transition: background 140ms ease;
+}
+
+.themeSwitchThumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink);
+  transform: translateX(0);
+  transition: transform 140ms ease, background 140ms ease;
+}
+
+.themeSwitch input:checked + .themeSwitchTrack {
+  background: var(--surface-switch-track-active);
+}
+
+.themeSwitch input:checked + .themeSwitchTrack .themeSwitchThumb {
+  transform: translateX(14px);
+}
+
+.themeSwitchText {
+  min-width: 2.2em;
+  font: 600 0.72rem/1 var(--font-ui);
+  color: var(--ink);
+  text-align: center;
+}
+
+.settingValueMuted {
+  color: var(--subtle);
+  font: 500 0.74rem/1.3 var(--font-ui);
+  text-align: right;
+  max-width: 220px;
+}
+
+.modeGroup > button {
+  min-height: 30px;
+  min-width: 78px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  box-shadow: none;
+  font: 600 0.76rem/1 var(--font-ui);
+}
+
+.modeGroup > button:hover,
+.modeGroup > button:focus-visible {
+  transform: none;
+  border-color: transparent;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--body-bg) 28%, var(--surface-tint) 72%);
+}
+
+.modeGroup > button.primary {
+  background: color-mix(in srgb, var(--card) 84%, var(--surface-tint) 16%);
+  border: 1px solid color-mix(in srgb, var(--brand-hot) 26%, var(--line) 74%);
+  box-shadow:
+    0 1px 2px rgba(18, 36, 62, 0.05),
+    inset 0 1px var(--surface-highlight-strong);
+}
+
+.modeGroup > button.ghost {
+  color: var(--subtle);
+}
+
+button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    background 140ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  background: var(--button-bg);
+  box-shadow: var(--button-shadow);
+  font: 600 0.84rem/1 var(--font-ui);
+  letter-spacing: -0.01em;
+}
+
+button::before {
+  content: none;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--line) 70%, var(--ink) 30%);
+  box-shadow: var(--button-hover-shadow);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
+  box-shadow: var(--button-disabled-shadow);
+}
+
+button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--brand-cool) 18%, transparent),
+    0 4px 10px rgba(18, 36, 62, 0.08);
+}
+
+button.primary {
+  border-color: color-mix(in srgb, var(--brand-hot) 36%, var(--line) 64%);
+  background: var(--button-primary-bg);
+}
+
+button.ghost {
+  border-color: color-mix(in srgb, var(--brand-cool) 24%, var(--line) 76%);
+  background: var(--button-ghost-bg);
+}
+
+button.danger {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line) 72%);
+  background: var(--button-danger-bg);
+}
+
+.metaStrip {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.metaPill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, var(--surface-tint) 10%);
+  border-radius: 12px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--meta-bg) 38%, transparent);
+  box-shadow: inset 0 1px var(--surface-highlight-faint);
+}
+
+.metaPill span {
+  color: var(--subtle);
+  font: 600 0.72rem/1.1 var(--font-ui);
+  letter-spacing: 0.01em;
+}
+
+.metaPill strong {
+  word-break: break-word;
+  font: 650 0.94rem/1 var(--font-ui);
+  letter-spacing: -0.02em;
+}
+
+.metaExportButton {
+  min-width: 84px;
+}
+
+.importBar {
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, var(--surface-tint) 10%);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--import-bg) 34%, transparent);
+  padding: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  box-shadow: inset 0 1px var(--surface-highlight-faint);
+}
+
+.importInfo {
+  display: flex;
+  align-items: center;
+}
+
+.importSmartSwitch {
+  min-width: 132px;
+}
+
+.importRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.importHint {
+  grid-column: 1 / -1;
+  margin-top: -2px;
+}
+
+.hint {
+  margin: 8px 0 0;
+  color: var(--hint);
+  font: 500 0.78rem/1.3 "IBM Plex Sans", sans-serif;
+}

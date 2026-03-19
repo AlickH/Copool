@@ -1,0 +1,905 @@
+.proxyPage {
+  width: min(1040px, 100%);
+  margin: 0 auto;
+  padding: 10px 0 32px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.proxyShell {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.proxyPageHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+  padding: 2px 4px 6px;
+}
+
+.proxyPageTitle {
+  min-width: 0;
+}
+
+.proxyKicker {
+  margin: 0 0 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font: 700 0.66rem/1 var(--font-ui);
+  color: var(--brand-cool);
+}
+
+.proxyPageTitle h2 {
+  margin: 0;
+  font: 650 1.08rem/1.2 var(--font-ui);
+  letter-spacing: -0.02em;
+}
+
+.proxyPageDescription,
+.proxySectionDescription {
+  margin: 4px 0 0;
+  max-width: 600px;
+  color: var(--subtle);
+  font: 500 0.78rem/1.4 var(--font-ui);
+}
+
+.proxyHeaderStats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.proxyHeaderStat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, var(--surface-tint) 12%);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--meta-bg) 58%, transparent);
+  box-shadow: inset 0 1px var(--surface-highlight-soft);
+  color: var(--subtle);
+  font: 600 0.76rem/1.1 var(--font-ui);
+}
+
+.proxyHeaderStat strong {
+  color: var(--ink);
+  font: 650 0.82rem/1 var(--font-ui);
+  letter-spacing: -0.01em;
+}
+
+.proxyStatusDot {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--subtle) 72%, var(--surface-tint) 28%);
+}
+
+.proxyStatusDot.isRunning {
+  background: var(--stamp-current-color);
+  box-shadow: 0 0 0 0 rgba(47, 210, 200, 0.42);
+  animation: proxyStatusPulse 1.6s ease-out infinite;
+}
+
+@keyframes proxyStatusPulse {
+  0% {
+    opacity: 0.95;
+    box-shadow: 0 0 0 0 rgba(47, 210, 200, 0.34);
+  }
+
+  70% {
+    opacity: 1;
+    box-shadow: 0 0 0 8px rgba(47, 210, 200, 0);
+  }
+
+  100% {
+    opacity: 0.95;
+    box-shadow: 0 0 0 0 rgba(47, 210, 200, 0);
+  }
+}
+
+.proxySectionCard {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--section-line);
+  border-radius: 24px;
+  background: var(--section-card-surface);
+  box-shadow: var(--section-shadow);
+  backdrop-filter: blur(14px) saturate(112%);
+}
+
+.proxySectionCard + .proxySectionCard {
+  padding-top: 16px;
+}
+
+.proxySectionCardPrimary .proxyHeaderStats {
+  justify-content: flex-start;
+}
+
+.proxySectionCardPrimary {
+  background: var(--section-card-primary-surface);
+}
+
+.proxySectionHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 0 2px 2px;
+}
+
+.proxySectionHeader h3 {
+  margin: 0;
+  font: 650 0.92rem/1.2 var(--font-ui);
+  letter-spacing: -0.01em;
+}
+
+.proxySectionToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.proxyControlRow {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: end;
+}
+
+.proxyCompactField {
+  display: grid;
+  gap: 6px;
+  min-width: 132px;
+}
+
+.proxyCompactField span,
+.proxyInlineLabel {
+  color: var(--subtle);
+  font: 600 0.72rem/1.1 var(--font-ui);
+  letter-spacing: -0.01em;
+}
+
+.proxyInlineSetting {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  flex-wrap: wrap;
+}
+
+.proxyControlActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.proxyPortInput {
+  width: 132px;
+  height: 38px;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, var(--surface-tint) 14%);
+  border-radius: 10px;
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--meta-bg) 46%, transparent);
+  color: var(--ink);
+  font: 600 0.78rem/1 "IBM Plex Mono", monospace;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.proxyPortInput:focus {
+  border-color: var(--button-primary-border);
+  box-shadow: 0 0 0 4px rgba(255, 143, 56, 0.12);
+}
+
+.proxyPortInput:disabled {
+  opacity: 0.68;
+  cursor: not-allowed;
+}
+
+.proxyDetailCard {
+  min-height: 0;
+  display: grid;
+  gap: 8px;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card) 80%, var(--surface-tint) 20%);
+  box-shadow:
+    inset 0 1px var(--surface-highlight-soft),
+    0 0 0 1px color-mix(in srgb, var(--line) 52%, var(--surface-tint) 48%);
+}
+
+.proxyDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.proxyDetailActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.proxyDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.proxyEndpointCard {
+  grid-column: 1 / -1;
+}
+
+.proxyLabel {
+  display: inline-flex;
+  align-items: center;
+  color: var(--subtle);
+  font: 600 0.68rem/1.1 var(--font-ui);
+  letter-spacing: 0;
+}
+
+.proxyDetailCard strong {
+  margin: 0;
+  display: block;
+  font: 650 0.92rem/1.25 var(--font-ui);
+  color: color-mix(in srgb, var(--ink) 94%, var(--surface-tint) 6%);
+  word-break: break-word;
+}
+
+.proxyDetailCard p {
+  margin: 0;
+  color: var(--subtle);
+  font: 500 0.78rem/1.45 var(--font-ui);
+  word-break: break-word;
+}
+
+.proxyStatus {
+  color: color-mix(in srgb, var(--brand-hot) 72%, var(--ink) 28%);
+}
+
+.proxyStatus.isRunning {
+  color: color-mix(in srgb, var(--brand-cool) 72%, var(--ink) 28%);
+}
+
+.proxyDetailCard code {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--meta-bg) 48%, transparent);
+  color: color-mix(in srgb, var(--ink) 90%, var(--surface-tint) 10%);
+  font: 500 0.75rem/1.5 "IBM Plex Mono", monospace;
+  word-break: break-all;
+}
+
+.proxyCopyButton {
+  min-width: 0;
+  padding: 7px 10px;
+}
+
+.proxyEndpointList {
+  display: grid;
+  gap: 0;
+}
+
+.proxyEndpointRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--line) 84%, var(--surface-tint) 16%);
+  border-radius: 0;
+  background: transparent;
+}
+
+.proxyEndpointRow:first-child {
+  padding-top: 2px;
+  border-top: 0;
+}
+
+.proxyEndpointMeta {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.proxyEndpointMeta > span {
+  color: var(--subtle);
+  font: 600 0.68rem/1 var(--font-ui);
+}
+
+.proxyEndpointMeta code {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.proxyErrorText {
+  color: var(--error-text);
+}
+
+.remoteServerCard {
+  border: 0;
+  border-radius: 18px;
+  padding: 14px 16px 16px;
+  background: color-mix(in srgb, var(--card) 72%, var(--surface-tint) 28%);
+  box-shadow:
+    inset 0 1px var(--surface-highlight-soft),
+    0 0 0 1px color-mix(in srgb, var(--line) 48%, var(--surface-tint) 52%);
+}
+
+.remoteServerList {
+  display: grid;
+  gap: 12px;
+}
+
+.remoteServerCard {
+  display: grid;
+  gap: 12px;
+}
+
+.remoteServerList > .remoteServerCard:first-child {
+  padding-top: 14px;
+}
+
+.remoteServerCardHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+}
+
+.remoteServerSummary {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.remoteServerSummaryMain {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.remoteServerIdentity {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.remoteServerIdentity strong {
+  font: 650 0.92rem/1.2 var(--font-ui);
+  letter-spacing: -0.01em;
+  color: color-mix(in srgb, var(--ink) 94%, var(--surface-tint) 6%);
+  word-break: break-word;
+}
+
+.remoteServerIdentity span {
+  color: var(--subtle);
+  font: 500 0.74rem/1.35 "IBM Plex Mono", monospace;
+  word-break: break-all;
+}
+
+.remoteServerState {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--meta-bg) 62%, transparent);
+  color: var(--subtle);
+  font: 600 0.74rem/1 var(--font-ui);
+}
+
+.remoteServerState.isRunning {
+  color: color-mix(in srgb, var(--brand-cool) 72%, var(--ink) 28%);
+}
+
+.remoteServerSummaryMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.remoteServerSummaryPill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--meta-bg) 60%, transparent);
+  color: var(--subtle);
+  font: 600 0.68rem/1 var(--font-ui);
+}
+
+.remoteServerSummaryTrailing {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+button.remoteServerDisclosure {
+  min-height: 32px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+}
+
+.remoteServerChevron {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 160ms ease;
+}
+
+.remoteServerChevron.isExpanded {
+  transform: rotate(180deg);
+}
+
+.remoteServerExpandedBody {
+  display: grid;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 68%, var(--surface-tint) 32%);
+}
+
+.remoteServerPanel {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.remoteServerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.remoteServerField {
+  display: grid;
+  gap: 6px;
+}
+
+.remoteServerField span,
+.cloudflaredInputField span {
+  color: var(--subtle);
+  font: 600 0.68rem/1 var(--font-ui);
+  letter-spacing: -0.01em;
+}
+
+.remoteServerField input,
+.cloudflaredInputField input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, var(--surface-tint) 14%);
+  border-radius: 10px;
+  padding: 0 12px;
+  background: color-mix(in srgb, var(--card) 90%, var(--surface-tint) 10%);
+  color: var(--ink);
+  font: 600 0.78rem/1 var(--font-ui);
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.remoteServerField input:focus,
+.cloudflaredInputField input:focus {
+  border-color: var(--button-primary-border);
+  box-shadow: 0 0 0 4px rgba(255, 143, 56, 0.12);
+}
+
+.remoteServerTextarea {
+  width: 100%;
+  min-height: 108px;
+  resize: vertical;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, var(--surface-tint) 14%);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--card) 90%, var(--surface-tint) 10%);
+  color: var(--ink);
+  font: 500 0.76rem/1.45 "IBM Plex Mono", monospace;
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.remoteServerTextarea:focus {
+  border-color: var(--button-primary-border);
+  box-shadow: 0 0 0 4px rgba(255, 143, 56, 0.12);
+}
+
+.remoteAuthRow {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.remoteAuthSelectField {
+  align-self: start;
+}
+
+.remoteAuthPicker {
+  width: 100%;
+  min-width: 0;
+}
+
+.remoteAuthInputArea {
+  min-width: 0;
+}
+
+.remoteIdentityRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.remoteServerFileRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.remoteServerBinaryMeta {
+  display: grid;
+  gap: 6px;
+}
+
+.remoteServerBinaryMeta strong {
+  font: 700 0.96rem/1.25 "IBM Plex Sans", sans-serif;
+  color: color-mix(in srgb, var(--ink) 92%, var(--surface-tint) 8%);
+  word-break: break-word;
+}
+
+.remoteServerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.remoteDependencyInstall {
+  display: grid;
+  gap: 10px;
+  padding: 13px 14px;
+  border-radius: 14px;
+  border: 0;
+  background: color-mix(in srgb, var(--brand-soft) 18%, var(--card) 82%);
+}
+
+.remoteDependencyInstallHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.remoteDependencyInstallHeader strong {
+  font: 650 0.82rem/1.3 var(--font-ui);
+  color: color-mix(in srgb, var(--ink) 92%, var(--surface-tint) 8%);
+}
+
+.remoteDependencyInstallTrack {
+  position: relative;
+  overflow: hidden;
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 76%, var(--surface-tint) 24%);
+}
+
+.remoteDependencyInstallFill {
+  position: absolute;
+  inset: 0 auto 0 -38%;
+  width: 38%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--brand) 88%, var(--surface-tint) 12%),
+    color-mix(in srgb, var(--brand-strong) 80%, var(--surface-tint) 20%)
+  );
+  animation: remoteDependencyInstallPulse 1.15s ease-in-out infinite;
+}
+
+@keyframes remoteDependencyInstallPulse {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(360%);
+  }
+}
+
+.remoteServerStatus {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 8px;
+}
+
+.remoteServerMeta {
+  display: grid;
+  gap: 4px;
+  padding: 10px 11px;
+  border-radius: 12px;
+  border: 0;
+  background: color-mix(in srgb, var(--meta-bg) 72%, transparent);
+}
+
+.remoteServerMeta span {
+  color: var(--subtle);
+  font: 600 0.66rem/1 var(--font-ui);
+  letter-spacing: 0;
+}
+
+.remoteServerMeta strong {
+  font: 650 0.8rem/1.2 var(--font-ui);
+  color: color-mix(in srgb, var(--ink) 92%, var(--surface-tint) 8%);
+  word-break: break-word;
+}
+
+.remoteServerHiddenInput {
+  display: none;
+}
+
+.remoteServerFooter {
+  display: grid;
+  gap: 10px;
+}
+
+.remoteProxyDetailGrid {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.remoteLogCard {
+  min-height: 0;
+}
+
+.remoteLogCode {
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.remoteLogCode::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.remoteDiagnosticsGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(240px, 0.9fr);
+  gap: 12px;
+}
+
+.remoteErrorCard {
+  min-height: 0;
+}
+
+.cloudflaredContent {
+  display: grid;
+  gap: 12px;
+}
+
+.cloudflaredInstallCard,
+.cloudflaredCallout {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+  border: 0;
+  border-radius: 14px;
+  padding: 13px 14px;
+  background: color-mix(in srgb, var(--card) 80%, var(--surface-tint) 20%);
+  box-shadow:
+    inset 0 1px var(--surface-highlight-soft),
+    0 0 0 1px color-mix(in srgb, var(--line) 48%, var(--surface-tint) 52%);
+}
+
+.cloudflaredInstallCard {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.cloudflaredInstallCard strong,
+.cloudflaredCallout strong {
+  display: block;
+  font: 650 0.9rem/1.2 var(--font-ui);
+  color: color-mix(in srgb, var(--ink) 92%, var(--surface-tint) 8%);
+}
+
+.cloudflaredInstallCard p,
+.cloudflaredCallout p {
+  margin: 4px 0 0;
+  color: var(--subtle);
+  font: 500 0.78rem/1.4 var(--font-ui);
+}
+
+.cloudflaredModeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+button.cloudflaredModeCard {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  text-align: left;
+  border-radius: 14px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--meta-bg) 44%, transparent);
+  box-shadow: none;
+}
+
+button.cloudflaredModeCard::before {
+  display: none;
+}
+
+button.cloudflaredModeCard strong {
+  font: 650 0.88rem/1.2 var(--font-ui);
+  color: color-mix(in srgb, var(--ink) 92%, var(--surface-tint) 8%);
+}
+
+button.cloudflaredModeCard p {
+  margin: 0;
+  color: var(--subtle);
+  font: 500 0.76rem/1.4 var(--font-ui);
+}
+
+button.cloudflaredModeCard.isActive {
+  border-color: color-mix(in srgb, var(--button-primary-border) 46%, var(--line) 54%);
+  background: var(--mode-card-active-surface);
+  box-shadow: inset 0 1px var(--surface-highlight-soft);
+}
+
+.cloudflaredFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cloudflaredInputField {
+  display: grid;
+  gap: 6px;
+}
+
+.cloudflaredToolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.cloudflaredToolbarMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cloudflaredToolbarActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.bottomDock {
+  position: static;
+  z-index: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px;
+  margin: 18px auto 0;
+  border: 1px solid color-mix(in srgb, var(--line) 84%, var(--surface-tint) 16%);
+  border-radius: 16px;
+  background: var(--dock-surface);
+  backdrop-filter: blur(14px) saturate(120%);
+  box-shadow:
+    0 10px 24px rgba(19, 34, 58, 0.1),
+    inset 0 1px var(--surface-highlight);
+}
+
+button.bottomDockButton {
+  min-width: 108px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: color-mix(in srgb, var(--subtle) 82%, var(--surface-tint) 18%);
+  border-color: color-mix(in srgb, var(--line) 88%, var(--surface-tint) 12%);
+  background: transparent;
+  box-shadow:
+    0 1px 2px rgba(20, 37, 61, 0.04),
+    inset 0 1px var(--surface-highlight-soft);
+}
+
+button.bottomDockButton::before {
+  display: none;
+}
+
+button.bottomDockButton:hover,
+button.bottomDockButton:focus-visible {
+  transform: none;
+  filter: none;
+  background: color-mix(in srgb, var(--body-bg) 30%, var(--surface-tint) 70%);
+}
+
+button.bottomDockButton.isActive {
+  color: color-mix(in srgb, var(--ink) 88%, var(--surface-tint) 12%);
+  border-color: color-mix(in srgb, var(--brand-hot) 26%, var(--line) 74%);
+  background: var(--dock-active-surface);
+  transform: none;
+  box-shadow:
+    0 8px 18px rgba(17, 34, 58, 0.08),
+    inset 0 1px var(--surface-highlight-strong);
+}
+
+button.bottomDockButton.isActive:hover,
+button.bottomDockButton.isActive:focus-visible {
+  transform: none;
+}
+
+.bottomDockIcon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bottomDockLabel {
+  font: 600 0.8rem/1 var(--font-ui);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}

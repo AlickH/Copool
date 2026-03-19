@@ -2,92 +2,64 @@
 
 <img src="./Copool.png" alt="Copool Icon" width="160" />
 
-Copool is a SwiftUI app for macOS and iOS that manages Codex/ChatGPT auth accounts, usage-based smart switching, and local/remote API proxy workflows.
+Copool manages Codex/ChatGPT accounts, usage-aware switching, and local or remote API proxy workflows.
 
-Copool 是一个面向 macOS 和 iOS 的 SwiftUI 应用，用于管理 Codex/ChatGPT 授权账号、按用量智能切换，以及本地/远程 API 代理工作流。
+This repo now contains two desktop tracks:
 
-## Screenshots / 截图
+- Apple app: native SwiftUI for macOS and iOS in `Sources/`, `Tests/`, and `Copool.xcodeproj`
+- Windows app: native desktop app in `apps/windows-desktop/` using React + Tauri + Rust
 
-<img src="./account.png" alt="Accounts Overview" width="560" />
-<img src="./account_2.png" alt="Accounts Detail" width="560" />
-<img src="./proxy.png" alt="Proxy" width="560" />
-<img src="./setting.png" alt="Settings" width="560" />
+## Platform Matrix
 
-## Features / 功能
+### macOS / iOS
 
-- Native SwiftUI architecture with layered design (`App`, `Features`, `UI`, `Behavior`, `Infrastructure`, `Domain`, `Layout`)
-- 纯 SwiftUI 分层架构（`App`、`Features`、`UI`、`Behavior`、`Infrastructure`、`Domain`、`Layout`）
-- Account import/switch/delete and usage refresh (5h / 1week)
-- 账号导入/切换/删除与用量刷新（5h / 1week）
-- Smart switch based on remaining quota score
-- 基于剩余额度评分的智能切换
-- iCloud-backed account sync, current-selection sync, and proxy control sync
-- 基于 iCloud 的账号同步、当前账号选择同步与代理控制同步
-- Local API proxy runtime (Swift native server) with model compatibility mapping
-- 本地 API 代理运行时（Swift 原生服务）与模型兼容映射
-- Cloudflared public tunnel management
-- Cloudflared 公网隧道管理
-- Remote Linux deployment/start/stop/logs for proxy nodes over SSH
-- 远程 Linux 代理节点 SSH 部署/启停/日志
-- ChatGPT OAuth import plus editor restart / launch integration on account switch
-- ChatGPT OAuth 导入，以及切换账号时的编辑器重启 / 拉起集成
-- Menu bar integration (MenuBarExtra)
-- 菜单栏集成（MenuBarExtra）
+- SwiftUI app with layered architecture
+- iCloud and CloudKit sync
+- Apple platform launch and menu bar integration
 
-## Requirements / 环境要求
+### Windows v1
 
-- macOS 14+
-- iOS 26+
-- Xcode 17+
-- Swift 6 toolchain
+- Native Tauri desktop app
+- Core account management, usage refresh, smart switch, local proxy, cloudflared, and remote Linux proxy control
+- Copool-compatible account store fields including `currentSelection`, `teamName`, and `teamAlias`
+- No CloudKit or iCloud sync in v1
+- Editor auto-restart is intentionally disabled in v1
 
-## Build & Run / 构建与运行
+## Build And Run
+
+### Apple app
 
 ```bash
-cd Copool
-xcodebuild test -project Copool.xcodeproj -scheme Copool -destination 'platform=macOS'
-xcodebuild -project Copool.xcodeproj -scheme Copool -configuration Debug -destination 'platform=macOS' build
-xcodebuild -project Copool.xcodeproj -scheme CopooliOS -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17' build
+xcodebuild test -project Copool.xcodeproj -scheme Copool -destination "platform=macOS"
+xcodebuild -project Copool.xcodeproj -scheme Copool -configuration Debug -destination "platform=macOS" build
+xcodebuild -project Copool.xcodeproj -scheme CopooliOS -configuration Debug -destination "platform=iOS Simulator,name=iPhone 17" build
 ```
 
 Open `Copool.xcodeproj` in Xcode and run `Copool` for macOS or `CopooliOS` for iOS.
 
-使用 Xcode 打开 `Copool.xcodeproj`，macOS 运行 `Copool` scheme，iOS 运行 `CopooliOS` scheme。
+### Windows app
 
-## Release Channels / 发布渠道
+```bash
+cd apps/windows-desktop
+npm install
+npm run build
+cd src-tauri
+cargo test
+```
 
-- macOS release artifacts are published through GitHub Releases.
-- macOS 发布产物通过 GitHub Releases 分发。
-- iOS builds are archived from the `CopooliOS` scheme and distributed through TestFlight.
-- iOS 构建通过 `CopooliOS` scheme 归档，并通过 TestFlight 分发。
+For local desktop development from the Windows app folder:
 
-## Project Structure / 项目结构
+```bash
+npm run tauri dev
+```
 
-- `Sources/Copool/App`: scene composition and app bootstrap
-- `Sources/Copool/Features`: page-level composition and bindings
-- `Sources/Copool/UI`: reusable visual primitives
-- `Sources/Copool/Behavior`: coordinators and behavior modules
-- `Sources/Copool/Infrastructure`: IO/network/process integrations
-- `Sources/Copool/Domain`: models and protocols (single source of truth)
-- `Sources/Copool/Layout`: centralized layout rules
+## Repo Layout
 
-## Reference Project / 参考项目
+- `Sources/Copool/`: Apple-platform app code
+- `Tests/CopoolTests/`: Swift tests
+- `apps/windows-desktop/src/`: Windows React frontend
+- `apps/windows-desktop/src-tauri/`: Windows Tauri + Rust backend
 
-- [170-carry/codex-tools](https://github.com/170-carry/codex-tools)
+## Reference
 
-This project is a Swift-native migration and redesign inspired by the original Tauri-based implementation.
-
-本项目是对原 Tauri 版本的 Swift 原生迁移与重构。
-
-## Acknowledgements / 致谢
-
-- Thanks to the original authors and contributors of `170-carry/codex-tools`.
-- 感谢 `170-carry/codex-tools` 的原作者与贡献者。
-- Thanks to all users who provided migration feedback and UI/UX suggestions.
-- 感谢所有提供迁移反馈与界面建议的用户。
-
-## License / 许可证
-
-Please follow the upstream license and your organization’s compliance requirements when reusing code from referenced projects.
-
-复用参考项目代码时，请遵循上游许可证与所在组织的合规要求。
+The Windows app is bootstrapped from the ideas and Windows runtime patterns in [170-carry/codex-tools](https://github.com/170-carry/codex-tools), then adapted to Copool data contracts and behavior.

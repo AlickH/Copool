@@ -1,0 +1,232 @@
+@media (max-width: 900px) {
+  .shell {
+    height: 100dvh;
+    padding: 12px 12px calc(env(safe-area-inset-bottom, 0px) + 12px);
+  }
+
+  .panel {
+    height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
+    min-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
+    padding: 0;
+    border-radius: 0;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 4px 18px;
+  }
+
+  .topActions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .settingsOverlay {
+    padding: 12px;
+  }
+
+  .settingsDialog {
+    max-height: calc(100vh - 24px);
+    border-radius: 14px;
+    padding: 14px;
+  }
+
+  .settingsPage {
+    width: 100%;
+    padding: 0 0 20px;
+  }
+
+  .updateOverlay {
+    padding: 12px;
+  }
+
+  .updateDialog {
+    max-height: calc(100vh - 24px);
+    border-radius: 14px;
+    padding: 12px;
+  }
+
+  .settingsHeader {
+    flex-direction: column;
+    padding: 2px 2px 4px;
+  }
+
+  .settingsShell {
+    gap: 10px;
+  }
+
+  .settingsGroupAction {
+    width: 100%;
+  }
+
+  .addAccountTabs {
+    grid-template-columns: 1fr;
+  }
+
+  .addAccountTab {
+    padding: 12px 14px;
+  }
+
+  .addUploadPickerRow {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .settingRow {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .editorPicker {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .modeGroup {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .modeGroup > button {
+    flex: 1 1 30%;
+    min-width: 0;
+  }
+
+  .settingValueMuted {
+    max-width: none;
+    text-align: left;
+  }
+
+  .settingActionGroup {
+    justify-content: flex-start;
+  }
+
+  .settingLinkLabel {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .accountsHero {
+    grid-template-columns: 1fr;
+  }
+
+  .metaStrip {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metaExportButton {
+    width: 100%;
+  }
+
+  .importBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .importSmartSwitch,
+  .importPrimary {
+    width: 100%;
+  }
+
+  .proxyPageHeader,
+  .proxySectionHeader,
+  .cloudflaredToolbar,
+  .cloudflaredInstallCard,
+  .remoteServerCardHeader,
+  .remoteDiagnosticsGrid,
+  .remoteServerFileRow,
+  .remoteAuthRow,
+  .remoteIdentityRow {
+    grid-template-columns: 1fr;
+  }
+
+  .proxyHeaderStats,
+  .proxySectionToggle,
+  .proxyControlActions {
+    justify-content: flex-start;
+  }
+
+  .proxyControlRow {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .proxyCompactField,
+  .proxyPortInput {
+    width: 100%;
+  }
+
+  .proxyDetailGrid,
+  .remoteServerGrid,
+  .remoteProxyDetailGrid,
+  .remoteServerStatus,
+  .cloudflaredModeGrid,
+  .cloudflaredFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .proxyEndpointRow {
+    grid-template-columns: 1fr;
+  }
+
+  .remoteServerSummaryTrailing {
+    justify-content: flex-start;
+  }
+
+  .remoteServerActions {
+    justify-content: flex-start;
+  }
+
+  .proxyDetailCard {
+    min-height: 0;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
+
+  .accountCard,
+  .emptyState {
+    width: 100%;
+    height: auto;
+  }
+
+  .usageGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .cardFooter {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cardLaunchButton {
+    width: 100%;
+  }
+
+  .bottomDock {
+    width: 100%;
+    align-self: stretch;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  button.bottomDockButton {
+    min-width: 0;
+    flex: 1;
+    padding: 0 10px;
+  }
+
+  .notice {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+    right: 14px;
+    width: calc(100vw - 28px);
+  }
+}
