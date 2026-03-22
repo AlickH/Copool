@@ -14,3 +14,4 @@ SDKStatCaches.noindex/
 *.xcuserstate
 xcuserdata/
 Copool.xcodeproj/project.xcworkspace/xcuserdata/
+.swiftpm/xcode/
