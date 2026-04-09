@@ -1,12 +1,6 @@
 import Foundation
 
 extension AccountsPageModel {
-    private struct PendingWorkspaceDiscoveryInput: Equatable {
-        let id: String
-        let accountID: String
-        let isCurrent: Bool
-    }
-
     func toggleUsageProgressDisplay() async {
         guard let settingsCoordinator else { return }
 
@@ -43,17 +37,8 @@ extension AccountsPageModel {
         async let cloudSyncAvailableTask = cloudSyncAvailabilityService?.isICloudAvailable() ?? true
         do {
             let accounts = try await coordinator.listAccounts()
-
-            if accounts.isEmpty {
-                isCloudSyncAvailable = await cloudSyncAvailableTask
-            }
-
-            applyAccounts(accounts)
-            await refreshPendingWorkspaceAuthorizations(from: accounts)
-
-            if !accounts.isEmpty {
-                isCloudSyncAvailable = await cloudSyncAvailableTask
-            }
+            let cloudSyncAvailable = await cloudSyncAvailableTask
+            await applyLoadedAccounts(accounts, cloudSyncAvailableTask: cloudSyncAvailable)
 
             hasLoaded = true
         } catch {
@@ -62,15 +47,17 @@ extension AccountsPageModel {
         }
     }
 
+    func reloadFromLocalStoreAfterExternalMutation() async {
+        do {
+            let accounts = try await coordinator.listAccounts(refreshWorkspaceMetadata: false)
+            await applyReloadedAccounts(accounts)
+        } catch {}
+    }
+
     /// Applies account snapshots produced by the global background refresh pipeline.
     /// This keeps the Accounts page in sync without creating a duplicate timer.
     func syncFromBackgroundRefresh(_ accounts: [AccountSummary]) {
-        let shouldRefreshPendingWorkspaces = pendingWorkspaceDiscoveryInputs(
-            from: currentAccountsForPendingWorkspaceDiscovery
-        ) != pendingWorkspaceDiscoveryInputs(from: accounts)
         applyAccounts(accounts)
-        guard shouldRefreshPendingWorkspaces else { return }
-        schedulePendingWorkspaceRefresh(from: accounts)
     }
 
     func syncRemoteUsageRefreshActivity(refreshingAccountIDs: Set<String>) {
@@ -83,20 +70,23 @@ extension AccountsPageModel {
         isRemoteUsageRefreshing = isRefreshing
     }
 
-    private var currentAccountsForPendingWorkspaceDiscovery: [AccountSummary] {
-        guard case .content(let accounts) = state else { return [] }
-        return accounts
+    private func applyLoadedAccounts(
+        _ accounts: [AccountSummary],
+        cloudSyncAvailableTask: Bool
+    ) async {
+        if accounts.isEmpty {
+            isCloudSyncAvailable = cloudSyncAvailableTask
+        }
+
+        await applyReloadedAccounts(accounts)
+
+        if !accounts.isEmpty {
+            isCloudSyncAvailable = cloudSyncAvailableTask
+        }
     }
 
-    private func pendingWorkspaceDiscoveryInputs(
-        from accounts: [AccountSummary]
-    ) -> [PendingWorkspaceDiscoveryInput] {
-        AccountRanking.sortForDisplay(accounts).map {
-            PendingWorkspaceDiscoveryInput(
-                id: $0.id,
-                accountID: $0.accountID,
-                isCurrent: $0.isCurrent
-            )
-        }
+    private func applyReloadedAccounts(_ accounts: [AccountSummary]) async {
+        applyAccounts(accounts)
+        await refreshPendingWorkspaceAuthorizations(from: accounts)
     }
 }

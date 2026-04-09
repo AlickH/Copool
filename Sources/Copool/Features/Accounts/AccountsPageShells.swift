@@ -10,6 +10,7 @@ struct AccountsPageShell: View {
     let onToggleCollapse: () -> Void
     let onSwitchAccount: (String) -> Void
     let onRefreshAccountUsage: (String) -> Void
+    let onReauthenticateAccount: (String) -> Void
     let onAuthorizeWorkspace: (String) -> Void
     let onCancelAuthorizeWorkspace: () -> Void
     let onDeletePendingWorkspace: (String) -> Void
@@ -27,6 +28,7 @@ struct AccountsPageShell: View {
             onToggleCollapse: onToggleCollapse,
             onSwitchAccount: onSwitchAccount,
             onRefreshAccountUsage: onRefreshAccountUsage,
+            onReauthenticateAccount: onReauthenticateAccount,
             onAuthorizeWorkspace: onAuthorizeWorkspace,
             onCancelAuthorizeWorkspace: onCancelAuthorizeWorkspace,
             onDeletePendingWorkspace: onDeletePendingWorkspace,
@@ -41,6 +43,7 @@ struct AccountsPageShell: View {
             onToggleCollapse: onToggleCollapse,
             onSwitchAccount: onSwitchAccount,
             onRefreshAccountUsage: onRefreshAccountUsage,
+            onReauthenticateAccount: onReauthenticateAccount,
             onAuthorizeWorkspace: onAuthorizeWorkspace,
             onCancelAuthorizeWorkspace: onCancelAuthorizeWorkspace,
             onDeletePendingWorkspace: onDeletePendingWorkspace,
@@ -61,6 +64,7 @@ private struct AccountsIOSPageShell: View {
     let onToggleCollapse: () -> Void
     let onSwitchAccount: (String) -> Void
     let onRefreshAccountUsage: (String) -> Void
+    let onReauthenticateAccount: (String) -> Void
     let onAuthorizeWorkspace: (String) -> Void
     let onCancelAuthorizeWorkspace: () -> Void
     let onDeletePendingWorkspace: (String) -> Void
@@ -75,6 +79,7 @@ private struct AccountsIOSPageShell: View {
                 areCardsPresented: areCardsPresented,
                 onSwitchAccount: onSwitchAccount,
                 onRefreshAccountUsage: onRefreshAccountUsage,
+                onReauthenticateAccount: onReauthenticateAccount,
                 onAuthorizeWorkspace: onAuthorizeWorkspace,
                 onCancelAuthorizeWorkspace: onCancelAuthorizeWorkspace,
                 onDeletePendingWorkspace: onDeletePendingWorkspace,
@@ -107,6 +112,7 @@ private struct AccountsMacPageShell: View {
     let onToggleCollapse: () -> Void
     let onSwitchAccount: (String) -> Void
     let onRefreshAccountUsage: (String) -> Void
+    let onReauthenticateAccount: (String) -> Void
     let onAuthorizeWorkspace: (String) -> Void
     let onCancelAuthorizeWorkspace: () -> Void
     let onDeletePendingWorkspace: (String) -> Void
@@ -132,6 +138,7 @@ private struct AccountsMacPageShell: View {
                 areCardsPresented: areCardsPresented,
                 onSwitchAccount: onSwitchAccount,
                 onRefreshAccountUsage: onRefreshAccountUsage,
+                onReauthenticateAccount: onReauthenticateAccount,
                 onAuthorizeWorkspace: onAuthorizeWorkspace,
                 onCancelAuthorizeWorkspace: onCancelAuthorizeWorkspace,
                 onDeletePendingWorkspace: onDeletePendingWorkspace,
@@ -166,6 +173,7 @@ private struct AccountsIOSContentHost: View {
     let areCardsPresented: Bool
     let onSwitchAccount: (String) -> Void
     let onRefreshAccountUsage: (String) -> Void
+    let onReauthenticateAccount: (String) -> Void
     let onAuthorizeWorkspace: (String) -> Void
     let onCancelAuthorizeWorkspace: () -> Void
     let onDeletePendingWorkspace: (String) -> Void
@@ -181,6 +189,7 @@ private struct AccountsIOSContentHost: View {
                     areCardsPresented: areCardsPresented,
                     onSwitchAccount: onSwitchAccount,
                     onRefreshAccountUsage: onRefreshAccountUsage,
+                    onReauthenticateAccount: onReauthenticateAccount,
                     onAuthorizeWorkspace: onAuthorizeWorkspace,
                     onCancelAuthorizeWorkspace: onCancelAuthorizeWorkspace,
                     onDeletePendingWorkspace: onDeletePendingWorkspace,
@@ -201,6 +210,7 @@ private struct AccountsMacContentHost: View {
     let areCardsPresented: Bool
     let onSwitchAccount: (String) -> Void
     let onRefreshAccountUsage: (String) -> Void
+    let onReauthenticateAccount: (String) -> Void
     let onAuthorizeWorkspace: (String) -> Void
     let onCancelAuthorizeWorkspace: () -> Void
     let onDeletePendingWorkspace: (String) -> Void
@@ -219,6 +229,7 @@ private struct AccountsMacContentHost: View {
                     areCardsPresented: areCardsPresented,
                     onSwitchAccount: onSwitchAccount,
                     onRefreshAccountUsage: onRefreshAccountUsage,
+                    onReauthenticateAccount: onReauthenticateAccount,
                     onAuthorizeWorkspace: onAuthorizeWorkspace,
                     onCancelAuthorizeWorkspace: onCancelAuthorizeWorkspace,
                     onDeletePendingWorkspace: onDeletePendingWorkspace,

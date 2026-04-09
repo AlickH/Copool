@@ -490,7 +490,7 @@ final class AccountsCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(authRepository.readRefreshCallCount(), 1)
         XCTAssertEqual(requestedTokens, [])
-        XCTAssertEqual(accounts.first?.usageError, message)
+        XCTAssertEqual(accounts.first?.usageError, L10n.tr("error.accounts.sign_in_expired"))
     }
 
     func testAddAccountViaLoginOnIOSSkipsUsageFetchAndImportsSingleCurrentAccount() async throws {
@@ -1404,6 +1404,84 @@ final class AccountsCoordinatorTests: XCTestCase {
     }
 
     @MainActor
+    func testDeletePendingWorkspaceCancelsInFlightPendingRefreshBeforeItCanRestoreCard() async {
+        let now: Int64 = 1_763_216_000
+        let metadataService = ControlledWorkspaceMetadataService(
+            resultsByAccessToken: [
+                "token-1": [
+                    WorkspaceMetadata(accountID: "account-2", workspaceName: "Workspace 2", structure: "workspace")
+                ]
+            ]
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: InMemoryAccountsStoreRepository(
+                store: AccountsStore(
+                    accounts: [
+                        StoredAccount(
+                            id: "acct-1",
+                            label: "acct-1",
+                            email: "account-1@example.com",
+                            accountID: "account-1",
+                            planType: "team",
+                            teamName: "workspace-a",
+                            teamAlias: nil,
+                            authJSON: .object([
+                                "account_id": .string("account-1")
+                            ]),
+                            addedAt: now,
+                            updatedAt: now,
+                            usage: nil,
+                            usageError: nil
+                        )
+                    ]
+                )
+            ),
+            settingsRepository: TestSettingsRepository(),
+            authRepository: MultiAccountAuthRepository(
+                extractedByAccountID: [
+                    "account-1": makeExtractedAuth(accountID: "account-1", planType: "team", teamName: "workspace-a")
+                ]
+            ),
+            usageService: CountingUsageService(result: makeUsageSnapshot(fetchedAt: now)),
+            workspaceMetadataService: metadataService,
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let model = AccountsPageModel(coordinator: coordinator)
+        let accounts = [
+            makeAccountSummary(
+                id: "acct-1",
+                accountID: "account-1",
+                isCurrent: true,
+                usage: nil,
+                planType: "team",
+                teamName: "workspace-a"
+            )
+        ]
+
+        model.pendingWorkspaceAuthorizations = [
+            WorkspaceAuthorizationCandidate(
+                workspaceID: "account-2",
+                workspaceName: "Workspace 2",
+                email: "account-2@example.com",
+                planType: "team"
+            )
+        ]
+
+        model.schedulePendingWorkspaceRefresh(from: accounts)
+        await metadataService.waitForFirstFetchToStart()
+
+        await model.deletePendingWorkspace(id: "account-2")
+        await metadataService.resumeFirstFetch()
+        try? await Task.sleep(for: .milliseconds(50))
+
+        XCTAssertTrue(model.pendingWorkspaceAuthorizations.isEmpty)
+    }
+
+    @MainActor
     func testAccountsPageViewStoreRoutesUsageDisplayChangesToAllCardRefresh() async {
         let model = makeAccountsPageModelForViewStoreTests(
             initialAccounts: [
@@ -1483,6 +1561,126 @@ final class AccountsCoordinatorTests: XCTestCase {
         XCTAssertEqual(cardIDs, ["acct-2", "acct-1"])
 
         withExtendedLifetime(cancellable) {}
+    }
+
+    @MainActor
+    func testAccountsPagePresentationDerivesPendingCardsFromUnifiedAccountStatus() {
+        let model = makeAccountsPageModelForViewStoreTests(
+            initialAccounts: [
+                makeAccountSummary(
+                    id: "acct-list",
+                    accountID: "account-list",
+                    isCurrent: true,
+                    usage: nil
+                ),
+                makeAccountSummary(
+                    id: "acct-pending",
+                    accountID: "account-pending",
+                    isCurrent: false,
+                    usage: nil,
+                    displayStatus: .pending,
+                    planType: "team",
+                    teamName: "Pending Space"
+                ),
+                makeAccountSummary(
+                    id: "acct-deactivated",
+                    accountID: "account-deactivated",
+                    isCurrent: false,
+                    usage: nil,
+                    displayStatus: .deactivated,
+                    planType: "team",
+                    teamName: "Dead Space"
+                ),
+                makeAccountSummary(
+                    id: "acct-deleted",
+                    accountID: "account-deleted",
+                    isCurrent: false,
+                    usage: nil,
+                    displayStatus: .deleted,
+                    planType: "team",
+                    teamName: "Hidden Space"
+                )
+            ]
+        )
+
+        let contentPresentation = model.makeContentPresentation()
+
+        if case .content(let ids) = contentPresentation.state {
+            XCTAssertEqual(ids, ["acct-list"])
+        } else {
+            XCTFail("Expected content state")
+        }
+        XCTAssertEqual(contentPresentation.pendingWorkspaceCards.map(\.id), ["acct-deactivated", "acct-pending"])
+        XCTAssertEqual(contentPresentation.pendingWorkspaceCards.map(\.status), [.deactivated, .pending])
+    }
+
+    @MainActor
+    func testAccountsPagePresentationHidesPendingSectionOnIOS() {
+        let model = makeAccountsPageModelForViewStoreTests(
+            runtimePlatform: .iOS,
+            initialAccounts: [
+                makeAccountSummary(
+                    id: "acct-list",
+                    accountID: "account-list",
+                    isCurrent: true,
+                    usage: nil
+                ),
+                makeAccountSummary(
+                    id: "acct-pending",
+                    accountID: "account-pending",
+                    isCurrent: false,
+                    usage: nil,
+                    displayStatus: .pending,
+                    planType: "team",
+                    teamName: "Pending Space"
+                ),
+                makeAccountSummary(
+                    id: "acct-deactivated",
+                    accountID: "account-deactivated",
+                    isCurrent: false,
+                    usage: nil,
+                    displayStatus: .deactivated,
+                    planType: "team",
+                    teamName: "Dead Space"
+                )
+            ]
+        )
+
+        let contentPresentation = model.makeContentPresentation()
+
+        if case .content(let ids) = contentPresentation.state {
+            XCTAssertEqual(ids, ["acct-list"])
+        } else {
+            XCTFail("Expected content state")
+        }
+        XCTAssertTrue(contentPresentation.pendingWorkspaceCards.isEmpty)
+        XCTAssertFalse(contentPresentation.shouldShowPendingWorkspaceSection)
+    }
+
+    @MainActor
+    func testAccountCardViewStateShowsReauthenticateButtonForExpiredSignIn() {
+        let model = makeAccountsPageModelForViewStoreTests(
+            initialAccounts: [
+                AccountSummary(
+                    id: "acct-1",
+                    label: "acct-1",
+                    email: "account-1@example.com",
+                    accountID: "account-1",
+                    planType: "team",
+                    teamName: "workspace-a",
+                    teamAlias: nil,
+                    addedAt: 1,
+                    updatedAt: 1,
+                    usage: nil,
+                    usageError: L10n.tr("error.accounts.sign_in_expired"),
+                    isCurrent: false
+                )
+            ]
+        )
+
+        let card = model.makeAccountCardViewState(forAccountID: "acct-1")
+
+        XCTAssertEqual(card?.showsReauthenticateButton, true)
     }
 
     @MainActor
@@ -1634,6 +1832,243 @@ final class AccountsCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(syncSpy.syncCallCount, 1)
         XCTAssertEqual(syncSpy.acceptedSnapshots.last?.first?.teamAlias, "Renamed")
+    }
+
+    @MainActor
+    func testAccountsPageModelManualRefreshReloadsAccountsFromStore() async throws {
+        let now: Int64 = 1_763_216_000
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [
+                    makeStoredAccount(id: "acct-1", accountID: "account-1", now: now)
+                ]
+            )
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: MultiAccountAuthRepository(
+                extractedByAccountID: [
+                    "account-1": makeExtractedAuth(accountID: "account-1"),
+                    "account-2": makeExtractedAuth(accountID: "account-2")
+                ]
+            ),
+            usageService: RecordingAccountUsageService(
+                results: [
+                    "account-2": makeUsageSnapshot(fetchedAt: now + 30, fiveHourResetAt: now + 600)
+                ]
+            ),
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let model = AccountsPageModel(
+            coordinator: coordinator,
+            manualRefreshService: StoreUpdatingAccountsManualRefreshService(
+                storeRepository: storeRepository,
+                refreshedAccounts: [
+                    makeStoredAccount(id: "acct-2", accountID: "account-2", now: now + 30)
+                ]
+            )
+        )
+
+        await model.load()
+        await model.refreshUsage()
+
+        guard case .content(let accounts) = model.state else {
+            return XCTFail("Expected refreshed accounts content state")
+        }
+
+        XCTAssertEqual(accounts.map(\.accountID), ["account-2"])
+    }
+
+    @MainActor
+    func testAccountsPageModelReauthenticateExpiredTeamAccountUsesWorkspaceLogin() async throws {
+        let now: Int64 = 1_763_216_000
+        let loginService = RecordingWorkspaceAwareChatGPTOAuthLoginService(
+            defaultTokens: ChatGPTOAuthTokens(
+                accessToken: "token-default",
+                refreshToken: "refresh-default",
+                idToken: "id-default",
+                apiKey: nil
+            ),
+            tokensByWorkspaceID: [
+                "account-1": ChatGPTOAuthTokens(
+                    accessToken: "token-new",
+                    refreshToken: "refresh-new",
+                    idToken: "id-new",
+                    apiKey: nil
+                )
+            ]
+        )
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [
+                    StoredAccount(
+                        id: "acct-1",
+                        label: "Primary",
+                        email: "account-1@example.com",
+                        accountID: "account-1",
+                        planType: "team",
+                        teamName: "workspace-a",
+                        teamAlias: nil,
+                        authJSON: .object([
+                            "tokens": .object([
+                                "access_token": .string("token-old")
+                            ])
+                        ]),
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: nil,
+                        usageError: L10n.tr("error.accounts.sign_in_expired")
+                    )
+                ]
+            )
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: TokenMappedAuthRepository(
+                extractedByAccessToken: [
+                    "token-old": ExtractedAuth(
+                        accountID: "account-1",
+                        accessToken: "token-old",
+                        email: "account-1@example.com",
+                        planType: "team",
+                        teamName: "workspace-a"
+                    ),
+                    "token-new": ExtractedAuth(
+                        accountID: "account-1",
+                        accessToken: "token-new",
+                        email: "account-1@example.com",
+                        planType: "team",
+                        teamName: "workspace-a"
+                    )
+                ]
+            ),
+            usageService: ValidatingUsageService(
+                validAccessToken: "token-new",
+                result: makeUsageSnapshot(fetchedAt: now, fiveHourResetAt: now + 300)
+            ),
+            workspaceMetadataService: StubWorkspaceMetadataService(
+                metadata: [
+                    WorkspaceMetadata(accountID: "account-1", workspaceName: "workspace-a", structure: "workspace")
+                ]
+            ),
+            chatGPTOAuthLoginService: loginService,
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let model = AccountsPageModel(coordinator: coordinator)
+
+        await model.load()
+        await model.reauthenticateAccount(id: "acct-1")
+
+        let savedStore = try storeRepository.loadStore()
+        let forcedWorkspaceIDs = await loginService.readForcedWorkspaceIDs()
+
+        XCTAssertEqual(forcedWorkspaceIDs, ["account-1"])
+        XCTAssertEqual(savedStore.accounts.first?.usageError, nil)
+        XCTAssertEqual(savedStore.accounts.first?.authJSON["tokens"]?["access_token"]?.stringValue, "token-new")
+    }
+
+    @MainActor
+    func testDeleteDeactivatedPendingAccountMarksUnifiedAccountDeleted() async throws {
+        let now: Int64 = 1_763_216_000
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [
+                    StoredAccount(
+                        id: "acct-1",
+                        label: "Primary",
+                        email: "dev@example.com",
+                        accountID: "account-1",
+                        planType: "team",
+                        teamName: "workspace-a",
+                        teamAlias: nil,
+                        authJSON: .object([
+                            "account_id": .string("account-1")
+                        ]),
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: makeUsageSnapshot(fetchedAt: now),
+                        usageError: L10n.tr("error.accounts.workspace_deactivated"),
+                        workspaceStatus: .deactivated,
+                        displayStatus: .deactivated
+                    )
+                ]
+            )
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: StubAuthRepository(),
+            usageService: CountingUsageService(result: makeUsageSnapshot(fetchedAt: now)),
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let model = AccountsPageModel(coordinator: coordinator)
+
+        await model.load()
+        await model.deletePendingWorkspace(id: "acct-1")
+
+        let savedStore = try storeRepository.loadStore()
+        XCTAssertEqual(savedStore.accounts.first?.displayStatus, .deleted)
+        XCTAssertTrue(model.makeContentPresentation().pendingWorkspaceCards.isEmpty)
+        XCTAssertTrue(model.makeAccountCardViewStates().isEmpty)
+    }
+
+    @MainActor
+    func testAccountsPageLoadHidesDeletedTeamAccounts() async {
+        let now: Int64 = 1_763_216_000
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [
+                    StoredAccount(
+                        id: "acct-1",
+                        label: "Deleted Team",
+                        email: "dev@example.com",
+                        accountID: "account-1",
+                        planType: "team",
+                        teamName: "workspace-a",
+                        teamAlias: nil,
+                        authJSON: .object([
+                            "account_id": .string("account-1")
+                        ]),
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: nil,
+                        usageError: nil,
+                        workspaceStatus: .deactivated,
+                        displayStatus: .deleted
+                    )
+                ]
+            )
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: StubAuthRepository(),
+            usageService: CountingUsageService(result: makeUsageSnapshot(fetchedAt: now)),
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let model = AccountsPageModel(coordinator: coordinator)
+
+        await model.load()
+
+        XCTAssertTrue(model.makeAccountCardViewStates().isEmpty)
+        XCTAssertTrue(model.makeContentPresentation().pendingWorkspaceCards.isEmpty)
     }
 
     @MainActor
@@ -2294,7 +2729,10 @@ final class AccountsCoordinatorTests: XCTestCase {
         await model.load()
 
         XCTAssertTrue(model.pendingWorkspaceAuthorizations.isEmpty)
-        XCTAssertNil(model.pendingWorkspaceAuthorizationError)
+        XCTAssertEqual(
+            model.pendingWorkspaceAuthorizationError,
+            "Provided authentication token is expired. Please try signing in again."
+        )
     }
 
     @MainActor
@@ -2557,7 +2995,7 @@ final class AccountsCoordinatorTests: XCTestCase {
                         authJSON: .object([
                             "account_id": .string("account-1"),
                             "tokens": .object([
-                                "access_token": .string("token-account-1")
+                                "access_token": .string("token-1")
                             ])
                         ]),
                         addedAt: now,
@@ -2593,8 +3031,8 @@ final class AccountsCoordinatorTests: XCTestCase {
         let model = AccountsPageModel(coordinator: coordinator)
 
         await model.load()
-        XCTAssertTrue(model.makeAccountCardViewStates().isEmpty)
-        XCTAssertEqual(model.makeContentPresentation().pendingWorkspaceCards.map(\.id), ["acct-1"])
+        XCTAssertEqual(model.makeAccountCardViewStates().map(\.id), ["acct-1"])
+        XCTAssertTrue(model.makeContentPresentation().pendingWorkspaceCards.isEmpty)
 
         await model.refreshUsage(forAccountID: "acct-1")
 
@@ -2698,8 +3136,8 @@ final class AccountsCoordinatorTests: XCTestCase {
         let model = AccountsPageModel(coordinator: coordinator)
 
         await model.load()
-        XCTAssertTrue(model.makeAccountCardViewStates().isEmpty)
-        XCTAssertEqual(model.makeContentPresentation().pendingWorkspaceCards.map(\.id), ["acct-1"])
+        XCTAssertEqual(model.makeAccountCardViewStates().map(\.id), ["acct-1"])
+        XCTAssertTrue(model.makeContentPresentation().pendingWorkspaceCards.isEmpty)
 
         await model.refreshUsage(forAccountID: "acct-1")
 
@@ -2715,7 +3153,7 @@ final class AccountsCoordinatorTests: XCTestCase {
     }
 
     @MainActor
-    func testAccountsPageModelDeletePendingWorkspaceDeletesDeactivatedAccount() async {
+    func testAccountsPageModelDeletePendingWorkspaceMarksDeactivatedAccountDeleted() async {
         let now: Int64 = 1_763_216_000
         let storeRepository = InMemoryAccountsStoreRepository(
             store: AccountsStore(
@@ -2773,12 +3211,12 @@ final class AccountsCoordinatorTests: XCTestCase {
         await model.deletePendingWorkspace(id: "acct-1")
 
         let accounts = try? await coordinator.listAccounts()
-        XCTAssertEqual(accounts, [])
+        XCTAssertEqual(accounts?.map(\.displayStatus), [.deleted])
         XCTAssertTrue(model.makeContentPresentation().pendingWorkspaceCards.isEmpty)
     }
 
     @MainActor
-    func testAccountsPageModelLoadDerivesOnlyDeactivatedPendingWorkspacesFromWorkspaceDirectory() async throws {
+    func testAccountsPageModelLoadShowsOnlyUnauthorizedWorkspaceCandidatesFromWorkspaceDirectory() async throws {
         let now: Int64 = 1_763_216_000
         let storeRepository = InMemoryAccountsStoreRepository(
             store: AccountsStore(
@@ -2837,8 +3275,8 @@ final class AccountsCoordinatorTests: XCTestCase {
 
         await model.load()
 
-        XCTAssertTrue(model.pendingWorkspaceAuthorizations.isEmpty)
-        XCTAssertTrue(model.makeContentPresentation().pendingWorkspaceCards.isEmpty)
+        XCTAssertEqual(model.pendingWorkspaceAuthorizations.map(\.workspaceID), ["account-2", "account-3"])
+        XCTAssertEqual(model.makeContentPresentation().pendingWorkspaceCards.map(\.id), ["account-2", "account-3"])
     }
 
     @MainActor
@@ -2901,6 +3339,82 @@ final class AccountsCoordinatorTests: XCTestCase {
         XCTAssertTrue(model.makeContentPresentation().pendingWorkspaceCards.isEmpty)
     }
 
+    @MainActor
+    func testAccountsPageModelLoadDoesNotShowDeletedTeamAccountFromWorkspaceDirectoryEntry() async throws {
+        let now: Int64 = 1_763_216_000
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [
+                    StoredAccount(
+                        id: "acct-1",
+                        label: "Deleted Team",
+                        email: "dev@example.com",
+                        accountID: "account-1",
+                        planType: "team",
+                        teamName: "workspace-a",
+                        teamAlias: nil,
+                        authJSON: .object([
+                            "account_id": .string("account-1"),
+                            "tokens": .object([
+                                "access_token": .string("token-1")
+                            ])
+                        ]),
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: makeUsageSnapshot(fetchedAt: now),
+                        usageError: nil,
+                        workspaceStatus: .deactivated,
+                        displayStatus: .deleted
+                    )
+                ],
+                workspaceDirectory: [
+                    WorkspaceDirectoryEntry(
+                        workspaceID: "account-1",
+                        workspaceName: "workspace-a",
+                        email: "dev@example.com",
+                        planType: "team",
+                        kind: .workspace,
+                        source: .deactivated,
+                        status: .deactivated,
+                        visibility: .visible,
+                        lastSeenAt: now,
+                        lastStatusCheckedAt: now
+                    )
+                ]
+            )
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: TokenMappedAuthRepository(
+                extractedByAccessToken: [
+                    "token-1": makeExtractedAuth(accountID: "account-1", planType: "team", teamName: "workspace-a")
+                ]
+            ),
+            usageService: AccountIDMappedResultUsageService(
+                resultsByAccountID: [
+                    "account-1": .failure(AppError.workspaceDeactivated)
+                ]
+            ),
+            workspaceMetadataService: StubWorkspaceMetadataService(
+                metadata: [
+                    WorkspaceMetadata(accountID: "account-1", workspaceName: "workspace-a", structure: "workspace")
+                ]
+            ),
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let model = AccountsPageModel(coordinator: coordinator)
+
+        await model.load()
+
+        XCTAssertTrue(model.makeAccountCardViewStates().isEmpty)
+        XCTAssertTrue(model.makeContentPresentation().pendingWorkspaceCards.isEmpty)
+    }
+
     func testWorkspaceMetadataCancellationPrefersFriendlyMessage() async throws {
         let message = DefaultWorkspaceMetadataService.debugPreferredUserFacingFailureMessage(
             from: [
@@ -2933,7 +3447,7 @@ final class AccountsCoordinatorTests: XCTestCase {
     }
 
     @MainActor
-    func testAccountsPageModelPendingWorkspaceRefreshDoesNotUseWorkspaceMetadataService() async {
+    func testAccountsPageModelPendingWorkspaceRefreshUsesWorkspaceMetadataServiceForUnauthorizedDiscovery() async {
         let now: Int64 = 1_763_216_000
         let metadataService = RecordingAccessTokenMappedWorkspaceMetadataService(
             metadataByAccessToken: [
@@ -3052,8 +3566,8 @@ final class AccountsCoordinatorTests: XCTestCase {
         await model.refreshPendingWorkspaceAuthorizations(from: accounts)
 
         let requestedTokens = await metadataService.readRequestedAccessTokens()
-        XCTAssertTrue(requestedTokens.isEmpty)
-        XCTAssertTrue(model.pendingWorkspaceAuthorizations.isEmpty)
+        XCTAssertEqual(requestedTokens, ["token-1", "token-2"])
+        XCTAssertEqual(model.pendingWorkspaceAuthorizations.map(\.workspaceID), ["account-3"])
         XCTAssertNil(model.pendingWorkspaceAuthorizationError)
     }
 
@@ -3112,7 +3626,8 @@ final class AccountsCoordinatorTests: XCTestCase {
         let model = AccountsPageModel(coordinator: coordinator)
 
         await model.load()
-        XCTAssertEqual(metadataService.callCount, 0)
+        XCTAssertEqual(metadataService.callCount, 1)
+        XCTAssertEqual(model.pendingWorkspaceAuthorizations.map(\.workspaceID), ["account-2"])
 
         model.syncFromBackgroundRefresh([
             AccountSummary(
@@ -3132,8 +3647,8 @@ final class AccountsCoordinatorTests: XCTestCase {
         ])
         await Task.yield()
 
-        XCTAssertEqual(metadataService.callCount, 0)
-        XCTAssertTrue(model.pendingWorkspaceAuthorizations.isEmpty)
+        XCTAssertEqual(metadataService.callCount, 1)
+        XCTAssertEqual(model.pendingWorkspaceAuthorizations.map(\.workspaceID), ["account-2"])
     }
 
     @MainActor
@@ -3392,7 +3907,7 @@ final class AccountsCoordinatorTests: XCTestCase {
         XCTAssertEqual(accounts.first?.teamName, "workspace-a")
     }
 
-    func testSyncWorkspaceDirectoryDropsActivePendingCandidatesWithoutConsentSource() async throws {
+    func testSyncWorkspaceDirectoryKeepsUnauthorizedCandidatesAndPreservesDeletedDeactivatedEntries() async throws {
         let now: Int64 = 1_763_216_000
         let metadataService = RecordingWorkspaceMetadataService(
             metadata: [
@@ -3465,17 +3980,70 @@ final class AccountsCoordinatorTests: XCTestCase {
         let entries = try await coordinator.syncWorkspaceDirectory()
         let savedStore = try storeRepository.loadStore()
 
-        XCTAssertEqual(metadataService.callCount, 0)
+        XCTAssertEqual(metadataService.callCount, 1)
         XCTAssertEqual(entries, savedStore.workspaceDirectory)
-        XCTAssertEqual(entries.map(\.workspaceID), ["account-3"])
-        XCTAssertEqual(entries.map(\.status), [.deactivated])
-        XCTAssertEqual(entries.map(\.kind), [.workspace])
-        XCTAssertEqual(entries.map(\.visibility), [.deleted])
-        XCTAssertEqual(entries.map(\.lastSeenAt), [now - 80])
-        XCTAssertEqual(entries.map(\.lastStatusCheckedAt), [now - 40])
+        XCTAssertEqual(entries.map(\.workspaceID), ["account-3", "account-2"])
+        XCTAssertEqual(entries.map(\.status), [.deactivated, .active])
+        XCTAssertEqual(entries.map(\.kind), [.workspace, .workspace])
+        XCTAssertEqual(entries.map(\.visibility), [.deleted, .visible])
+        XCTAssertEqual(entries.map(\.lastSeenAt), [now - 80, now])
+        XCTAssertEqual(entries.map(\.lastStatusCheckedAt), [now - 40, now - 50])
     }
 
-    func testSyncWorkspaceDirectoryPreservesExistingDeactivatedEntriesWithoutRemoteLookup() async throws {
+    func testSyncWorkspaceDirectoryIgnoresDeletedAccountsForDiscovery() async throws {
+        let now: Int64 = 1_763_216_000
+        let metadataService = RecordingWorkspaceMetadataService(
+            metadata: [
+                WorkspaceMetadata(accountID: "account-2", workspaceName: "ops-space", structure: "workspace")
+            ]
+        )
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [
+                    StoredAccount(
+                        id: "acct-1",
+                        label: "Deleted",
+                        email: "test@example.com",
+                        accountID: "account-1",
+                        planType: "team",
+                        teamName: "remote-space",
+                        teamAlias: nil,
+                        authJSON: .object([
+                            "account_id": .string("account-1")
+                        ]),
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: nil,
+                        usageError: nil,
+                        displayStatus: .deleted
+                    )
+                ]
+            )
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: MultiAccountAuthRepository(
+                extractedByAccountID: [
+                    "account-1": makeExtractedAuth(accountID: "account-1", planType: "team", teamName: nil)
+                ]
+            ),
+            usageService: CountingUsageService(result: makeUsageSnapshot(fetchedAt: now)),
+            workspaceMetadataService: metadataService,
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+
+        let entries = try await coordinator.syncWorkspaceDirectory()
+
+        XCTAssertTrue(entries.isEmpty)
+        XCTAssertEqual(metadataService.callCount, 0)
+    }
+
+    func testSyncWorkspaceDirectoryThrowsWhenUnauthorizedWorkspaceDiscoveryFails() async throws {
         let now: Int64 = 1_763_216_000
         let existingEntry = WorkspaceDirectoryEntry(
             workspaceID: "account-2",
@@ -3530,11 +4098,13 @@ final class AccountsCoordinatorTests: XCTestCase {
             dateProvider: FixedDateProvider(now: now)
         )
 
-        let entries = try await coordinator.syncWorkspaceDirectory()
-
-        let savedStore = try storeRepository.loadStore()
-        XCTAssertEqual(entries, [existingEntry])
-        XCTAssertEqual(savedStore.workspaceDirectory, [existingEntry])
+        do {
+            _ = try await coordinator.syncWorkspaceDirectory()
+            XCTFail("Expected syncWorkspaceDirectory to throw")
+        } catch {
+            let savedStore = try storeRepository.loadStore()
+            XCTAssertEqual(savedStore.workspaceDirectory, [existingEntry])
+        }
     }
 
     func testSyncWorkspaceDirectoryBuildsPendingEntriesFromWorkspaceMetadataAndPreservesDeletedVisibility() async throws {
@@ -3849,10 +4419,26 @@ final class AccountsCoordinatorTests: XCTestCase {
 
         let entries = try await coordinator.syncWorkspaceDirectory()
 
-        XCTAssertEqual(entries, [existingEntry])
+        XCTAssertEqual(
+            entries,
+            [
+                WorkspaceDirectoryEntry(
+                    workspaceID: "account-2",
+                    workspaceName: "ops-space",
+                    email: "test@example.com",
+                    planType: "team",
+                    kind: .workspace,
+                    source: .legacyMetadata,
+                    status: .deactivated,
+                    visibility: .deleted,
+                    lastSeenAt: now,
+                    lastStatusCheckedAt: now - 50
+                )
+            ]
+        )
     }
 
-    func testRefreshUsageStoresDeactivatedWorkspaceInDirectory() async throws {
+    func testRefreshUsageMarksDeactivatedAccountWithoutWritingWorkspaceDirectoryEntry() async throws {
         let now: Int64 = 1_763_216_000
         let storeRepository = InMemoryAccountsStoreRepository(
             store: AccountsStore(
@@ -3899,13 +4485,9 @@ final class AccountsCoordinatorTests: XCTestCase {
         _ = try await coordinator.refreshUsage(force: true)
         let savedStore = try storeRepository.loadStore()
 
-        XCTAssertEqual(savedStore.workspaceDirectory.count, 1)
-        XCTAssertEqual(savedStore.workspaceDirectory[0].workspaceID, "account-1")
-        XCTAssertEqual(savedStore.workspaceDirectory[0].workspaceName, "remote-space")
-        XCTAssertEqual(savedStore.workspaceDirectory[0].status, .deactivated)
-        XCTAssertEqual(savedStore.workspaceDirectory[0].visibility, .visible)
-        XCTAssertEqual(savedStore.workspaceDirectory[0].lastSeenAt, now)
-        XCTAssertEqual(savedStore.workspaceDirectory[0].lastStatusCheckedAt, now)
+        XCTAssertTrue(savedStore.workspaceDirectory.isEmpty)
+        XCTAssertEqual(savedStore.accounts[0].workspaceStatus, .deactivated)
+        XCTAssertEqual(savedStore.accounts[0].displayStatus, .deactivated)
     }
 
     func testImportAccountRemovesStoredWorkspaceDirectoryEntryForAuthorizedWorkspace() async throws {
@@ -4112,16 +4694,11 @@ final class AccountsCoordinatorTests: XCTestCase {
 
         await model.deletePendingWorkspace(id: "acct-2")
 
-        let savedStore = try? storeRepository.loadStore()
         let accounts = try? await coordinator.listAccounts()
         await model.refreshPendingWorkspaceAuthorizations(from: accounts ?? [])
 
-        XCTAssertEqual(accounts?.map(\.accountID), ["account-1"])
-        XCTAssertEqual(savedStore?.workspaceDirectory.count, 1)
-        XCTAssertEqual(
-            savedStore?.workspaceDirectory.first(where: { $0.workspaceID == "account-2" })?.visibility,
-            .deleted
-        )
+        XCTAssertEqual(accounts?.map(\.accountID), ["account-1", "account-2"])
+        XCTAssertEqual(accounts?.map(\.displayStatus), [.list, .deleted])
         XCTAssertTrue(model.pendingWorkspaceAuthorizations.isEmpty)
         XCTAssertEqual(model.makeContentPresentation().pendingWorkspaceCards.map(\.id), [])
     }
@@ -4540,16 +5117,14 @@ final class AccountsCoordinatorTests: XCTestCase {
         XCTAssertEqual(pullCallCount, 1)
     }
 
-    func testBackgroundRefreshPolicyForMacUsesFastCurrentSelectionRefreshAndWorkspaceHealthChecks() {
+    func testBackgroundRefreshPolicyForMacUsesThirtySecondUsageRefresh() {
         let policy = TrayMenuModel.BackgroundRefreshPolicy.forPlatform(.macOS)
 
-        XCTAssertEqual(policy.currentSelectionUsageRefreshInterval, .seconds(10))
-        XCTAssertEqual(policy.workspaceHealthCheckInterval, .seconds(600))
         XCTAssertEqual(policy.usageRefreshInterval, .seconds(30))
     }
 
     @MainActor
-    func testTrayMenuModelStartBackgroundRefreshRefreshesCurrentSelectionUsageOnIndependentTick() async {
+    func testTrayMenuModelStartBackgroundRefreshRefreshesUsageOnRecurringTick() async {
         let now: Int64 = 1_763_216_000
         let usageService = RecordingAccountUsageService(
             results: [
@@ -4591,10 +5166,8 @@ final class AccountsCoordinatorTests: XCTestCase {
             backgroundRefreshPolicy: .init(
                 initialRefreshDelay: .zero,
                 cloudReconciliationInterval: .seconds(30),
-                usageRefreshInterval: .seconds(30),
-                currentSelectionUsageRefreshInterval: .milliseconds(30),
-                workspaceHealthCheckInterval: .seconds(600),
-                refreshUsageOnRecurringTick: false,
+                usageRefreshInterval: .milliseconds(30),
+                refreshUsageOnRecurringTick: true,
                 cloudSyncMode: .pushLocalAccounts,
                 applyRemoteSelectionSwitchEffects: false
             ),
@@ -4612,7 +5185,7 @@ final class AccountsCoordinatorTests: XCTestCase {
     }
 
     @MainActor
-    func testTrayMenuModelStartBackgroundRefreshRunsWorkspaceHealthCheckOnIndependentTick() async {
+    func testTrayMenuModelStartBackgroundRefreshDoesNotRunWorkspaceHealthCheckOnRecurringTick() async {
         let now: Int64 = 1_763_216_000
         let metadataService = RecordingWorkspaceMetadataService(
             metadata: [
@@ -4665,8 +5238,6 @@ final class AccountsCoordinatorTests: XCTestCase {
                 initialRefreshDelay: .zero,
                 cloudReconciliationInterval: .seconds(30),
                 usageRefreshInterval: .seconds(30),
-                currentSelectionUsageRefreshInterval: .seconds(10),
-                workspaceHealthCheckInterval: .milliseconds(30),
                 refreshUsageOnRecurringTick: false,
                 cloudSyncMode: .pushLocalAccounts,
                 applyRemoteSelectionSwitchEffects: false
@@ -4679,7 +5250,75 @@ final class AccountsCoordinatorTests: XCTestCase {
         try? await Task.sleep(for: .milliseconds(120))
         trayModel.stopBackgroundRefresh()
 
-        XCTAssertGreaterThanOrEqual(metadataService.callCount, 1)
+        XCTAssertEqual(metadataService.callCount, 0)
+    }
+
+    @MainActor
+    func testTrayMenuModelRecurringRefreshDoesNotTriggerWorkspaceMetadataLookup() async {
+        let now: Int64 = 1_763_216_000
+        let metadataService = RecordingWorkspaceMetadataService(
+            metadata: [
+                WorkspaceMetadata(accountID: "account-1", workspaceName: "remote-space", structure: "workspace")
+            ]
+        )
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [
+                    StoredAccount(
+                        id: "acct-1",
+                        label: "acct-1",
+                        email: "account-1@example.com",
+                        accountID: "account-1",
+                        planType: "team",
+                        teamName: nil,
+                        teamAlias: nil,
+                        authJSON: .object([
+                            "account_id": .string("account-1")
+                        ]),
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: nil,
+                        usageError: nil
+                    )
+                ]
+            )
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: RemoteLookupAuthRepository(),
+            usageService: CountingUsageService(result: makeUsageSnapshot(fetchedAt: now)),
+            workspaceMetadataService: metadataService,
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let trayModel = TrayMenuModel(
+            accountsCoordinator: coordinator,
+            settingsCoordinator: SettingsCoordinator(
+                settingsRepository: TestSettingsRepository(),
+                launchAtStartupService: StubLaunchAtStartupService()
+            ),
+            cloudSyncService: nil,
+            currentAccountSelectionSyncService: nil,
+            backgroundRefreshPolicy: .init(
+                initialRefreshDelay: .zero,
+                cloudReconciliationInterval: .seconds(30),
+                usageRefreshInterval: .milliseconds(30),
+                refreshUsageOnRecurringTick: true,
+                cloudSyncMode: .pushLocalAccounts,
+                applyRemoteSelectionSwitchEffects: false
+            ),
+            dateProvider: FixedDateProvider(now: now),
+            initialAccounts: []
+        )
+
+        await trayModel.refreshNow(forceUsageRefresh: true)
+        try? await Task.sleep(for: .milliseconds(120))
+
+        XCTAssertEqual(metadataService.callCount, 0)
     }
 
     @MainActor
@@ -4734,8 +5373,6 @@ final class AccountsCoordinatorTests: XCTestCase {
                 initialRefreshDelay: .seconds(10),
                 cloudReconciliationInterval: .seconds(30),
                 usageRefreshInterval: .seconds(30),
-                currentSelectionUsageRefreshInterval: .seconds(10),
-                workspaceHealthCheckInterval: .seconds(600),
                 refreshUsageOnRecurringTick: false,
                 cloudSyncMode: .pullRemoteAccounts,
                 applyRemoteSelectionSwitchEffects: false
@@ -4769,26 +5406,31 @@ private func makeAccountSummary(
     id: String,
     accountID: String,
     isCurrent: Bool,
-    usage: UsageSnapshot?
+    usage: UsageSnapshot?,
+    displayStatus: AccountDisplayStatus = .list,
+    planType: String? = "pro",
+    teamName: String? = nil
 ) -> AccountSummary {
     AccountSummary(
         id: id,
         label: id,
         email: "\(accountID)@example.com",
         accountID: accountID,
-        planType: "pro",
-        teamName: nil,
+        planType: planType,
+        teamName: teamName,
         teamAlias: nil,
         addedAt: 1,
         updatedAt: 1,
         usage: usage,
         usageError: nil,
+        displayStatus: displayStatus,
         isCurrent: isCurrent
     )
 }
 
 @MainActor
 private func makeAccountsPageModelForViewStoreTests(
+    runtimePlatform: RuntimePlatform = .macOS,
     initialAccounts: [AccountSummary]
 ) -> AccountsPageModel {
     let coordinator = AccountsCoordinator(
@@ -4812,6 +5454,7 @@ private func makeAccountsPageModelForViewStoreTests(
 
     return AccountsPageModel(
         coordinator: coordinator,
+        runtimePlatform: runtimePlatform,
         onLocalAccountsChanged: nil,
         initialAccounts: initialAccounts
     )
@@ -5210,6 +5853,31 @@ private final class StubAccountsManualRefreshService: AccountsManualRefreshServi
         onPartialUpdate: @escaping @MainActor ([AccountSummary]) -> Void
     ) async throws -> [AccountSummary] {
         _ = onPartialUpdate
+        return []
+    }
+}
+
+private final class StoreUpdatingAccountsManualRefreshService: AccountsManualRefreshServiceProtocol, @unchecked Sendable {
+    private let storeRepository: InMemoryAccountsStoreRepository
+    private let refreshedAccounts: [StoredAccount]
+
+    init(
+        storeRepository: InMemoryAccountsStoreRepository,
+        refreshedAccounts: [StoredAccount]
+    ) {
+        self.storeRepository = storeRepository
+        self.refreshedAccounts = refreshedAccounts
+    }
+
+    func performManualRefresh(
+        onPartialUpdate: @escaping @MainActor ([AccountSummary]) -> Void
+    ) async throws -> [AccountSummary] {
+        _ = onPartialUpdate
+        try storeRepository.saveStore(
+            AccountsStore(
+                accounts: refreshedAccounts
+            )
+        )
         return []
     }
 }

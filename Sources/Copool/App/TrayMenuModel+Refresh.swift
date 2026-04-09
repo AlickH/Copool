@@ -12,7 +12,6 @@ extension TrayMenuModel {
                 failOnCloudSyncError: false
             )
             accounts = latestAccounts
-            scheduleWorkspaceMetadataRefresh(forceRemoteCheck: false)
             notice = nil
         } catch {
             notice = error.localizedDescription
@@ -33,7 +32,7 @@ extension TrayMenuModel {
         do {
             let result = try await reconcileCurrentAccountSelection(failOnError: false)
             guard result.didUpdateSelection else { return }
-            accounts = try await accountsCoordinator.listAccounts()
+            accounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
             notice = nil
         } catch {
             notice = error.localizedDescription
@@ -107,22 +106,6 @@ extension TrayMenuModel {
                 await self.refreshNow(forceUsageRefresh: true)
             }
         }
-        currentSelectionUsageRefreshTask = Task { [weak self] in
-            guard let self else { return }
-            try? await Task.sleep(for: self.backgroundRefreshPolicy.initialRefreshDelay)
-            while !Task.isCancelled {
-                try? await Task.sleep(for: self.backgroundRefreshPolicy.currentSelectionUsageRefreshInterval)
-                await self.refreshCurrentSelectionUsageNow()
-            }
-        }
-        workspaceHealthCheckTask = Task { [weak self] in
-            guard let self else { return }
-            try? await Task.sleep(for: self.backgroundRefreshPolicy.workspaceHealthCheckInterval)
-            while !Task.isCancelled {
-                self.scheduleWorkspaceMetadataRefresh(forceRemoteCheck: true)
-                try? await Task.sleep(for: self.backgroundRefreshPolicy.workspaceHealthCheckInterval)
-            }
-        }
     }
 
     func stopBackgroundRefresh() {
@@ -130,10 +113,6 @@ extension TrayMenuModel {
         cloudReconciliationTask = nil
         usageRefreshTask?.cancel()
         usageRefreshTask = nil
-        currentSelectionUsageRefreshTask?.cancel()
-        currentSelectionUsageRefreshTask = nil
-        workspaceHealthCheckTask?.cancel()
-        workspaceHealthCheckTask = nil
         workspaceMetadataRefreshTask?.cancel()
         workspaceMetadataRefreshTask = nil
         accountsSnapshotPushCancellable = nil
@@ -162,7 +141,7 @@ extension TrayMenuModel {
             )
         }
         let targetAccountIDs = usageRefreshPlanningPolicy.targetAccountIDs(
-            from: try await accountsCoordinator.listAccounts(),
+            from: try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false),
             now: now
         )
         var latestAccounts = try await refreshLocalAccounts(
@@ -174,7 +153,7 @@ extension TrayMenuModel {
         )
 
         if cloudPullResult.didUpdateAccounts {
-            latestAccounts = try await accountsCoordinator.listAccounts()
+            latestAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
         }
 
         if shouldRefreshUsage,
@@ -186,7 +165,7 @@ extension TrayMenuModel {
         if try await reconcileCurrentAccountSelection(
             failOnError: failOnCloudSyncError
         ).didUpdateSelection {
-            latestAccounts = try await accountsCoordinator.listAccounts()
+            latestAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
         }
 
         return latestAccounts
@@ -199,7 +178,7 @@ extension TrayMenuModel {
         let selectionPullResult = try await reconcileCurrentAccountSelection(
             failOnError: failOnCloudSyncError
         )
-        let latestLocalAccounts = try await accountsCoordinator.listAccounts()
+        let latestLocalAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
 
         if backgroundRefreshPolicy.cloudSyncMode == .pushLocalAccounts,
            !latestLocalAccounts.isEmpty,
@@ -208,7 +187,7 @@ extension TrayMenuModel {
         }
 
         if cloudPullResult.didUpdateAccounts || selectionPullResult.didUpdateSelection {
-            return try await accountsCoordinator.listAccounts()
+            return try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
         }
 
         return latestLocalAccounts
@@ -221,7 +200,7 @@ extension TrayMenuModel {
         targetAccountIDs: [String]?,
         onPartialUpdate: (@MainActor ([AccountSummary]) -> Void)?
     ) async throws -> [AccountSummary] {
-        let latestAccounts = try await accountsCoordinator.listAccounts()
+        let latestAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
         if forceUsageRefresh {
             let resolvedTargetAccountIDs = targetAccountIDs ?? latestAccounts.map(\.id)
             guard !resolvedTargetAccountIDs.isEmpty else {
@@ -246,23 +225,7 @@ extension TrayMenuModel {
                 await syncCurrentAccountSelectionIfNeeded(accountID: selectedAccount.accountID)
             }
         }
-        return try await accountsCoordinator.listAccounts()
-    }
-
-    func refreshCurrentSelectionUsageNow() async {
-        let latestAccounts = (try? await accountsCoordinator.listAccounts()) ?? accounts
-        guard let currentAccount = latestAccounts.first(where: \.isCurrent) else { return }
-
-        do {
-            let refreshedAccounts = try await refreshLocalAccounts(
-                forceUsageRefresh: true,
-                prefersSerialUsageRefresh: false,
-                bypassUsageThrottle: true,
-                targetAccountIDs: [currentAccount.id],
-                onPartialUpdate: nil
-            )
-            accounts = refreshedAccounts
-        } catch {}
+        return try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
     }
 
     func pullCloudAccountsIfNeeded(

@@ -1,11 +1,6 @@
 import Foundation
 
 extension AccountsPageModel {
-    private struct EffectiveAccountsOverlay {
-        let normalizedWorkspaceID: String
-        let status: WorkspaceDirectoryStatus
-    }
-
     static func makeViewState(
         accounts: [AccountSummary],
         cloudSyncAvailable: Bool
@@ -49,7 +44,7 @@ extension AccountsPageModel {
     }
 
     func applyAccounts(_ accounts: [AccountSummary]) {
-        let displayAccounts = AccountRanking.sortForDisplay(accountsWithDirectoryStatusApplied(accounts))
+        let displayAccounts = AccountRanking.sortForDisplay(accounts)
         let availableIDs = Set(displayAccounts.filter { !$0.isWorkspaceDeactivated }.map(\.id))
         let nextCollapsed = collapsedAccountIDs.intersection(availableIDs)
         if nextCollapsed != collapsedAccountIDs {
@@ -69,9 +64,6 @@ extension AccountsPageModel {
         if workspaceDirectory != entries {
             workspaceDirectory = entries
         }
-
-        guard case .content(let accounts) = state else { return }
-        applyAccounts(accounts)
     }
 
     func syncCurrentAccountSelection(accountID: String) async {
@@ -96,36 +88,6 @@ extension AccountsPageModel {
         publishLocalAccounts(accounts)
         Task { @MainActor [weak self] in
             await self?.localAccountsMutationSyncService?.syncLocalAccountsMutationNow()
-        }
-    }
-
-    private func accountsWithDirectoryStatusApplied(_ accounts: [AccountSummary]) -> [AccountSummary] {
-        let overlays = Dictionary(
-            uniqueKeysWithValues: workspaceDirectory.map {
-                (
-                    AccountIdentity.normalizedAccountID($0.workspaceID),
-                    EffectiveAccountsOverlay(
-                        normalizedWorkspaceID: AccountIdentity.normalizedAccountID($0.workspaceID),
-                        status: $0.status
-                    )
-                )
-            }
-        )
-
-        return accounts.map { account in
-            let normalizedWorkspaceID = AccountIdentity.normalizedAccountID(account.accountID)
-            guard let overlay = overlays[normalizedWorkspaceID] else { return account }
-
-            var account = account
-            switch overlay.status {
-            case .unknown:
-                break
-            case .active:
-                account.workspaceStatus = .active
-            case .deactivated:
-                account.workspaceStatus = .deactivated
-            }
-            return account
         }
     }
 }

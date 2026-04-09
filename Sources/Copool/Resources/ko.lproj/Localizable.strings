@@ -411,5 +411,8 @@
 "accounts.pending.error.tag" = "인증";
 "accounts.pending.error.title" = "워크스페이스 목록을 가져올 수 없음";
 "accounts.pending.error.hint" = "이 계정 인증을 새로고침하거나 다시 가져온 뒤 다시 시도하세요.";
+"accounts.card.sign_in_again" = "다시 로그인";
 "accounts.card.status.deactivated" = "비활성화됨";
 "accounts.notice.workspace_authorized_format" = "워크스페이스 인증 완료: %@";
+"error.accounts.sign_in_expired" = "로그인이 만료되었습니다. 다시 로그인해 주세요.";
+"error.accounts.workspace_deactivated" = "이 워크스페이스는 현재 비활성화되었습니다.";

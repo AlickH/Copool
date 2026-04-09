@@ -193,11 +193,13 @@ struct AccountCardBottomOverlay: View {
     let switching: Bool
     let refreshing: Bool
     let showsRefreshButton: Bool
+    let showsReauthenticateButton: Bool
     let isRefreshEnabled: Bool
     let usageError: String?
     let palette: AccountCardPalette
     let onSwitch: () -> Void
     let onRefresh: () -> Void
+    let onReauthenticate: () -> Void
 
     var body: some View {
         if !isCollapsed {
@@ -214,10 +216,12 @@ struct AccountCardBottomOverlay: View {
                     switching: switching,
                     refreshing: refreshing,
                     showsRefreshButton: showsRefreshButton,
+                    showsReauthenticateButton: showsReauthenticateButton,
                     isRefreshEnabled: isRefreshEnabled,
                     palette: palette,
                     onSwitch: onSwitch,
-                    onRefresh: onRefresh
+                    onRefresh: onRefresh,
+                    onReauthenticate: onReauthenticate
                 )
             }
             .padding(8)
@@ -343,39 +347,67 @@ private struct AccountRefreshButton: View {
     }
 }
 
+private struct AccountReauthenticateButton: View {
+    let onReauthenticate: () -> Void
+
+    var body: some View {
+        Button {
+            onReauthenticate()
+        } label: {
+            Label(L10n.tr("accounts.card.sign_in_again"), systemImage: "person.crop.circle.badge.exclamationmark")
+                .font(.caption.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        }
+        .copoolActionButtonStyle(
+            prominent: true,
+            tint: .orange,
+            density: .compact,
+            iOSStyle: .liquidGlass
+        )
+        .accessibilityLabel(Text(L10n.tr("accounts.card.sign_in_again")))
+    }
+}
+
 private struct AccountTrailingActionCluster: View {
     let isCurrent: Bool
     let switching: Bool
     let refreshing: Bool
     let showsRefreshButton: Bool
+    let showsReauthenticateButton: Bool
     let isRefreshEnabled: Bool
     let palette: AccountCardPalette
     let onSwitch: () -> Void
     let onRefresh: () -> Void
+    let onReauthenticate: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            if isCurrent {
-                AccountTagView(
-                    text: L10n.tr("accounts.card.current"),
-                    backgroundColor: palette.toneColor.opacity(0.24),
-                    foregroundColor: palette.toneColor
-                )
-                .frame(height: AccountCardOverlayLayout.compactActionControlHeight, alignment: .bottom)
-            } else {
-                AccountSwitchButton(
-                    switching: switching,
-                    labelStyle: .iconOnly,
-                    onSwitch: onSwitch
-                )
-            }
+        if showsReauthenticateButton {
+            AccountReauthenticateButton(onReauthenticate: onReauthenticate)
+        } else {
+            HStack(spacing: 8) {
+                if isCurrent {
+                    AccountTagView(
+                        text: L10n.tr("accounts.card.current"),
+                        backgroundColor: palette.toneColor.opacity(0.24),
+                        foregroundColor: palette.toneColor
+                    )
+                    .frame(height: AccountCardOverlayLayout.compactActionControlHeight, alignment: .bottom)
+                } else {
+                    AccountSwitchButton(
+                        switching: switching,
+                        labelStyle: .iconOnly,
+                        onSwitch: onSwitch
+                    )
+                }
 
-            if showsRefreshButton {
-                AccountRefreshButton(
-                    refreshing: refreshing,
-                    isEnabled: isRefreshEnabled,
-                    onRefresh: onRefresh
-                )
+                if showsRefreshButton {
+                    AccountRefreshButton(
+                        refreshing: refreshing,
+                        isEnabled: isRefreshEnabled,
+                        onRefresh: onRefresh
+                    )
+                }
             }
         }
     }

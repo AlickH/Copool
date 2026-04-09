@@ -411,5 +411,8 @@
 "accounts.pending.error.tag" = "認証";
 "accounts.pending.error.title" = "ワークスペース一覧を取得できません";
 "accounts.pending.error.hint" = "このアカウントの認証を更新または再取り込みしてから、再試行してください。";
+"accounts.card.sign_in_again" = "再ログイン";
 "accounts.card.status.deactivated" = "無効化済み";
 "accounts.notice.workspace_authorized_format" = "ワークスペースを認証しました: %@";
+"error.accounts.sign_in_expired" = "ログインの有効期限が切れました。再度ログインしてください。";
+"error.accounts.workspace_deactivated" = "このワークスペースは現在無効です。";

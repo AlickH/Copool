@@ -15,6 +15,7 @@ struct RemoteProxyAccountsPayloadBuilder {
             do {
                 let store = try decodeAccountsStore(from: path)
                 mergeAccounts(from: store.accounts, into: &mergedStore)
+                mergeCurrentSelection(from: store.currentSelection, accounts: store.accounts, into: &mergedStore)
                 let usable = store.accounts.filter(isProxyUsable(account:)).count
                 loadDiagnostics.append("\(path.path): total=\(store.accounts.count), usable=\(usable)")
             } catch {
@@ -66,6 +67,31 @@ struct RemoteProxyAccountsPayloadBuilder {
             return incoming.updatedAt > existing.updatedAt ? incoming : existing
         }
         return existing
+    }
+
+    private func mergeCurrentSelection(
+        from incoming: CurrentAccountSelection?,
+        accounts: [StoredAccount],
+        into merged: inout AccountsStore
+    ) {
+        guard let incoming else { return }
+        guard selectionMatchesAnyAccount(incoming, accounts: accounts) else { return }
+
+        guard let existing = merged.currentSelection else {
+            merged.currentSelection = incoming
+            return
+        }
+
+        if incoming.selectedAt >= existing.selectedAt {
+            merged.currentSelection = incoming
+        }
+    }
+
+    private func selectionMatchesAnyAccount(
+        _ selection: CurrentAccountSelection,
+        accounts: [StoredAccount]
+    ) -> Bool {
+        accounts.contains { AccountIdentity.matches(selection: selection, account: $0) }
     }
 
     private func encodeRemoteCompatibleStore(_ store: AccountsStore) throws -> Data {

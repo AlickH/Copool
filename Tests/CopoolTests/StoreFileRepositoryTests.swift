@@ -430,6 +430,48 @@ final class StoreFileRepositoryTests: XCTestCase {
         XCTAssertEqual(merged.accounts[0].usage, remoteUsage)
     }
 
+    func testCloudKitAccountsStoreMergePreservesDeletedDisplayStatus() {
+        let localAccount = StoredAccount(
+            id: "local-id",
+            label: "Local",
+            email: "local@example.com",
+            accountID: "account-1",
+            planType: "team",
+            teamName: "Hidden Space",
+            teamAlias: nil,
+            authJSON: .object([:]),
+            addedAt: 1,
+            updatedAt: 100,
+            usage: nil,
+            usageError: nil,
+            displayStatus: .deleted
+        )
+        let remoteAccount = StoredAccount(
+            id: "remote-id",
+            label: "Remote",
+            email: "local@example.com",
+            accountID: "account-1",
+            planType: "team",
+            teamName: "Hidden Space",
+            teamAlias: nil,
+            authJSON: .object([:]),
+            addedAt: 1,
+            updatedAt: 200,
+            usage: nil,
+            usageError: nil,
+            displayStatus: .list
+        )
+
+        let merged = CloudKitAccountsStoreMerge.applyingRemoteSnapshot(
+            [remoteAccount],
+            remoteSyncedAt: 200,
+            to: AccountsStore(accounts: [localAccount])
+        )
+
+        XCTAssertEqual(merged.accounts.count, 1)
+        XCTAssertEqual(merged.accounts[0].displayStatus, .deleted)
+    }
+
     func testCloudKitAccountsStoreMergePrefersSuccessfulUsageOverNewerRemoteUsageError() {
         let localUsage = UsageSnapshot(
             fetchedAt: 200,

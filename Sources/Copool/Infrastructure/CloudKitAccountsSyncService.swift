@@ -273,8 +273,16 @@ enum CloudKitAccountsStoreMerge {
         merged.usage = usageWinner.usage
         merged.usageError = usageWinner.usageError
         merged.usageStateUpdatedAt = usageWinner.usageStateUpdatedAt
+        merged.displayStatus = preferredDisplayStatus(local: local, remote: remote)
         merged.updatedAt = max(local.updatedAt, remote.updatedAt)
         return merged
+    }
+
+    private static func preferredDisplayStatus(local: StoredAccount, remote: StoredAccount) -> AccountDisplayStatus {
+        if local.displayStatus == .deleted || remote.displayStatus == .deleted {
+            return .deleted
+        }
+        return remote.updatedAt >= local.updatedAt ? remote.displayStatus : local.displayStatus
     }
 
     private static func preferredMetadataValue(primary: String?, fallback: String?) -> String? {

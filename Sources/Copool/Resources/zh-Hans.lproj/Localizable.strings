@@ -255,7 +255,9 @@
 "error.accounts.account_not_found_for_update" = "找不到要更新的账号";
 "error.accounts.account_not_found_for_switch" = "找不到要切换的账号";
 "error.accounts.add_account_timeout" = "等待浏览器登录完成超时，请重试";
+"error.accounts.sign_in_expired" = "登录已失效，请重新登录。";
 "error.accounts.workspace_deactivated" = "这个工作区已停用，无法导入。";
+"accounts.card.sign_in_again" = "登录";
 
 "error.store.read_failed_format" = "读取账号存储失败: %@";
 "error.store.serialize_failed_format" = "序列化账号存储失败: %@";

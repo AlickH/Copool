@@ -65,8 +65,10 @@ struct RootScene: View {
         .onChange(of: chromeStore.localeIdentifier) { _, value in
             L10n.setLocale(identifier: value)
         }
-        .onReceive(trayModel.$accounts.removeDuplicates()) { accounts in
-            accountsModel.syncFromBackgroundRefresh(accounts)
+        .onReceive(trayModel.$accounts.removeDuplicates()) { _ in
+            Task {
+                await accountsModel.reloadFromLocalStoreAfterExternalMutation()
+            }
         }
         .onReceive(trayModel.$remoteUsageRefreshingAccountIDs.removeDuplicates()) { accountIDs in
             accountsModel.syncRemoteUsageRefreshActivity(refreshingAccountIDs: accountIDs)
@@ -78,7 +80,7 @@ struct RootScene: View {
         .task {
             #if os(iOS)
             await trayModel.reconcileCloudStateNow()
-            accountsModel.syncFromBackgroundRefresh(trayModel.accounts)
+            await accountsModel.reloadFromLocalStoreAfterExternalMutation()
             #endif
             await accountsModel.loadIfNeeded()
         }

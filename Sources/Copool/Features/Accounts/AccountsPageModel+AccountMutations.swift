@@ -66,6 +66,48 @@ extension AccountsPageModel {
         }
     }
 
+    func reauthenticateAccount(id: String) async {
+        guard runtimePlatform == .macOS else {
+            notice = NoticeMessage(style: .error, text: PlatformCapabilities.unsupportedOperationMessage)
+            return
+        }
+        guard addAccountTask == nil else { return }
+        guard case .content(let accounts) = state,
+              let account = accounts.first(where: { $0.id == id }) else {
+            return
+        }
+
+        isAdding = true
+        let task = Task { [coordinator] in
+            if account.shouldDisplayWorkspaceTag, let workspaceName = account.displayTeamName {
+                return try await coordinator.authorizeWorkspaceViaLogin(
+                    workspaceID: account.accountID,
+                    workspaceName: workspaceName,
+                    customLabel: nil
+                )
+            }
+            return try await coordinator.addAccountViaLogin(customLabel: nil)
+        }
+        addAccountTask = task
+        defer {
+            addAccountTask = nil
+            isAdding = false
+        }
+
+        do {
+            let imported = try await task.value
+            let accounts = try await coordinator.listAccounts()
+            applyAccounts(accounts)
+            await refreshPendingWorkspaceAuthorizations(from: accounts, preferredSourceAccountID: imported.id)
+            publishAndSyncLocalAccountsMutation(accounts)
+            notice = NoticeMessage(style: .success, text: L10n.tr("accounts.notice.imported_format", imported.label))
+        } catch is CancellationError {
+            notice = NoticeMessage(style: .error, text: L10n.tr("error.oauth.request_cancelled"))
+        } catch {
+            notice = NoticeMessage(style: .error, text: error.localizedDescription)
+        }
+    }
+
     func cancelAddAccount() {
         authFlowLogger.log("AccountsPageModel.cancelAddAccount requested")
         AuthFlowDebugLog.write("AccountsPageAuthFlow", "AccountsPageModel.cancelAddAccount requested")

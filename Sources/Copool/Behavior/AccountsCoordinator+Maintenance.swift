@@ -6,10 +6,12 @@ extension AccountsCoordinator {
         Logger(subsystem: "Copool", category: "AccountsAuthFlow")
     }
 
-    func listAccounts() async throws -> [AccountSummary] {
+    func listAccounts(refreshWorkspaceMetadata: Bool = true) async throws -> [AccountSummary] {
         var store = try storeRepository.loadStore()
         let didReconcile = Self.reconcileStoredAccountMetadata(in: &store, authRepository: authRepository)
-        let didEnrich = try await enrichStoredWorkspaceMetadataIfNeeded(in: &store, forceRemoteCheck: false)
+        let didEnrich = refreshWorkspaceMetadata
+            ? try await enrichStoredWorkspaceMetadataIfNeeded(in: &store, forceRemoteCheck: false)
+            : false
         if didReconcile || didEnrich {
             try storeRepository.saveStore(store)
         }
@@ -71,6 +73,7 @@ extension AccountsCoordinator {
         }
 
         let eligibleAccounts = try store.accounts.compactMap { account -> (StoredAccount, ExtractedAuth)? in
+            guard account.displayStatus == .list else { return nil }
             let extracted = try authRepository.extractAuth(from: account.authJSON)
             guard shouldLookupRemoteWorkspaceMetadata(extracted: extracted) else { return nil }
             return (account, extracted)
@@ -81,7 +84,9 @@ extension AccountsCoordinator {
 
         let now = dateProvider.unixSecondsNow()
         let authorizedWorkspaceIDs = Set(
-            store.accounts.map { AccountIdentity.normalizedAccountID($0.accountID) }
+            store.accounts
+                .filter { $0.displayStatus == .list }
+                .map { AccountIdentity.normalizedAccountID($0.accountID) }
         )
         var nextEntriesByID = Dictionary(
             uniqueKeysWithValues: store.workspaceDirectory.compactMap { entry -> (String, WorkspaceDirectoryEntry)? in
@@ -95,9 +100,11 @@ extension AccountsCoordinator {
         var discoveredWorkspacesByID: [String: (metadata: WorkspaceMetadata, sourceAccount: StoredAccount)] = [:]
 
         for (sourceAccount, extracted) in eligibleAccounts {
+            try Task.checkCancellation()
             let metadata = try await workspaceMetadataService.fetchWorkspaceMetadata(
                 accessToken: extracted.accessToken
             )
+            try Task.checkCancellation()
 
             for workspace in metadata {
                 let normalizedWorkspaceID = AccountIdentity.normalizedAccountID(workspace.accountID)
@@ -222,6 +229,7 @@ extension AccountsCoordinator {
         let currentAccountKey = authRepository.currentAuthAccountKey()
         let targetIDSet = accountIDs.map(Set.init)
         let refreshTargets = snapshot.accounts.filter { account in
+            guard account.displayStatus != .deleted, account.displayStatus != .pending else { return false }
             guard let targetIDSet else { return true }
             return targetIDSet.contains(account.id)
         }
@@ -448,6 +456,7 @@ extension AccountsCoordinator {
 
         for index in store.accounts.indices {
             let storedAccount = store.accounts[index]
+            guard storedAccount.displayStatus != .deleted else { continue }
             let extracted = try authRepository.extractAuth(from: storedAccount.authJSON)
             guard shouldLookupRemoteWorkspaceMetadata(extracted: extracted) else { continue }
             if !forceRemoteCheck,
@@ -537,6 +546,9 @@ extension AccountsCoordinator {
         }
             account.email = refreshed.extractedAuth.email ?? account.email
             account.workspaceStatus = .active
+            if account.displayStatus != .deleted {
+                account.displayStatus = .list
+            }
             account.principalID = refreshed.extractedAuth.principalID
             persistCurrentAuthIfNeeded(
                 refreshed.authJSON,
@@ -547,9 +559,12 @@ extension AccountsCoordinator {
         } catch {
             if let deactivatedError = AppError.workspaceDeactivatedIfMatched(error) {
                 account.workspaceStatus = .deactivated
+                if account.displayStatus != .deleted {
+                    account.displayStatus = .deactivated
+                }
                 account.usageError = deactivatedError.localizedDescription
             } else {
-                account.usageError = error.localizedDescription
+                account.usageError = userFacingUsageErrorMessage(for: error)
             }
             account.usageStateUpdatedAt = now
         }
@@ -576,6 +591,7 @@ extension AccountsCoordinator {
             merged.usage = refreshed.usage
             merged.usageError = refreshed.usageError
             merged.workspaceStatus = refreshed.workspaceStatus
+            merged.displayStatus = refreshed.displayStatus
             merged.principalID = refreshed.principalID
             return merged
         }
@@ -589,32 +605,6 @@ extension AccountsCoordinator {
     ) {
         let normalizedWorkspaceID = AccountIdentity.normalizedAccountID(account.accountID)
         guard !normalizedWorkspaceID.isEmpty else { return }
-
-        if account.workspaceStatus == .deactivated {
-            let existingIndex = store.workspaceDirectory.firstIndex {
-                AccountIdentity.normalizedAccountID($0.workspaceID) == normalizedWorkspaceID
-            }
-            let existingEntry = existingIndex.map { store.workspaceDirectory[$0] }
-            let entry = WorkspaceDirectoryEntry(
-                workspaceID: account.accountID,
-                workspaceName: WorkspaceDisplayName.normalized(from: account.teamName),
-                email: account.email,
-                planType: account.planType,
-                kind: workspaceDirectoryKind(for: account),
-                source: .deactivated,
-                status: .deactivated,
-                visibility: existingEntry?.visibility ?? .visible,
-                lastSeenAt: account.updatedAt,
-                lastStatusCheckedAt: account.updatedAt
-            )
-
-            if let existingIndex {
-                store.workspaceDirectory[existingIndex] = entry
-            } else {
-                store.workspaceDirectory.append(entry)
-            }
-            return
-        }
 
         store.workspaceDirectory.removeAll {
             AccountIdentity.normalizedAccountID($0.workspaceID) == normalizedWorkspaceID
@@ -679,7 +669,15 @@ extension AccountsCoordinator {
         let message = error.localizedDescription.lowercased()
         return message.contains("provided authentication token is expired")
             || message.contains("token_expired")
+            || message.contains("refresh token has already been used")
             || message.contains("signing in again")
+    }
+
+    private static func userFacingUsageErrorMessage(for error: Error) -> String {
+        if isExpiredAuthenticationError(error) {
+            return L10n.tr("error.accounts.sign_in_expired")
+        }
+        return error.localizedDescription
     }
 
     private static func persistCurrentAuthIfNeeded(
@@ -824,7 +822,9 @@ extension AccountsCoordinator {
         let now = dateProvider.unixSecondsNow()
         let normalizedAuthorizedWorkspaceID = AccountIdentity.normalizedAccountID(authorizedWorkspaceID)
         let authorizedWorkspaceIDs = Set(
-            store.accounts.map { AccountIdentity.normalizedAccountID($0.accountID) }
+            store.accounts
+                .filter { $0.displayStatus == .list }
+                .map { AccountIdentity.normalizedAccountID($0.accountID) }
         )
 
         var nextEntriesByID = Dictionary(

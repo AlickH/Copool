@@ -23,6 +23,7 @@ struct AccountCardViewState: Equatable, Identifiable {
     let switching: Bool
     let refreshing: Bool
     let showsRefreshButton: Bool
+    let showsReauthenticateButton: Bool
     let isRefreshEnabled: Bool
     let isUsageRefreshActive: Bool
     let usageProgressDisplayMode: UsageProgressDisplayMode
@@ -36,6 +37,7 @@ struct AccountCardViewState: Equatable, Identifiable {
             && lhs.switching == rhs.switching
             && lhs.refreshing == rhs.refreshing
             && lhs.showsRefreshButton == rhs.showsRefreshButton
+            && lhs.showsReauthenticateButton == rhs.showsReauthenticateButton
             && lhs.isRefreshEnabled == rhs.isRefreshEnabled
             && lhs.isUsageRefreshActive == rhs.isUsageRefreshActive
             && lhs.usageProgressDisplayMode == rhs.usageProgressDisplayMode
@@ -49,6 +51,7 @@ struct AccountCardViewState: Equatable, Identifiable {
             && lhs.account.usage == rhs.account.usage
             && lhs.account.usageError == rhs.account.usageError
             && lhs.account.workspaceStatus == rhs.account.workspaceStatus
+            && lhs.account.displayStatus == rhs.account.displayStatus
             && lhs.account.isCurrent == rhs.account.isCurrent
     }
 }
@@ -121,6 +124,7 @@ extension AccountsPageModel {
             switching: switchingAccountID == account.id,
             refreshing: isAccountRefreshing(account.id),
             showsRefreshButton: runtimePlatform == .macOS,
+            showsReauthenticateButton: account.usageError == L10n.tr("error.accounts.sign_in_expired"),
             isRefreshEnabled: canRefreshAccount(account.id),
             isUsageRefreshActive: isUsageRefreshActive(forAccountID: account.id),
             usageProgressDisplayMode: usageProgressDisplayMode
@@ -132,7 +136,7 @@ extension AccountsPageModel {
         locale: Locale = .autoupdatingCurrent
     ) -> AccountCardViewState? {
         guard case .content(let accounts) = state else { return nil }
-        guard let account = accounts.first(where: { $0.id == accountID && !$0.isWorkspaceDeactivated }) else {
+        guard let account = accounts.first(where: { $0.id == accountID && $0.isVisibleInMainList }) else {
             return nil
         }
         return makeAccountCardViewState(for: account, locale: locale)
@@ -141,17 +145,25 @@ extension AccountsPageModel {
     func makeAccountCardViewStates(locale: Locale = .autoupdatingCurrent) -> [AccountCardViewState] {
         guard case .content(let accounts) = state else { return [] }
         return accounts
-            .filter { !$0.isWorkspaceDeactivated }
+            .filter(\.isVisibleInMainList)
             .map { makeAccountCardViewState(for: $0, locale: locale) }
     }
 
     func makeContentPresentation() -> AccountsPageContentPresentation {
         let contentState = state.mapContent { accounts in
             accounts
-                .filter { !$0.isWorkspaceDeactivated }
+                .filter(\.isVisibleInMainList)
                 .map(\.id)
         }
-        let deactivatedAccountCards = currentDeactivatedAccountPendingCards()
+        if runtimePlatform == .iOS {
+            return AccountsPageContentPresentation(
+                state: contentState,
+                pendingWorkspaceCards: [],
+                pendingWorkspaceError: nil,
+                isOverviewMode: areAllAccountsCollapsed
+            )
+        }
+        let accountPendingCards = currentPendingCards()
         let pendingAuthorizationCards = pendingWorkspaceAuthorizations.map { candidate in
             PendingWorkspaceAuthorizationCardViewState(
                 id: candidate.id,
@@ -164,7 +176,7 @@ extension AccountsPageModel {
             )
         }
         let pendingCards = PendingWorkspaceCardRules.sortedForDisplay(
-            deactivatedAccountCards + pendingAuthorizationCards
+            accountPendingCards + pendingAuthorizationCards
         )
         let pendingError = pendingCards.isEmpty ? nil : pendingWorkspaceAuthorizationError
         return AccountsPageContentPresentation(
@@ -182,17 +194,17 @@ extension AccountsPageModel {
         )
     }
 
-    private func currentDeactivatedAccountPendingCards() -> [PendingWorkspaceAuthorizationCardViewState] {
+    private func currentPendingCards() -> [PendingWorkspaceAuthorizationCardViewState] {
         guard case .content(let accounts) = state else { return [] }
         return accounts.compactMap { account in
-            guard account.isWorkspaceDeactivated else { return nil }
+            guard account.isPendingDisplay || account.isWorkspaceDeactivated else { return nil }
             return PendingWorkspaceAuthorizationCardViewState(
                 id: account.id,
                 workspaceID: account.accountID,
                 workspaceName: account.displayTeamName ?? account.teamName ?? account.label,
                 email: account.email,
                 planType: account.planType ?? account.usage?.planType,
-                status: .deactivated,
+                status: account.isWorkspaceDeactivated ? .deactivated : .pending,
                 authorizing: false
             )
         }

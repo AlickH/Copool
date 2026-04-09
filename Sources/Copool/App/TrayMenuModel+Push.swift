@@ -74,7 +74,7 @@ extension TrayMenuModel {
         do {
             let pullResult = try await pullCloudAccountsForPushNotification()
             guard pullResult.didUpdateAccounts else { return }
-            accounts = try await accountsCoordinator.listAccounts()
+            accounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
             notice = nil
         } catch {
             notice = error.localizedDescription
@@ -82,7 +82,7 @@ extension TrayMenuModel {
     }
 
     func applyRemoteSelectionSwitchEffects(accountKey: String) async throws {
-        let accounts = try await accountsCoordinator.listAccounts()
+        let accounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
         let matchingAccount = accounts.first(where: { $0.accountKey == accountKey })
             ?? accounts.first(where: \.isCurrent)
         guard let matchingAccount else { return }
@@ -93,7 +93,7 @@ extension TrayMenuModel {
         do {
             let result = try await pullCurrentSelectionForPushNotification()
             guard result.didUpdateSelection else { return }
-            accounts = try await accountsCoordinator.listAccounts()
+            accounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
             notice = nil
         } catch {
             notice = error.localizedDescription

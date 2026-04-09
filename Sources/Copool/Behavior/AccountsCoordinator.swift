@@ -122,6 +122,19 @@ actor AccountsCoordinator {
         return toSummary(store.accounts[index], currentAccountKey: authRepository.currentAuthAccountKey())
     }
 
+    func updateAccountDisplayStatus(id: String, status: AccountDisplayStatus) throws -> AccountSummary {
+        var store = try storeRepository.loadStore()
+        guard let index = store.accounts.firstIndex(where: { $0.id == id }) else {
+            throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_update"))
+        }
+
+        store.accounts[index].displayStatus = status
+        store.accounts[index].updatedAt = dateProvider.unixSecondsNow()
+        try storeRepository.saveStore(store)
+
+        return toSummary(store.accounts[index], currentAccountKey: authRepository.currentAuthAccountKey())
+    }
+
     func switchAccount(id: String) throws {
         let store = try storeRepository.loadStore()
         guard let account = store.accounts.first(where: { $0.id == id }) else {

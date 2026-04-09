@@ -11,17 +11,10 @@ extension AccountsPageModel {
         defer { isManualRefreshing = false }
 
         do {
-            let accounts: [AccountSummary]
             if let manualRefreshService {
-                accounts = try await manualRefreshService.performManualRefresh(
-                    onPartialUpdate: { [weak self] accounts in
-                        guard let self else { return }
-                        self.applyAccounts(accounts)
-                        self.publishLocalAccounts(accounts)
-                    }
-                )
+                _ = try await manualRefreshService.performManualRefresh(onPartialUpdate: { _ in })
             } else {
-                accounts = try await coordinator.refreshUsage(
+                _ = try await coordinator.refreshUsage(
                     force: true,
                     onPartialUpdate: { [weak self] accounts in
                         guard let self else { return }
@@ -32,9 +25,12 @@ extension AccountsPageModel {
                     }
                 )
             }
+            let accounts = try await coordinator.listAccounts()
             applyAccounts(accounts)
             await refreshPendingWorkspaceAuthorizations(from: accounts)
-            publishLocalAccounts(accounts)
+            if manualRefreshService == nil {
+                publishLocalAccounts(accounts)
+            }
             let noticeKey = manualRefreshService == nil
                 ? "accounts.notice.usage_refreshed"
                 : "accounts.notice.accounts_refreshed"

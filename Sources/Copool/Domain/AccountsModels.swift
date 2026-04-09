@@ -5,6 +5,13 @@ enum AccountWorkspaceStatus: String, Codable, Equatable {
     case deactivated
 }
 
+enum AccountDisplayStatus: String, Codable, Equatable {
+    case list
+    case pending
+    case deactivated
+    case deleted
+}
+
 enum WorkspaceDirectoryKind: String, Codable, Equatable {
     case workspace
     case personal
@@ -229,6 +236,7 @@ struct StoredAccount: Codable, Equatable, Identifiable {
     var usageError: String?
     var usageStateUpdatedAt: Int64 = 0
     var workspaceStatus: AccountWorkspaceStatus = .active
+    var displayStatus: AccountDisplayStatus = .list
     var principalID: String? = nil
 
     enum CodingKeys: String, CodingKey {
@@ -246,6 +254,7 @@ struct StoredAccount: Codable, Equatable, Identifiable {
         case usageError
         case usageStateUpdatedAt
         case workspaceStatus
+        case displayStatus
         case principalID = "principalId"
     }
 
@@ -268,6 +277,7 @@ struct StoredAccount: Codable, Equatable, Identifiable {
         usageError: String?,
         usageStateUpdatedAt: Int64? = nil,
         workspaceStatus: AccountWorkspaceStatus = .active,
+        displayStatus: AccountDisplayStatus = .list,
         principalID: String? = nil
     ) {
         self.id = id
@@ -286,6 +296,7 @@ struct StoredAccount: Codable, Equatable, Identifiable {
             ?? usage?.fetchedAt
             ?? (usageError == nil ? 0 : updatedAt)
         self.workspaceStatus = workspaceStatus
+        self.displayStatus = displayStatus
         self.principalID = principalID
     }
 
@@ -307,6 +318,8 @@ struct StoredAccount: Codable, Equatable, Identifiable {
             ?? usage?.fetchedAt
             ?? (usageError == nil ? 0 : updatedAt)
         workspaceStatus = try container.decodeIfPresent(AccountWorkspaceStatus.self, forKey: .workspaceStatus) ?? .active
+        displayStatus = try container.decodeIfPresent(AccountDisplayStatus.self, forKey: .displayStatus)
+            ?? (workspaceStatus == .deactivated ? .deactivated : .list)
         principalID = try container.decodeIfPresent(String.self, forKey: .principalID)
     }
 }
@@ -324,6 +337,7 @@ struct AccountSummary: Equatable, Identifiable {
     var usage: UsageSnapshot?
     var usageError: String?
     var workspaceStatus: AccountWorkspaceStatus = .active
+    var displayStatus: AccountDisplayStatus = .list
     var isCurrent: Bool
     var principalID: String? = nil
 
@@ -360,7 +374,22 @@ struct AccountSummary: Equatable, Identifiable {
     }
 
     var isWorkspaceDeactivated: Bool {
-        workspaceStatus == .deactivated
+        if displayStatus == .deleted {
+            return false
+        }
+        return displayStatus == .deactivated || workspaceStatus == .deactivated
+    }
+
+    var isPendingDisplay: Bool {
+        displayStatus == .pending
+    }
+
+    var isHidden: Bool {
+        displayStatus == .deleted
+    }
+
+    var isVisibleInMainList: Bool {
+        displayStatus == .list
     }
 }
 
@@ -382,6 +411,7 @@ extension AccountsStore {
                 usage: account.usage,
                 usageError: account.usageError,
                 workspaceStatus: account.workspaceStatus,
+                displayStatus: account.displayStatus,
                 isCurrent: resolvedCurrentAccountKey == account.accountKey,
                 principalID: account.principalID
             )

@@ -4,6 +4,7 @@ struct AccountCardView: View {
     let card: AccountCardViewState
     let onSwitch: () -> Void
     let onRefresh: () -> Void
+    let onReauthenticate: () -> Void
     let onDelete: () -> Void
 
     @State private var isHoveringCollapsedSwitch = false
@@ -13,11 +14,13 @@ struct AccountCardView: View {
         card: AccountCardViewState,
         onSwitch: @escaping () -> Void,
         onRefresh: @escaping () -> Void,
+        onReauthenticate: @escaping () -> Void,
         onDelete: @escaping () -> Void
     ) {
         self.card = card
         self.onSwitch = onSwitch
         self.onRefresh = onRefresh
+        self.onReauthenticate = onReauthenticate
         self.onDelete = onDelete
     }
 
@@ -124,11 +127,13 @@ struct AccountCardView: View {
                 switching: card.switching,
                 refreshing: card.refreshing,
                 showsRefreshButton: card.showsRefreshButton,
+                showsReauthenticateButton: card.showsReauthenticateButton,
                 isRefreshEnabled: card.isRefreshEnabled,
                 usageError: card.isUsageRefreshActive ? nil : card.account.usageError,
                 palette: palette,
                 onSwitch: onSwitch,
-                onRefresh: onRefresh
+                onRefresh: onRefresh,
+                onReauthenticate: onReauthenticate
             )
         }
         .animation(AccountCardMorphRules.animation, value: card.isCollapsed)

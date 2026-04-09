@@ -7,6 +7,7 @@ struct AccountsPageContentSection: View {
     let areCardsPresented: Bool
     let onSwitchAccount: (String) -> Void
     let onRefreshAccountUsage: (String) -> Void
+    let onReauthenticateAccount: (String) -> Void
     let onAuthorizeWorkspace: (String) -> Void
     let onCancelAuthorizeWorkspace: () -> Void
     let onDeletePendingWorkspace: (String) -> Void
@@ -44,6 +45,7 @@ struct AccountsPageContentSection: View {
                     areCardsPresented: areCardsPresented,
                     onSwitchAccount: onSwitchAccount,
                     onRefreshAccountUsage: onRefreshAccountUsage,
+                    onReauthenticateAccount: onReauthenticateAccount,
                     onDeleteAccount: onDeleteAccount
                 )
             }
@@ -59,6 +61,7 @@ private struct AccountsGridSection: View {
     let areCardsPresented: Bool
     let onSwitchAccount: (String) -> Void
     let onRefreshAccountUsage: (String) -> Void
+    let onReauthenticateAccount: (String) -> Void
     let onDeleteAccount: (String) -> Void
 
     private var gridContext: LayoutRules.AccountsGridContext {
@@ -99,6 +102,7 @@ private struct AccountsGridSection: View {
                         index: index,
                         onSwitch: { onSwitchAccount(cardID) },
                         onRefresh: { onRefreshAccountUsage(cardID) },
+                        onReauthenticate: { onReauthenticateAccount(cardID) },
                         onDelete: { onDeleteAccount(cardID) }
                     )
                 }
@@ -116,6 +120,7 @@ private struct AccountCardGridItem: View {
     let index: Int
     let onSwitch: () -> Void
     let onRefresh: () -> Void
+    let onReauthenticate: () -> Void
     let onDelete: () -> Void
 
     var body: some View {
@@ -123,6 +128,7 @@ private struct AccountCardGridItem: View {
             card: store.presentation,
             onSwitch: onSwitch,
             onRefresh: onRefresh,
+            onReauthenticate: onReauthenticate,
             onDelete: onDelete
         )
         .frame(width: frameWidth)

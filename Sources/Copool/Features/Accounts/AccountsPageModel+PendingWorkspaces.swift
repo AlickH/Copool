@@ -64,6 +64,7 @@ extension AccountsPageModel {
             notice = NoticeMessage(style: .error, text: PlatformCapabilities.unsupportedOperationMessage)
             return
         }
+        pendingWorkspaceRefreshTask?.cancel()
         if isCurrentDeactivatedAccountPendingCard(id: id) {
             await deleteDeactivatedPendingAccount(id: id)
             return
@@ -96,13 +97,14 @@ extension AccountsPageModel {
         from accounts: [AccountSummary],
         preferredSourceAccountID: String? = nil
     ) async {
+        guard runtimePlatform == .macOS else {
+            pendingWorkspaceAuthorizations = []
+            pendingWorkspaceAuthorizationError = nil
+            return
+        }
         guard !Task.isCancelled else { return }
         do {
-            let entries = if runtimePlatform == .macOS {
-                try await coordinator.syncWorkspaceDirectory()
-            } else {
-                try await coordinator.listWorkspaceDirectory()
-            }
+            let entries = try await coordinator.syncWorkspaceDirectory()
             guard !Task.isCancelled else { return }
             applyWorkspaceDirectory(entries)
             pendingWorkspaceAuthorizations = pendingWorkspaceCandidates(
@@ -215,7 +217,7 @@ extension AccountsPageModel {
 
     private func deleteDeactivatedPendingAccount(id: String) async {
         guard case .content(let accounts) = state,
-              let account = accounts.first(where: { $0.id == id }) else {
+              accounts.contains(where: { $0.id == id }) else {
             return
         }
 
@@ -223,19 +225,7 @@ extension AccountsPageModel {
         applyAccounts(remainingAccounts)
 
         do {
-            try await coordinator.updateWorkspaceDirectoryStatus(
-                workspaceID: account.accountID,
-                workspaceName: account.displayTeamName ?? account.label,
-                email: account.email,
-                planType: account.planType,
-                kind: account.displayTeamName == nil ? .personal : .workspace,
-                status: .deactivated
-            )
-            try await coordinator.deleteAccount(id: id)
-            try await coordinator.updateWorkspaceDirectoryVisibility(
-                workspaceID: account.accountID,
-                visibility: .deleted
-            )
+            _ = try await coordinator.updateAccountDisplayStatus(id: id, status: .deleted)
             let refreshedAccounts = try await coordinator.listAccounts()
             applyAccounts(refreshedAccounts)
             await refreshPendingWorkspaceAuthorizations(from: refreshedAccounts)

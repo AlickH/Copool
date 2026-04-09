@@ -18,8 +18,6 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
         let initialRefreshDelay: Duration
         let cloudReconciliationInterval: Duration
         let usageRefreshInterval: Duration
-        let currentSelectionUsageRefreshInterval: Duration
-        let workspaceHealthCheckInterval: Duration
         let refreshUsageOnRecurringTick: Bool
         let cloudSyncMode: AccountsCloudSyncMode
         let applyRemoteSelectionSwitchEffects: Bool
@@ -28,8 +26,6 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
             initialRefreshDelay: Duration,
             cloudReconciliationInterval: Duration,
             usageRefreshInterval: Duration,
-            currentSelectionUsageRefreshInterval: Duration = .seconds(10),
-            workspaceHealthCheckInterval: Duration = .seconds(600),
             refreshUsageOnRecurringTick: Bool,
             cloudSyncMode: AccountsCloudSyncMode,
             applyRemoteSelectionSwitchEffects: Bool
@@ -37,8 +33,6 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
             self.initialRefreshDelay = initialRefreshDelay
             self.cloudReconciliationInterval = cloudReconciliationInterval
             self.usageRefreshInterval = usageRefreshInterval
-            self.currentSelectionUsageRefreshInterval = currentSelectionUsageRefreshInterval
-            self.workspaceHealthCheckInterval = workspaceHealthCheckInterval
             self.refreshUsageOnRecurringTick = refreshUsageOnRecurringTick
             self.cloudSyncMode = cloudSyncMode
             self.applyRemoteSelectionSwitchEffects = applyRemoteSelectionSwitchEffects
@@ -51,8 +45,6 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
                     initialRefreshDelay: .milliseconds(700),
                     cloudReconciliationInterval: .seconds(3),
                     usageRefreshInterval: .seconds(30),
-                    currentSelectionUsageRefreshInterval: .seconds(10),
-                    workspaceHealthCheckInterval: .seconds(600),
                     refreshUsageOnRecurringTick: true,
                     cloudSyncMode: .pushLocalAccounts,
                     applyRemoteSelectionSwitchEffects: true
@@ -62,8 +54,6 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
                     initialRefreshDelay: .milliseconds(700),
                     cloudReconciliationInterval: .seconds(3),
                     usageRefreshInterval: .seconds(30),
-                    currentSelectionUsageRefreshInterval: .seconds(10),
-                    workspaceHealthCheckInterval: .seconds(600),
                     refreshUsageOnRecurringTick: true,
                     cloudSyncMode: .pullRemoteAccounts,
                     applyRemoteSelectionSwitchEffects: true
@@ -83,8 +73,6 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
     let usageRefreshPlanningPolicy: AccountsUsageRefreshPlanningPolicy
     var cloudReconciliationTask: Task<Void, Never>?
     var usageRefreshTask: Task<Void, Never>?
-    var currentSelectionUsageRefreshTask: Task<Void, Never>?
-    var workspaceHealthCheckTask: Task<Void, Never>?
     var workspaceMetadataRefreshTask: Task<Void, Never>?
     var accountsSnapshotPushCancellable: AnyCancellable?
     var currentSelectionPushCancellable: AnyCancellable?
@@ -126,8 +114,6 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
     deinit {
         cloudReconciliationTask?.cancel()
         usageRefreshTask?.cancel()
-        currentSelectionUsageRefreshTask?.cancel()
-        workspaceHealthCheckTask?.cancel()
         workspaceMetadataRefreshTask?.cancel()
     }
 
