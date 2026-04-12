@@ -312,6 +312,8 @@ extension SwiftNativeProxyRuntimeService {
         switch formatType {
         case "text":
             format["type"] = "text"
+        case "json_object":
+            format["type"] = "json_object"
         case "json_schema":
             format["type"] = "json_schema"
             if let schemaObject = formatObject["json_schema"] as? [String: Any] {

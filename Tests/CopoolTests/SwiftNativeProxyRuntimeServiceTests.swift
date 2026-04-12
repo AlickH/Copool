@@ -749,6 +749,42 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         XCTAssertEqual(normalizedReasoningEffort, "high")
     }
 
+    func testChatConversionMapsJSONResponseFormatToTextFormatType() async throws {
+        let runtime = SwiftNativeProxyRuntimeService(
+            paths: FileSystemPaths(
+                applicationSupportDirectory: URL(fileURLWithPath: "/tmp"),
+                accountStorePath: URL(fileURLWithPath: "/tmp/accounts.json"),
+                settingsStorePath: URL(fileURLWithPath: "/tmp/settings.json"),
+                codexAuthPath: URL(fileURLWithPath: "/tmp/auth.json"),
+                codexConfigPath: URL(fileURLWithPath: "/tmp/config.toml"),
+                proxyDaemonDataDirectory: URL(fileURLWithPath: "/tmp/proxyd", isDirectory: true),
+                proxyDaemonKeyPath: URL(fileURLWithPath: "/tmp/proxyd/api-proxy.key"),
+                cloudflaredLogDirectory: URL(fileURLWithPath: "/tmp/cloudflared-logs", isDirectory: true)
+            ),
+            storeRepository: MockStoreRepository(),
+            settingsRepository: MockSettingsRepository(),
+            authRepository: MockAuthRepository()
+        )
+
+        let mappedType = try await runtime.withIsolation { runtime in
+            let normalized = try runtime.convertChatRequestToResponses([
+                "model": "GPT-5.4",
+                "messages": [
+                    [
+                        "role": "user",
+                        "content": "return valid json"
+                    ]
+                ],
+                "response_format": [
+                    "type": "json_object"
+                ]
+            ])
+            return ((normalized.payload["text"] as? [String: Any])?["format"] as? [String: Any])?["type"] as? String
+        }
+
+        XCTAssertEqual(mappedType, "json_object")
+    }
+
     func testStreamingChatTranslatorEmitsChunksIncrementally() async throws {
         let runtime = makeRuntime(store: AccountsStore())
         let decoder = await runtime.withIsolation { runtime in

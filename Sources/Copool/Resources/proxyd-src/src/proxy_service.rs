@@ -1357,6 +1357,9 @@ fn map_response_format(root: &mut Map<String, Value>, response_format: &Value) {
         "text" => {
             format_object.insert("type".to_string(), Value::String("text".to_string()));
         }
+        "json_object" => {
+            format_object.insert("type".to_string(), Value::String("json_object".to_string()));
+        }
         "json_schema" => {
             format_object.insert("type".to_string(), Value::String("json_schema".to_string()));
             if let Some(schema_object) = response_format_object
@@ -3096,6 +3099,31 @@ mod tests {
         assert_eq!(
             payload.get("model").and_then(|value| value.as_str()),
             Some("gpt-5.4")
+        );
+    }
+
+    #[test]
+    fn maps_chat_json_object_response_format_to_upstream_text_format() {
+        let request = json!({
+            "model": "gpt-5.4",
+            "messages": [
+                { "role": "user", "content": "return valid json" }
+            ],
+            "response_format": {
+                "type": "json_object"
+            }
+        });
+
+        let (payload, _) =
+            convert_openai_chat_request_to_codex(&request).expect("payload should convert");
+
+        assert_eq!(
+            payload
+                .get("text")
+                .and_then(|value| value.get("format"))
+                .and_then(|value| value.get("type"))
+                .and_then(|value| value.as_str()),
+            Some("json_object")
         );
     }
 
