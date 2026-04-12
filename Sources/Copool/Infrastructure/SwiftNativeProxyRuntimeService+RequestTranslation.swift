@@ -5,7 +5,9 @@ extension SwiftNativeProxyRuntimeService {
         "prompt_cache_key",
         "prompt_cache_retention",
         "safety_identifier",
-        "service_tier"
+        "service_tier",
+        "max_output_tokens",
+        "temperature"
     ]
 
     func normalizeResponsesRequest(_ request: [String: Any]) throws -> (payload: [String: Any], downstreamStream: Bool) {

@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 use std::convert::Infallible;
 use std::fs;
 use std::io::Write;
@@ -67,6 +68,8 @@ const UNSUPPORTED_RESPONSES_FORWARDING_KEYS: &[&str] = &[
     "prompt_cache_retention",
     "safety_identifier",
     "service_tier",
+    "max_output_tokens",
+    "temperature",
 ];
 const SSE_DONE: &str = "data: [DONE]\n\n";
 const MODELS: &[&str] = &[
@@ -177,6 +180,44 @@ struct SseDecoder {
 struct SseEvent {
     event: Option<String>,
     data: String,
+}
+
+#[derive(Default)]
+struct CompletedResponseAccumulator {
+    output_items: BTreeMap<u64, Value>,
+}
+
+impl CompletedResponseAccumulator {
+    fn observe(&mut self, event: &SseEvent) {
+        let Ok(parsed) = serde_json::from_str::<Value>(&event.data) else {
+            return;
+        };
+        if parsed.get("type").and_then(Value::as_str) != Some("response.output_item.done") {
+            return;
+        }
+
+        let Some(item) = parsed.get("item").cloned() else {
+            return;
+        };
+        let index = parsed
+            .get("output_index")
+            .and_then(Value::as_u64)
+            .unwrap_or(self.output_items.len() as u64);
+        self.output_items.insert(index, item);
+    }
+
+    fn finalize_response(&self, response: Value) -> Value {
+        if !response_output_is_empty(&response) || self.output_items.is_empty() {
+            return response;
+        }
+
+        let mut response_object = response.as_object().cloned().unwrap_or_default();
+        response_object.insert(
+            "output".to_string(),
+            Value::Array(self.output_items.values().cloned().collect()),
+        );
+        Value::Object(response_object)
+    }
 }
 
 struct ChatStreamState {
@@ -2360,23 +2401,30 @@ fn extract_completed_response_from_sse(bytes: &[u8]) -> Result<Value, String> {
             return value
                 .get("response")
                 .cloned()
+                .map(|response| CompletedResponseAccumulator::default().finalize_response(response))
                 .ok_or_else(|| "Codex 响应缺少 response 字段".to_string());
         }
     }
 
     let mut decoder = SseDecoder::default();
+    let mut accumulator = CompletedResponseAccumulator::default();
+    let mut completed_response = None;
     for event in decoder.push(bytes) {
+        accumulator.observe(&event);
         if let Some(response) = response_completed_from_event(&event) {
-            return Ok(response);
+            completed_response = Some(response);
         }
     }
     for event in decoder.finish() {
+        accumulator.observe(&event);
         if let Some(response) = response_completed_from_event(&event) {
-            return Ok(response);
+            completed_response = Some(response);
         }
     }
 
-    Err("未在 Codex SSE 中找到 response.completed 事件".to_string())
+    completed_response
+        .map(|response| accumulator.finalize_response(response))
+        .ok_or_else(|| "未在 Codex SSE 中找到 response.completed 事件".to_string())
 }
 
 fn response_completed_from_event(event: &SseEvent) -> Option<Value> {
@@ -2385,6 +2433,14 @@ fn response_completed_from_event(event: &SseEvent) -> Option<Value> {
         return None;
     }
     parsed.get("response").cloned()
+}
+
+fn response_output_is_empty(response: &Value) -> bool {
+    response
+        .get("output")
+        .and_then(Value::as_array)
+        .map(|output| output.is_empty())
+        .unwrap_or(true)
 }
 
 fn convert_completed_response_to_chat_completion(response: &Value) -> Value {
@@ -2964,6 +3020,7 @@ mod tests {
     use super::current_selection_matches;
     use super::extract_completed_response_from_sse;
     use super::map_client_model_to_upstream;
+    use super::MODELS;
     use super::normalize_openai_responses_request;
     use super::normalize_model_for_client;
     use super::ProxyCandidate;
@@ -3113,6 +3170,22 @@ mod tests {
                 .and_then(|value| value.as_str()),
             Some("input_text")
         );
+    }
+
+    #[test]
+    fn strips_responses_parameters_rejected_by_codex_upstream() {
+        let request = json!({
+            "model": "gpt-5.4",
+            "input": "hello",
+            "max_output_tokens": 32,
+            "temperature": 0.1
+        });
+
+        let (payload, _) =
+            normalize_openai_responses_request(request).expect("request should normalize");
+
+        assert!(payload.get("max_output_tokens").is_none());
+        assert!(payload.get("temperature").is_none());
     }
 
     #[test]
@@ -3320,6 +3393,30 @@ data: {"type":"response.completed","response":{"id":"resp_123","created_at":1,"m
                 .and_then(|value| value.get("type"))
                 .and_then(|value| value.as_str()),
             Some("message")
+        );
+    }
+
+    #[test]
+    fn extracts_completed_response_from_sse_body_when_output_only_exists_in_output_item_done() {
+        let body = br#"event: response.output_item.done
+data: {"type":"response.output_item.done","item":{"id":"msg_123","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"OK"}]},"output_index":1,"sequence_number":9}
+
+event: response.completed
+data: {"type":"response.completed","response":{"id":"resp_123","created_at":1,"model":"gpt-5","status":"completed","output":[],"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}}
+
+"#;
+
+        let response =
+            extract_completed_response_from_sse(body).expect("response.completed expected");
+        assert_eq!(
+            response
+                .get("output")
+                .and_then(|value| value.get(0))
+                .and_then(|value| value.get("content"))
+                .and_then(|value| value.get(0))
+                .and_then(|value| value.get("text"))
+                .and_then(|value| value.as_str()),
+            Some("OK")
         );
     }
 

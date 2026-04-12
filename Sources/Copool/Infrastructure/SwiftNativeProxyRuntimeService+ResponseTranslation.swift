@@ -396,6 +396,7 @@ extension SwiftNativeProxyRuntimeService {
     func extractCompletedResponse(fromSSE data: Data) throws -> [String: Any] {
         let events = parseSSEEvents(from: data)
         var lastJSON: [String: Any]?
+        var accumulator = CompletedResponseAccumulator()
 
         for event in events {
             guard event.data != "[DONE]" else { continue }
@@ -405,10 +406,11 @@ extension SwiftNativeProxyRuntimeService {
             }
 
             lastJSON = object
+            accumulator.observe(object)
 
             if (object["type"] as? String) == "response.completed",
                let response = object["response"] as? [String: Any] {
-                return response
+                return accumulator.finalize(response)
             }
 
             if object["id"] != nil, object["output"] != nil {
@@ -466,6 +468,31 @@ struct ChatStreamState {
     var functionCallIndex: Int
     var hasReceivedArgumentsDelta: Bool
     var hasToolCallAnnounced: Bool
+}
+
+private struct CompletedResponseAccumulator {
+    private var outputItems: [Int: [String: Any]] = [:]
+
+    mutating func observe(_ object: [String: Any]) {
+        guard (object["type"] as? String) == "response.output_item.done",
+              let item = object["item"] as? [String: Any] else {
+            return
+        }
+
+        let index = object["output_index"] as? Int ?? outputItems.count
+        outputItems[index] = item
+    }
+
+    func finalize(_ response: [String: Any]) -> [String: Any] {
+        let currentOutput = response["output"] as? [Any] ?? []
+        guard currentOutput.isEmpty, !outputItems.isEmpty else {
+            return response
+        }
+
+        var updated = response
+        updated["output"] = outputItems.keys.sorted().compactMap { outputItems[$0] }
+        return updated
+    }
 }
 
 final class ChatCompletionsSSEStreamDecoder: @unchecked Sendable {

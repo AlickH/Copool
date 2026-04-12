@@ -618,6 +618,36 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         XCTAssertEqual(retainedUnsupportedKeys, [])
     }
 
+    func testResponsesNormalizationDropsMaxOutputTokensAndTemperature() async throws {
+        let runtime = SwiftNativeProxyRuntimeService(
+            paths: FileSystemPaths(
+                applicationSupportDirectory: URL(fileURLWithPath: "/tmp"),
+                accountStorePath: URL(fileURLWithPath: "/tmp/accounts.json"),
+                settingsStorePath: URL(fileURLWithPath: "/tmp/settings.json"),
+                codexAuthPath: URL(fileURLWithPath: "/tmp/auth.json"),
+                codexConfigPath: URL(fileURLWithPath: "/tmp/config.toml"),
+                proxyDaemonDataDirectory: URL(fileURLWithPath: "/tmp/proxyd", isDirectory: true),
+                proxyDaemonKeyPath: URL(fileURLWithPath: "/tmp/proxyd/api-proxy.key"),
+                cloudflaredLogDirectory: URL(fileURLWithPath: "/tmp/cloudflared-logs", isDirectory: true)
+            ),
+            storeRepository: MockStoreRepository(),
+            settingsRepository: MockSettingsRepository(),
+            authRepository: MockAuthRepository()
+        )
+
+        let retainedKeys = try await runtime.withIsolation { runtime in
+            let normalized = try runtime.normalizeResponsesRequest([
+                "model": "gpt-5.4",
+                "input": "hello",
+                "max_output_tokens": 32,
+                "temperature": 0.1
+            ])
+            return ["max_output_tokens", "temperature"].filter { normalized.payload[$0] != nil }
+        }
+
+        XCTAssertEqual(retainedKeys, [])
+    }
+
     func testResponsesNormalizationInjectsReasoningEffortFromModelAlias() async throws {
         let runtime = SwiftNativeProxyRuntimeService(
             paths: FileSystemPaths(
@@ -765,6 +795,27 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         XCTAssertEqual(secondSnapshot.chunkCount, 2)
         XCTAssertEqual(secondSnapshot.firstContent, "Hello")
         XCTAssertEqual(secondSnapshot.finishReason, "stop")
+    }
+
+    func testExtractCompletedResponseBackfillsOutputFromOutputItemDoneEvent() async throws {
+        let runtime = makeRuntime(store: AccountsStore())
+
+        let response = try await runtime.withIsolation { runtime in
+            try runtime.extractCompletedResponse(
+                fromSSE: Data("""
+                event: response.output_item.done
+                data: {"type":"response.output_item.done","item":{"id":"msg_123","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"OK"}]},"output_index":1,"sequence_number":9}
+
+                event: response.completed
+                data: {"type":"response.completed","response":{"id":"resp_123","created_at":1,"model":"gpt-5","status":"completed","output":[],"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}}
+
+                """.utf8)
+            )
+        }
+
+        let output = response["output"] as? [[String: Any]]
+        let content = output?.first?["content"] as? [[String: Any]]
+        XCTAssertEqual(content?.first?["text"] as? String, "OK")
     }
 
     func testPayloadOversizeDetectionFromContentLengthHeader() {
