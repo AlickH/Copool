@@ -29,7 +29,10 @@ extension AccountsPageModel {
     }
 
     func loadIfNeeded() async {
-        guard !hasLoaded else { return }
+        guard !hasLoaded else {
+            await reloadFromLocalStoreAfterExternalMutation()
+            return
+        }
         await load()
     }
 

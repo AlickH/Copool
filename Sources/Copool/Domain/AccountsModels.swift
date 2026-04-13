@@ -153,12 +153,14 @@ struct AccountsStore: Codable, Equatable {
     var version: Int = 1
     var accounts: [StoredAccount] = []
     var workspaceDirectory: [WorkspaceDirectoryEntry] = []
+    var currentAccountID: String?
     var currentSelection: CurrentAccountSelection?
 
     enum CodingKeys: String, CodingKey {
         case version
         case accounts
         case workspaceDirectory
+        case currentAccountID = "currentAccountId"
         case currentSelection
     }
 
@@ -166,11 +168,13 @@ struct AccountsStore: Codable, Equatable {
         version: Int = 1,
         accounts: [StoredAccount] = [],
         workspaceDirectory: [WorkspaceDirectoryEntry] = [],
+        currentAccountID: String? = nil,
         currentSelection: CurrentAccountSelection? = nil
     ) {
         self.version = version
         self.accounts = accounts
         self.workspaceDirectory = workspaceDirectory
+        self.currentAccountID = currentAccountID
         self.currentSelection = currentSelection
     }
 
@@ -179,6 +183,7 @@ struct AccountsStore: Codable, Equatable {
         version = try container.decodeIfPresent(Int.self, forKey: .version) ?? 1
         accounts = try container.decodeIfPresent([StoredAccount].self, forKey: .accounts) ?? []
         workspaceDirectory = try container.decodeIfPresent([WorkspaceDirectoryEntry].self, forKey: .workspaceDirectory) ?? []
+        currentAccountID = try container.decodeIfPresent(String.self, forKey: .currentAccountID)
         currentSelection = try container.decodeIfPresent(CurrentAccountSelection.self, forKey: .currentSelection)
     }
 }
@@ -395,7 +400,7 @@ struct AccountSummary: Equatable, Identifiable {
 
 extension AccountsStore {
     func accountSummaries(currentAccountKey: String?) -> [AccountSummary] {
-        let resolvedCurrentAccountKey = resolvedCurrentAccountKey(currentAccountKey)
+        let resolvedCurrentAccountID = resolvedCurrentAccountID(currentAccountKey)
 
         return accounts.map { account in
             AccountSummary(
@@ -412,16 +417,21 @@ extension AccountsStore {
                 usageError: account.usageError,
                 workspaceStatus: account.workspaceStatus,
                 displayStatus: account.displayStatus,
-                isCurrent: resolvedCurrentAccountKey == account.accountKey,
+                isCurrent: resolvedCurrentAccountID == account.id,
                 principalID: account.principalID
             )
         }
     }
 
-    private func resolvedCurrentAccountKey(_ currentAccountKey: String?) -> String? {
+    private func resolvedCurrentAccountID(_ currentAccountKey: String?) -> String? {
+        if let currentAccountID,
+           accounts.contains(where: { $0.id == currentAccountID }) {
+            return currentAccountID
+        }
+
         if let selectionKey = AccountIdentity.normalizedSelectionKey(currentSelection?.accountKey),
-           accounts.contains(where: { $0.accountKey == selectionKey }) {
-            return selectionKey
+           let selected = accounts.first(where: { $0.accountKey == selectionKey }) {
+            return selected.id
         }
 
         if let selectionAccountID = currentSelection?.accountID {
@@ -429,13 +439,13 @@ extension AccountsStore {
                 AccountIdentity.normalizedAccountID($0.accountID) == AccountIdentity.normalizedAccountID(selectionAccountID)
             }
             if matches.count == 1 {
-                return matches[0].accountKey
+                return matches[0].id
             }
         }
 
         if let currentAccountKey = AccountIdentity.normalizedSelectionKey(currentAccountKey),
-           accounts.contains(where: { $0.accountKey == currentAccountKey }) {
-            return currentAccountKey
+           let current = accounts.first(where: { $0.accountKey == currentAccountKey }) {
+            return current.id
         }
 
         return nil

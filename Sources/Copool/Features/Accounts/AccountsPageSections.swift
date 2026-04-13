@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AccountsPageContentSection: View {
     let presentation: AccountsPageContentPresentation
-    let cardStoreProvider: (String) -> AccountCardStore?
+    let cards: [AccountCardViewState]
     let availableViewportSize: CGSize
     let areCardsPresented: Bool
     let onSwitchAccount: (String) -> Void
@@ -24,7 +24,7 @@ struct AccountsPageContentSection: View {
         case .error(let message):
             EmptyStateView(title: L10n.tr("accounts.error.load_failed"), message: message)
                 .padding(.horizontal, LayoutRules.pagePadding)
-        case .content(let cards):
+        case .content:
             VStack(alignment: .leading, spacing: LayoutRules.sectionSpacing) {
                 if presentation.shouldShowPendingWorkspaceSection {
                     PendingWorkspaceAuthorizationSection(
@@ -38,8 +38,7 @@ struct AccountsPageContentSection: View {
                 }
 
                 AccountsGridSection(
-                    cardIDs: cards,
-                    cardStoreProvider: cardStoreProvider,
+                    cards: self.cards,
                     isOverviewMode: presentation.isOverviewMode,
                     availableViewportSize: availableViewportSize,
                     areCardsPresented: areCardsPresented,
@@ -54,8 +53,7 @@ struct AccountsPageContentSection: View {
 }
 
 private struct AccountsGridSection: View {
-    let cardIDs: [String]
-    let cardStoreProvider: (String) -> AccountCardStore?
+    let cards: [AccountCardViewState]
     let isOverviewMode: Bool
     let availableViewportSize: CGSize
     let areCardsPresented: Bool
@@ -93,19 +91,17 @@ private struct AccountsGridSection: View {
             alignment: .leading,
             spacing: LayoutRules.accountsRowSpacing
         ) {
-            ForEach(Array(cardIDs.enumerated()), id: \.element) { index, cardID in
-                if let store = cardStoreProvider(cardID) {
-                    AccountCardGridItem(
-                        store: store,
-                        areCardsPresented: areCardsPresented,
-                        frameWidth: cardFrameWidth,
-                        index: index,
-                        onSwitch: { onSwitchAccount(cardID) },
-                        onRefresh: { onRefreshAccountUsage(cardID) },
-                        onReauthenticate: { onReauthenticateAccount(cardID) },
-                        onDelete: { onDeleteAccount(cardID) }
-                    )
-                }
+            ForEach(Array(cards.enumerated()), id: \.element.id) { index, card in
+                AccountCardGridItem(
+                    card: card,
+                    areCardsPresented: areCardsPresented,
+                    frameWidth: cardFrameWidth,
+                    index: index,
+                    onSwitch: { onSwitchAccount(card.id) },
+                    onRefresh: { onRefreshAccountUsage(card.id) },
+                    onReauthenticate: { onReauthenticateAccount(card.id) },
+                    onDelete: { onDeleteAccount(card.id) }
+                )
             }
         }
         .padding(.horizontal, LayoutRules.pagePadding)
@@ -114,7 +110,7 @@ private struct AccountsGridSection: View {
 }
 
 private struct AccountCardGridItem: View {
-    @ObservedObject var store: AccountCardStore
+    let card: AccountCardViewState
     let areCardsPresented: Bool
     let frameWidth: CGFloat?
     let index: Int
@@ -125,7 +121,7 @@ private struct AccountCardGridItem: View {
 
     var body: some View {
         AccountCardView(
-            card: store.presentation,
+            card: card,
             onSwitch: onSwitch,
             onRefresh: onRefresh,
             onReauthenticate: onReauthenticate,

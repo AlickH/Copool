@@ -203,6 +203,7 @@ actor CloudKitCurrentAccountSelectionSyncService: CurrentAccountSelectionSyncSer
     private func saveCurrentSelection(_ selection: CurrentAccountSelection) throws {
         var latestStore = try storeRepository.loadStore()
         latestStore.currentSelection = selection
+        latestStore.currentAccountID = matchingAccount(for: selection, in: latestStore.accounts)?.id
         try storeRepository.saveStore(latestStore)
     }
 

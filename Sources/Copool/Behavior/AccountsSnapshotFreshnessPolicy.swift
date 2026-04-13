@@ -75,8 +75,8 @@ struct AccountsUsageRefreshPlanningPolicy: Sendable {
         guard let usage = account.usage else { return false }
         return usage.windows.contains { window in
             guard let resetAt = window.resetAt else { return false }
-            let remaining = resetAt - now
-            return remaining >= 0 && remaining <= nonCurrentResetLeadTimeSeconds
+            let delta = resetAt - now
+            return delta >= -nonCurrentResetLeadTimeSeconds && delta <= nonCurrentResetLeadTimeSeconds
         }
     }
 }

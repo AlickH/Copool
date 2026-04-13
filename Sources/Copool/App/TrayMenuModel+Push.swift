@@ -84,7 +84,6 @@ extension TrayMenuModel {
     func applyRemoteSelectionSwitchEffects(accountKey: String) async throws {
         let accounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
         let matchingAccount = accounts.first(where: { $0.accountKey == accountKey })
-            ?? accounts.first(where: \.isCurrent)
         guard let matchingAccount else { return }
         _ = try await accountsCoordinator.switchAccountAndApplySettings(id: matchingAccount.id)
     }

@@ -704,6 +704,9 @@ extension AccountsCoordinator {
             guard let reconciled = try? authRepository.extractAuth(from: storedAccount.authJSON) else {
                 continue
             }
+            let wasCurrentSelection = store.currentSelection.map {
+                AccountIdentity.matches(selection: $0, account: storedAccount)
+            } ?? false
 
             if store.accounts[index].email != reconciled.email {
                 store.accounts[index].email = reconciled.email
@@ -724,6 +727,27 @@ extension AccountsCoordinator {
             let storedTeamName = WorkspaceDisplayName.normalized(from: store.accounts[index].teamName)
             if let reconciledTeamName, storedTeamName != reconciledTeamName {
                 store.accounts[index].teamName = reconciledTeamName
+                didChange = true
+            }
+
+            if wasCurrentSelection,
+               store.currentSelection?.accountKey != store.accounts[index].accountKey {
+                store.currentSelection?.accountID = store.accounts[index].accountID
+                store.currentSelection?.accountKey = store.accounts[index].accountKey
+                didChange = true
+            }
+        }
+
+        if let currentAccountID = store.currentAccountID,
+           !store.accounts.contains(where: { $0.id == currentAccountID }) {
+            store.currentAccountID = nil
+            didChange = true
+        }
+
+        if store.currentAccountID == nil {
+            let summaries = store.accountSummaries(currentAccountKey: authRepository.currentAuthAccountKey())
+            if let current = summaries.first(where: \.isCurrent) {
+                store.currentAccountID = current.id
                 didChange = true
             }
         }

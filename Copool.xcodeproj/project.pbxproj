@@ -219,7 +219,6 @@
 		A809A809A809A809A809A809 /* AccountsPageModel+Selection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A709A709A709A709A709A709 /* AccountsPageModel+Selection.swift */; };
 		A810A810A810A810A810A810 /* AccountsPageModel+State.swift in Sources */ = {isa = PBXBuildFile; fileRef = A710A710A710A710A710A710 /* AccountsPageModel+State.swift */; };
 		A811A811A811A811A811A811 /* AccountsPagePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A713A713A713A713A713A713 /* AccountsPagePresentation.swift */; };
-		A812A812A812A812A812A812 /* AccountsPageViewStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A714A714A714A714A714A714 /* AccountsPageViewStore.swift */; };
 		A813A813A813A813A813A813 /* AccountsAnimationRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = A715A715A715A715A715A715 /* AccountsAnimationRules.swift */; };
 		A821A821A821A821A821A821 /* AccountsActionPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A701A701A701A701A701A701 /* AccountsActionPresentation.swift */; };
 		A822A822A822A822A822A822 /* AccountsActionPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = A702A702A702A702A702A702 /* AccountsActionPrimitives.swift */; };
@@ -232,7 +231,6 @@
 		A829A829A829A829A829A829 /* AccountsPageModel+Selection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A709A709A709A709A709A709 /* AccountsPageModel+Selection.swift */; };
 		A830A830A830A830A830A830 /* AccountsPageModel+State.swift in Sources */ = {isa = PBXBuildFile; fileRef = A710A710A710A710A710A710 /* AccountsPageModel+State.swift */; };
 		A831A831A831A831A831A831 /* AccountsPagePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A713A713A713A713A713A713 /* AccountsPagePresentation.swift */; };
-		A832A832A832A832A832A832 /* AccountsPageViewStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A714A714A714A714A714A714 /* AccountsPageViewStore.swift */; };
 		A833A833A833A833A833A833 /* AccountsAnimationRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = A715A715A715A715A715A715 /* AccountsAnimationRules.swift */; };
 		A841A841A841A841A841A841 /* AccountsActionPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A711A711A711A711A711A711 /* AccountsActionPresentationTests.swift */; };
 		A842A842A842A842A842A842 /* AccountCardInteractionPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A712A712A712A712A712A712 /* AccountCardInteractionPresentationTests.swift */; };
@@ -566,7 +564,6 @@
 		A711A711A711A711A711A711 /* AccountsActionPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsActionPresentationTests.swift; sourceTree = "<group>"; };
 		A712A712A712A712A712A712 /* AccountCardInteractionPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountCardInteractionPresentationTests.swift; sourceTree = "<group>"; };
 		A713A713A713A713A713A713 /* AccountsPagePresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsPagePresentation.swift; sourceTree = "<group>"; };
-		A714A714A714A714A714A714 /* AccountsPageViewStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsPageViewStore.swift; sourceTree = "<group>"; };
 		A715A715A715A715A715A715 /* AccountsAnimationRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsAnimationRules.swift; sourceTree = "<group>"; };
 		AB56BDF9685A258D5CD4C18A /* OpencodeAuthSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpencodeAuthSyncService.swift; sourceTree = "<group>"; };
 		AF0DC4DC19A65B4CD0658DE8 /* SwiftNativeProxyRuntimeService+RuntimeSupport.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "SwiftNativeProxyRuntimeService+RuntimeSupport.swift"; sourceTree = "<group>"; };
@@ -824,7 +821,6 @@
 				A709A709A709A709A709A709 /* AccountsPageModel+Selection.swift */,
 				A710A710A710A710A710A710 /* AccountsPageModel+State.swift */,
 				A713A713A713A713A713A713 /* AccountsPagePresentation.swift */,
-				A714A714A714A714A714A714 /* AccountsPageViewStore.swift */,
 				A715A715A715A715A715A715 /* AccountsAnimationRules.swift */,
 				A103A103A103A103A103A103 /* AccountsPageControls.swift */,
 				A703A703A703A703A703A703 /* AccountsPageSections.swift */,
@@ -1298,7 +1294,6 @@
 				A809A809A809A809A809A809 /* AccountsPageModel+Selection.swift in Sources */,
 				A810A810A810A810A810A810 /* AccountsPageModel+State.swift in Sources */,
 				A811A811A811A811A811A811 /* AccountsPagePresentation.swift in Sources */,
-				A812A812A812A812A812A812 /* AccountsPageViewStore.swift in Sources */,
 				A813A813A813A813A813A813 /* AccountsAnimationRules.swift in Sources */,
 				FCB8E6490AA6D2891320E6A2 /* AccountsPageControls.swift in Sources */,
 				A803A803A803A803A803A803 /* AccountsPageSections.swift in Sources */,
@@ -1494,7 +1489,6 @@
 				A829A829A829A829A829A829 /* AccountsPageModel+Selection.swift in Sources */,
 				A830A830A830A830A830A830 /* AccountsPageModel+State.swift in Sources */,
 				A831A831A831A831A831A831 /* AccountsPagePresentation.swift in Sources */,
-				A832A832A832A832A832A832 /* AccountsPageViewStore.swift in Sources */,
 				A833A833A833A833A833A833 /* AccountsAnimationRules.swift in Sources */,
 				137936A0518C78C5549E91A1 /* AccountsPageControls.swift in Sources */,
 				A823A823A823A823A823A823 /* AccountsPageSections.swift in Sources */,

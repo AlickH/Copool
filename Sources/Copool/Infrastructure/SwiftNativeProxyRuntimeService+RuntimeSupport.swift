@@ -213,9 +213,6 @@ extension SwiftNativeProxyRuntimeService {
             }
         }
 
-        if statusCode == 200, shouldSyncCurrentAuthOnSuccessfulProxyResponse() {
-            try? authRepository.writeCurrentAuth(candidate.authJSON)
-        }
         return UpstreamResponse(statusCode: statusCode, body: responseBody)
     }
 

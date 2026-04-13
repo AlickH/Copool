@@ -1,8 +1,7 @@
 import SwiftUI
 
 struct AccountsPageShell: View {
-    let contentStore: AccountsPageViewStore
-    let chromeStore: AccountsPageChromeStore
+    @ObservedObject var model: AccountsPageModel
     let currentLocale: AppLocale
     let onSelectLocale: (AppLocale) -> Void
     let areCardsPresented: Bool
@@ -19,8 +18,7 @@ struct AccountsPageShell: View {
     var body: some View {
         #if os(iOS)
         AccountsIOSPageShell(
-            contentStore: contentStore,
-            chromeStore: chromeStore,
+            model: model,
             currentLocale: currentLocale,
             onSelectLocale: onSelectLocale,
             areCardsPresented: areCardsPresented,
@@ -36,8 +34,7 @@ struct AccountsPageShell: View {
         )
         #else
         AccountsMacPageShell(
-            contentStore: contentStore,
-            chromeStore: chromeStore,
+            model: model,
             areCardsPresented: areCardsPresented,
             onTriggerAction: onTriggerAction,
             onToggleCollapse: onToggleCollapse,
@@ -55,8 +52,7 @@ struct AccountsPageShell: View {
 
 #if os(iOS)
 private struct AccountsIOSPageShell: View {
-    let contentStore: AccountsPageViewStore
-    let chromeStore: AccountsPageChromeStore
+    @ObservedObject var model: AccountsPageModel
     let currentLocale: AppLocale
     let onSelectLocale: (AppLocale) -> Void
     let areCardsPresented: Bool
@@ -73,7 +69,7 @@ private struct AccountsIOSPageShell: View {
     var body: some View {
         GeometryReader { proxy in
             AccountsIOSContentHost(
-                contentStore: contentStore,
+                model: model,
                 safeAreaInsets: proxy.safeAreaInsets,
                 viewportSize: proxy.size,
                 areCardsPresented: areCardsPresented,
@@ -92,7 +88,7 @@ private struct AccountsIOSPageShell: View {
             }
             .toolbar {
                 AccountsToolbarHost(
-                    chromeStore: chromeStore,
+                    model: model,
                     currentLocale: currentLocale,
                     onSelectLocale: onSelectLocale,
                     onTriggerAction: onTriggerAction,
@@ -105,8 +101,7 @@ private struct AccountsIOSPageShell: View {
 #endif
 
 private struct AccountsMacPageShell: View {
-    let contentStore: AccountsPageViewStore
-    let chromeStore: AccountsPageChromeStore
+    @ObservedObject var model: AccountsPageModel
     let areCardsPresented: Bool
     let onTriggerAction: (AccountsPageActionIntent) -> Void
     let onToggleCollapse: () -> Void
@@ -125,7 +120,7 @@ private struct AccountsMacPageShell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: LayoutRules.sectionSpacing) {
             AccountsMacActionBarHost(
-                chromeStore: chromeStore,
+                model: model,
                 onTriggerAction: onTriggerAction,
                 onToggleCollapse: onToggleCollapse
             )
@@ -133,7 +128,7 @@ private struct AccountsMacPageShell: View {
             .frame(width: pageContentWidth, alignment: .leading)
 
             AccountsMacContentHost(
-                contentStore: contentStore,
+                model: model,
                 pageContentWidth: pageContentWidth,
                 areCardsPresented: areCardsPresented,
                 onSwitchAccount: onSwitchAccount,
@@ -152,13 +147,13 @@ private struct AccountsMacPageShell: View {
 }
 
 private struct AccountsMacActionBarHost: View {
-    @ObservedObject var chromeStore: AccountsPageChromeStore
+    @ObservedObject var model: AccountsPageModel
     let onTriggerAction: (AccountsPageActionIntent) -> Void
     let onToggleCollapse: () -> Void
 
     var body: some View {
         AccountsActionBarView(
-            presentation: chromeStore.macActionBarPresentation,
+            presentation: model.makeMacActionBarPresentation(),
             onTriggerAction: onTriggerAction,
             onToggleCollapse: onToggleCollapse
         )
@@ -167,7 +162,7 @@ private struct AccountsMacActionBarHost: View {
 
 #if os(iOS)
 private struct AccountsIOSContentHost: View {
-    @ObservedObject var contentStore: AccountsPageViewStore
+    @ObservedObject var model: AccountsPageModel
     let safeAreaInsets: EdgeInsets
     let viewportSize: CGSize
     let areCardsPresented: Bool
@@ -183,8 +178,8 @@ private struct AccountsIOSContentHost: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 AccountsPageContentSection(
-                    presentation: contentStore.contentPresentation,
-                    cardStoreProvider: contentStore.cardStore(for:),
+                    presentation: model.makeContentPresentation(),
+                    cards: model.makeAccountCardViewStates(),
                     availableViewportSize: viewportSize,
                     areCardsPresented: areCardsPresented,
                     onSwitchAccount: onSwitchAccount,
@@ -205,7 +200,7 @@ private struct AccountsIOSContentHost: View {
 #endif
 
 private struct AccountsMacContentHost: View {
-    @ObservedObject var contentStore: AccountsPageViewStore
+    @ObservedObject var model: AccountsPageModel
     let pageContentWidth: CGFloat
     let areCardsPresented: Bool
     let onSwitchAccount: (String) -> Void
@@ -220,8 +215,8 @@ private struct AccountsMacContentHost: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 AccountsPageContentSection(
-                    presentation: contentStore.contentPresentation,
-                    cardStoreProvider: contentStore.cardStore(for:),
+                    presentation: model.makeContentPresentation(),
+                    cards: model.makeAccountCardViewStates(),
                     availableViewportSize: CGSize(
                         width: pageContentWidth,
                         height: LayoutRules.defaultPanelHeight
@@ -244,7 +239,7 @@ private struct AccountsMacContentHost: View {
 
 #if os(iOS)
 private struct AccountsToolbarHost: ToolbarContent {
-    @ObservedObject var chromeStore: AccountsPageChromeStore
+    @ObservedObject var model: AccountsPageModel
     let currentLocale: AppLocale
     let onSelectLocale: (AppLocale) -> Void
     let onTriggerAction: (AccountsPageActionIntent) -> Void
@@ -252,8 +247,8 @@ private struct AccountsToolbarHost: ToolbarContent {
 
     var body: some ToolbarContent {
         AccountsToolbarActions(
-            leadingButtons: chromeStore.leadingToolbarButtons,
-            trailingButtons: chromeStore.trailingToolbarButtons,
+            leadingButtons: model.leadingToolbarButtons,
+            trailingButtons: model.trailingToolbarButtons,
             currentLocale: currentLocale,
             onSelectLocale: onSelectLocale,
             onTriggerAction: onTriggerAction,

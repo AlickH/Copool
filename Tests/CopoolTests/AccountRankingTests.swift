@@ -51,6 +51,25 @@ final class AccountRankingTests: XCTestCase {
         XCTAssertEqual(target?.id, bestAlternative.id)
     }
 
+    func testAutoSwitchTargetChoosesBestAlternativeWhenCurrentHasOnePercentRemaining() {
+        let nearlyExhaustedCurrent = makeAccount(id: "current", weekUsed: 99, hourUsed: 95, isCurrent: true)
+        let bestAlternative = makeAccount(id: "best", weekUsed: 20, hourUsed: 15)
+        let otherAlternative = makeAccount(id: "other", weekUsed: 40, hourUsed: 25)
+
+        let target = AccountRanking.pickAutoSwitchTarget([nearlyExhaustedCurrent, otherAlternative, bestAlternative])
+
+        XCTAssertEqual(target?.id, bestAlternative.id)
+    }
+
+    func testAutoSwitchTargetIsNilWhenCurrentHasOnePercentRemainingButAlternativesAreWorse() {
+        let nearlyExhaustedCurrent = makeAccount(id: "current", weekUsed: 99, hourUsed: 100, isCurrent: true)
+        let exhaustedAlternative = makeAccount(id: "exhausted", weekUsed: 100, hourUsed: 100)
+
+        let target = AccountRanking.pickAutoSwitchTarget([nearlyExhaustedCurrent, exhaustedAlternative])
+
+        XCTAssertNil(target)
+    }
+
     func testAutoSwitchTargetIsNilWhenNoCurrentAccount() {
         let accountA = makeAccount(id: "a", weekUsed: 100, hourUsed: 100)
         let accountB = makeAccount(id: "b", weekUsed: 5, hourUsed: 5)

@@ -13,6 +13,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
     let storeRepository: AccountsStoreRepository
     let settingsRepository: SettingsRepository
     let authRepository: AuthRepository
+    let onAccountsStoreChanged: (@Sendable () -> Void)?
     let dateProvider: DateProviding
 
     private var server: SimpleHTTPServer?
@@ -32,12 +33,14 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
         storeRepository: AccountsStoreRepository,
         settingsRepository: SettingsRepository,
         authRepository: AuthRepository,
+        onAccountsStoreChanged: (@Sendable () -> Void)? = nil,
         dateProvider: DateProviding = SystemDateProvider()
     ) {
         self.paths = paths
         self.storeRepository = storeRepository
         self.settingsRepository = settingsRepository
         self.authRepository = authRepository
+        self.onAccountsStoreChanged = onAccountsStoreChanged
         self.dateProvider = dateProvider
     }
 
@@ -260,10 +263,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
             do {
                 let response = try await sendUpstream(payload: payload, candidate: candidate, downstreamHeaders: downstreamHeaders)
                 if response.statusCode >= 200 && response.statusCode < 300 {
-                    try? recordSuccessfulCandidate(candidate)
-                    if shouldSyncCurrentAuthOnSuccessfulProxyResponse() {
-                        try? authRepository.writeCurrentAuth(candidate.authJSON)
-                    }
+                    try recordSuccessfulCandidate(candidate)
                     return response
                 }
 
@@ -322,7 +322,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
                 )
 
                 if response.statusCode >= 200 && response.statusCode < 300 {
-                    try? recordSuccessfulCandidate(candidate)
+                    try recordSuccessfulCandidate(candidate)
                     return response
                 }
 
@@ -607,6 +607,10 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
         stickyAccountID = candidate.accountID
         cooldownUntilByAccountID.removeValue(forKey: candidate.accountID)
         try persistCurrentSelection(for: candidate)
+        if shouldSyncCurrentAuthOnSuccessfulProxyResponse() {
+            try authRepository.writeCurrentAuth(candidate.authJSON)
+        }
+        onAccountsStoreChanged?()
         lastError = nil
     }
 
@@ -619,6 +623,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
             sourceDeviceID: PlatformCapabilities.currentPlatform == .macOS ? "macos-local" : "ios-local",
             accountKey: candidate.accountKey
         )
+        store.currentAccountID = candidate.id
         try storeRepository.saveStore(store)
         cachedCandidatesStoreModificationDate = nil
     }

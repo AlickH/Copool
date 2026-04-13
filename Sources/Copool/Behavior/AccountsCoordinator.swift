@@ -159,20 +159,36 @@ actor AccountsCoordinator {
         )
     }
 
+    func switchAccountAndReload(id: String, workspacePath: String? = nil) async throws -> (
+        selectedAccount: AccountSummary,
+        accounts: [AccountSummary],
+        execution: SwitchAccountExecutionResult
+    ) {
+        let execution = try switchAccountAndApplySettings(id: id, workspacePath: workspacePath)
+        let accounts = try await listAccounts(refreshWorkspaceMetadata: false)
+        guard let selectedAccount = accounts.first(where: { $0.id == id }) else {
+            throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
+        }
+        return (selectedAccount, accounts, execution)
+    }
+
     func smartSwitch() async throws -> (AccountSummary, SwitchAccountExecutionResult)? {
         let sorted = AccountRanking.sortByRemaining(try await listAccounts())
         guard let best = sorted.first else { return nil }
-        let execution = try switchAccountAndApplySettings(id: best.id)
-        return (best, execution)
+        let switchResult = try await switchAccountAndReload(id: best.id)
+        return (switchResult.selectedAccount, switchResult.execution)
     }
 
-    func autoSmartSwitchIfNeeded() async throws -> (AccountSummary, SwitchAccountExecutionResult)? {
+    func autoSmartSwitchIfNeeded() async throws -> (
+        selectedAccount: AccountSummary,
+        accounts: [AccountSummary],
+        execution: SwitchAccountExecutionResult
+    )? {
         let accounts = try await listAccounts()
         guard let target = AccountRanking.pickAutoSwitchTarget(accounts) else {
             return nil
         }
-        let execution = try switchAccountAndApplySettings(id: target.id)
-        return (target, execution)
+        return try await switchAccountAndReload(id: target.id)
     }
 
     private func updateCurrentAccountProjection(authJSON: JSONValue) throws {
@@ -188,6 +204,7 @@ actor AccountsCoordinator {
             sourceDeviceID: runtimePlatform == .macOS ? "macos-local" : "ios-local",
             accountKey: matchedAccount.accountKey
         )
+        store.currentAccountID = matchedAccount.id
         try storeRepository.saveStore(store)
         try authRepository.writeCurrentAuth(authJSON)
     }

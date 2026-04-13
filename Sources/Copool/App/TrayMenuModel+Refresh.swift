@@ -221,8 +221,9 @@ extension TrayMenuModel {
                 }
             )
             if autoSmartSwitchEnabled,
-               let (selectedAccount, _) = try await accountsCoordinator.autoSmartSwitchIfNeeded() {
-                await syncCurrentAccountSelectionIfNeeded(accountID: selectedAccount.accountID)
+               let switchResult = try await accountsCoordinator.autoSmartSwitchIfNeeded() {
+                await syncCurrentAccountSelectionIfNeeded(accountID: switchResult.selectedAccount.accountID)
+                return switchResult.accounts
             }
         }
         return try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
@@ -333,6 +334,8 @@ extension TrayMenuModel {
         do {
             try await currentAccountSelectionSyncService.recordLocalSelection(accountID: accountID)
             try await currentAccountSelectionSyncService.pushLocalSelectionIfNeeded()
-        } catch {}
+        } catch {
+            notice = error.localizedDescription
+        }
     }
 }

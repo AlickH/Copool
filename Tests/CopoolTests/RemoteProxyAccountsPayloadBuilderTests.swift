@@ -61,11 +61,12 @@ final class RemoteProxyAccountsPayloadBuilderTests: XCTestCase {
         defer { try? fileManager.removeItem(at: tempDirectory) }
 
         let storePath = tempDirectory.appendingPathComponent("accounts.json", isDirectory: false)
+        let accountID = "acct-current"
         let store = AccountsStore(
             version: 1,
             accounts: [
                 StoredAccount(
-                    id: UUID().uuidString,
+                    id: accountID,
                     label: "test@example.com",
                     email: "test@example.com",
                     accountID: "acc-1",
@@ -87,6 +88,7 @@ final class RemoteProxyAccountsPayloadBuilderTests: XCTestCase {
                     principalID: nil
                 ),
             ],
+            currentAccountID: accountID,
             currentSelection: CurrentAccountSelection(
                 accountID: "acc-1",
                 selectedAt: 123,
@@ -102,6 +104,7 @@ final class RemoteProxyAccountsPayloadBuilderTests: XCTestCase {
         ).build()
 
         let builtStore = try JSONDecoder().decode(AccountsStore.self, from: payload)
+        XCTAssertEqual(builtStore.currentAccountID, "acct-current")
         XCTAssertEqual(builtStore.currentSelection?.accountID, "acc-1")
         XCTAssertEqual(builtStore.currentSelection?.accountKey, "test@example.com|acc-1")
     }

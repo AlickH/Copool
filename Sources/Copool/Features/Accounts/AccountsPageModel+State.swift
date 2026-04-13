@@ -71,7 +71,9 @@ extension AccountsPageModel {
         do {
             try await currentAccountSelectionSyncService.recordLocalSelection(accountID: accountID)
             try await currentAccountSelectionSyncService.pushLocalSelectionIfNeeded()
-        } catch {}
+        } catch {
+            notice = NoticeMessage(style: .error, text: error.localizedDescription)
+        }
     }
 
     func syncCurrentAccountSelectionInBackground(accountID: String) {
@@ -82,6 +84,10 @@ extension AccountsPageModel {
 
     func publishLocalAccounts(_ accounts: [AccountSummary]) {
         onLocalAccountsChanged?(AccountRanking.sortForDisplay(accounts))
+    }
+
+    func acceptExternalAccountsSnapshot(_ accounts: [AccountSummary]) {
+        applyAccounts(accounts)
     }
 
     func publishAndSyncLocalAccountsMutation(_ accounts: [AccountSummary]) {

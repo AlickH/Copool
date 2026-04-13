@@ -127,6 +127,122 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         XCTAssertEqual(repository.store.currentSelection?.selectedAt, 123_456)
     }
 
+    func testRecordSuccessfulCandidateSyncsCurrentAuthWhenAllowed() async throws {
+        let authRepository = RecordingAuthRepository()
+        let runtime = makeRuntime(
+            storeRepository: InMemoryAccountsStoreRepository(
+                store: AccountsStore(
+                    accounts: [
+                        makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1)
+                    ]
+                )
+            ),
+            authRepository: authRepository
+        )
+        let candidate = ProxyCandidate(
+            id: "a",
+            label: "Account A",
+            accountID: "acct-a",
+            accountKey: "acct-a|acct-a",
+            accessToken: "token-acct-a",
+            authJSON: .object([
+                "tokens": .object([
+                    "access_token": .string("token-acct-a"),
+                    "account_id": .string("acct-a")
+                ])
+            ]),
+            addedAt: 1,
+            isPreferredCurrent: false,
+            oneWeekUsed: nil,
+            fiveHourUsed: nil
+        )
+
+        try await runtime.withIsolation { runtime in
+            try runtime.recordSuccessfulCandidate(candidate)
+        }
+
+        XCTAssertEqual(authRepository.writeCurrentAuthCallCount, 1)
+    }
+
+    func testRecordSuccessfulCandidateCallsStoreChangeHandler() async throws {
+        let callback = StoreChangeCallback()
+        let runtime = makeRuntime(
+            storeRepository: InMemoryAccountsStoreRepository(
+                store: AccountsStore(
+                    accounts: [
+                        makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1)
+                    ]
+                )
+            ),
+            onAccountsStoreChanged: {
+                callback.markCalled()
+            }
+        )
+        let candidate = ProxyCandidate(
+            id: "a",
+            label: "Account A",
+            accountID: "acct-a",
+            accountKey: "acct-a|acct-a",
+            accessToken: "token-acct-a",
+            authJSON: .object([
+                "tokens": .object([
+                    "access_token": .string("token-acct-a"),
+                    "account_id": .string("acct-a")
+                ])
+            ]),
+            addedAt: 1,
+            isPreferredCurrent: false,
+            oneWeekUsed: nil,
+            fiveHourUsed: nil
+        )
+
+        try await runtime.withIsolation { runtime in
+            try runtime.recordSuccessfulCandidate(candidate)
+        }
+
+        let callbackCount = callback.readCallCount()
+        XCTAssertEqual(callbackCount, 1)
+    }
+
+    func testRecordSuccessfulCandidatePropagatesAuthWriteFailure() async throws {
+        let runtime = makeRuntime(
+            storeRepository: InMemoryAccountsStoreRepository(
+                store: AccountsStore(
+                    accounts: [
+                        makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1)
+                    ]
+                )
+            ),
+            authRepository: FailingWriteAuthRepository()
+        )
+        let candidate = ProxyCandidate(
+            id: "a",
+            label: "Account A",
+            accountID: "acct-a",
+            accountKey: "acct-a|acct-a",
+            accessToken: "token-acct-a",
+            authJSON: .object([
+                "tokens": .object([
+                    "access_token": .string("token-acct-a"),
+                    "account_id": .string("acct-a")
+                ])
+            ]),
+            addedAt: 1,
+            isPreferredCurrent: false,
+            oneWeekUsed: nil,
+            fiveHourUsed: nil
+        )
+
+        do {
+            try await runtime.withIsolation { runtime in
+                try runtime.recordSuccessfulCandidate(candidate)
+            }
+            XCTFail("Expected auth write failure")
+        } catch {
+            XCTAssertEqual(error.localizedDescription, "write failed")
+        }
+    }
+
     func testNormalizesReasoningSummaryForUpstream() {
         XCTAssertEqual(
             SwiftNativeProxyRuntimeService.normalizedReasoningSummaryForUpstream("none"),
@@ -811,12 +927,16 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
     ) -> SwiftNativeProxyRuntimeService {
         makeRuntime(
             storeRepository: CountingStoreRepository(store: store),
+            authRepository: ExtractingAuthRepository(),
+            onAccountsStoreChanged: nil,
             dateProvider: dateProvider
         )
     }
 
     private func makeRuntime(
         storeRepository: AccountsStoreRepository,
+        authRepository: AuthRepository = ExtractingAuthRepository(),
+        onAccountsStoreChanged: (@Sendable () -> Void)? = nil,
         dateProvider: DateProviding = SystemDateProvider()
     ) -> SwiftNativeProxyRuntimeService {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -833,7 +953,8 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
             ),
             storeRepository: storeRepository,
             settingsRepository: MockSettingsRepository(),
-            authRepository: ExtractingAuthRepository(),
+            authRepository: authRepository,
+            onAccountsStoreChanged: onAccountsStoreChanged,
             dateProvider: dateProvider
         )
     }
@@ -966,6 +1087,88 @@ private final class CountingAuthRepository: AuthRepository, @unchecked Sendable 
         _ = auth
         extractAuthCallCount += 1
         return ExtractedAuth(accountID: "acct", accessToken: "token", email: nil, planType: nil, teamName: nil)
+    }
+}
+
+private final class RecordingAuthRepository: AuthRepository, @unchecked Sendable {
+    private(set) var writeCurrentAuthCallCount = 0
+
+    func readCurrentAuth() throws -> JSONValue { .null }
+    func readCurrentAuthOptional() throws -> JSONValue? { nil }
+    func readAuth(from url: URL) throws -> JSONValue {
+        _ = url
+        return .null
+    }
+    func writeCurrentAuth(_ auth: JSONValue) throws {
+        _ = auth
+        writeCurrentAuthCallCount += 1
+    }
+    func removeCurrentAuth() throws {}
+    func makeChatGPTAuth(from tokens: ChatGPTOAuthTokens) throws -> JSONValue {
+        _ = tokens
+        return .null
+    }
+    func extractAuth(from auth: JSONValue) throws -> ExtractedAuth {
+        guard case .object(let root) = auth,
+              case .object(let tokens)? = root["tokens"],
+              case .string(let accountID)? = tokens["account_id"],
+              case .string(let accessToken)? = tokens["access_token"] else {
+            throw AppError.invalidData("Missing test auth payload")
+        }
+
+        return ExtractedAuth(
+            accountID: accountID,
+            accessToken: accessToken,
+            email: nil,
+            planType: nil,
+            teamName: nil
+        )
+    }
+}
+
+private final class FailingWriteAuthRepository: AuthRepository, @unchecked Sendable {
+    func readCurrentAuth() throws -> JSONValue { .null }
+    func readCurrentAuthOptional() throws -> JSONValue? { nil }
+    func readAuth(from url: URL) throws -> JSONValue {
+        _ = url
+        return .null
+    }
+    func writeCurrentAuth(_ auth: JSONValue) throws {
+        _ = auth
+        throw AppError.io("write failed")
+    }
+    func removeCurrentAuth() throws {}
+    func makeChatGPTAuth(from tokens: ChatGPTOAuthTokens) throws -> JSONValue {
+        _ = tokens
+        return .null
+    }
+    func extractAuth(from auth: JSONValue) throws -> ExtractedAuth {
+        guard case .object(let root) = auth,
+              case .object(let tokens)? = root["tokens"],
+              case .string(let accountID)? = tokens["account_id"],
+              case .string(let accessToken)? = tokens["access_token"] else {
+            throw AppError.invalidData("Missing test auth payload")
+        }
+
+        return ExtractedAuth(
+            accountID: accountID,
+            accessToken: accessToken,
+            email: nil,
+            planType: nil,
+            teamName: nil
+        )
+    }
+}
+
+private final class StoreChangeCallback: @unchecked Sendable {
+    private var callCount = 0
+
+    func markCalled() {
+        callCount += 1
+    }
+
+    func readCallCount() -> Int {
+        callCount
     }
 }
 

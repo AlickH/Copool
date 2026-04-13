@@ -5,10 +5,8 @@ struct AccountsPageView: View {
     @State private var areCardsPresented = false
     @State private var didRunInitialCardEntrance = false
     @State private var isImportingAuthFile = false
-    @StateObject private var contentStore: AccountsPageViewStore
-    @StateObject private var chromeStore: AccountsPageChromeStore
 
-    let model: AccountsPageModel
+    @ObservedObject var model: AccountsPageModel
     let currentLocale: AppLocale
     let onSelectLocale: (AppLocale) -> Void
 
@@ -20,8 +18,6 @@ struct AccountsPageView: View {
         self.model = model
         self.currentLocale = currentLocale
         self.onSelectLocale = onSelectLocale
-        _contentStore = StateObject(wrappedValue: AccountsPageViewStore(model: model))
-        _chromeStore = StateObject(wrappedValue: AccountsPageChromeStore(model: model))
         let hasResolvedInitialState = model.hasResolvedInitialState
         _areCardsPresented = State(initialValue: hasResolvedInitialState)
         _didRunInitialCardEntrance = State(initialValue: hasResolvedInitialState)
@@ -29,8 +25,7 @@ struct AccountsPageView: View {
 
     var body: some View {
         AccountsPageShell(
-            contentStore: contentStore,
-            chromeStore: chromeStore,
+            model: model,
             currentLocale: currentLocale,
             onSelectLocale: onSelectLocale,
             areCardsPresented: areCardsPresented,
@@ -61,7 +56,7 @@ struct AccountsPageView: View {
     }
 
     private var contentAccountCount: Int? {
-        guard case .content(let cards) = contentStore.contentPresentation.state else { return nil }
+        guard case .content(let cards) = model.makeContentPresentation().state else { return nil }
         return cards.count
     }
 

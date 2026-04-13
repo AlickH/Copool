@@ -136,6 +136,65 @@ final class StoreFileRepositoryTests: XCTestCase {
         XCTAssertEqual(summaries.first(where: \.isCurrent)?.accountID, "legacy-account")
     }
 
+    func testLoadStoreUsesCurrentAccountIDAsSingleCurrentSource() throws {
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDir) }
+
+        let storePath = tempDir.appendingPathComponent("accounts.json")
+        let raw = try JSONSerialization.data(
+            withJSONObject: [
+                "version": 1,
+                "currentAccountId": "acct-2",
+                "accounts": [
+                    [
+                        "id": "acct-1",
+                        "label": "First",
+                        "email": "first@example.com",
+                        "accountId": "account-1",
+                        "planType": "pro",
+                        "authJson": [:],
+                        "addedAt": 1,
+                        "updatedAt": 1,
+                        "workspaceStatus": "active",
+                        "displayStatus": "list"
+                    ],
+                    [
+                        "id": "acct-2",
+                        "label": "Second",
+                        "email": "second@example.com",
+                        "accountId": "account-2",
+                        "planType": "pro",
+                        "authJson": [:],
+                        "addedAt": 2,
+                        "updatedAt": 2,
+                        "workspaceStatus": "active",
+                        "displayStatus": "list"
+                    ]
+                ]
+            ],
+            options: [.prettyPrinted, .sortedKeys]
+        )
+        try raw.write(to: storePath)
+
+        let paths = FileSystemPaths(
+            applicationSupportDirectory: tempDir,
+            accountStorePath: storePath,
+            settingsStorePath: tempDir.appendingPathComponent("settings.json"),
+            codexAuthPath: tempDir.appendingPathComponent("auth.json"),
+            codexConfigPath: tempDir.appendingPathComponent("config.toml"),
+            proxyDaemonDataDirectory: tempDir.appendingPathComponent("proxyd", isDirectory: true),
+            proxyDaemonKeyPath: tempDir.appendingPathComponent("proxyd/api-proxy.key", isDirectory: false),
+            cloudflaredLogDirectory: tempDir.appendingPathComponent("cloudflared-logs", isDirectory: true)
+        )
+
+        let repository = StoreFileRepository(paths: paths)
+        let store = try repository.loadStore()
+        let summaries = store.accountSummaries(currentAccountKey: nil as String?)
+
+        XCTAssertEqual(summaries.filter(\.isCurrent).map(\.id), ["acct-2"])
+    }
+
     func testLoadStoreDefaultsMissingWorkspaceStatusToActive() throws {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)

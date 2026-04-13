@@ -116,7 +116,7 @@ build_target() {
   fi
 
   if [ "$build_failed" -ne 0 ]; then
-    if [ -x "$output_bin" ]; then
+    if [ -f "$output_bin" ]; then
       echo "warning: proxyd rebuild failed for $target, keeping existing prebuilt"
       return 0
     fi

@@ -1,7 +1,7 @@
 import Foundation
 
 enum AccountRanking {
-    private static let exhaustedThreshold = 100.0
+    private static let autoSwitchUsedThreshold = 99.0
 
     static func remainingScore(for account: AccountSummary) -> Double {
         let oneWeekUsed = account.usage?.oneWeek?.usedPercent ?? 100
@@ -49,11 +49,15 @@ enum AccountRanking {
         }
 
         let alternatives = accounts.filter { $0.id != current.id }
-        return pickBestAccount(alternatives)
+        guard let bestAlternative = pickBestAccount(alternatives),
+              remainingScore(for: bestAlternative) > remainingScore(for: current) else {
+            return nil
+        }
+        return bestAlternative
     }
 
     private static func isWindowExhausted(_ window: UsageWindow?) -> Bool {
         guard let window else { return false }
-        return window.usedPercent >= exhaustedThreshold
+        return window.usedPercent >= autoSwitchUsedThreshold
     }
 }

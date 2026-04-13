@@ -1,4 +1,5 @@
 import XCTest
+import Combine
 @testable import Copool
 
 @MainActor
@@ -122,6 +123,138 @@ final class AppSmokeTests: XCTestCase {
         let commandsAfterStop = await localCommandService.readCommands()
         XCTAssertEqual(commandsAfterStop, [.startProxy, .stopProxy])
     }
+
+    func testTrayAutoSmartSwitchUpdatesAccountsPageCurrentState() async throws {
+        let now: Int64 = 1_763_216_000
+        let storeRepository = SmokeAccountsStoreRepository(
+            store: AccountsStore(
+                version: 1,
+                accounts: [
+                    StoredAccount(
+                        id: "acct-current",
+                        label: "Current",
+                        email: "current@example.com",
+                        accountID: "account-current",
+                        planType: "pro",
+                        teamName: nil,
+                        teamAlias: nil,
+                        authJSON: .object(["id_token": .string("current-token")]),
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: nil,
+                        usageError: nil
+                    ),
+                    StoredAccount(
+                        id: "acct-next",
+                        label: "Next",
+                        email: "next@example.com",
+                        accountID: "account-next",
+                        planType: "pro",
+                        teamName: nil,
+                        teamAlias: nil,
+                        authJSON: .object(["id_token": .string("next-token")]),
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: nil,
+                        usageError: nil
+                    )
+                ],
+                currentSelection: CurrentAccountSelection(
+                    accountID: "account-current",
+                    selectedAt: now * 1_000,
+                    sourceDeviceID: "smoke-device",
+                    accountKey: "account-current"
+                )
+            )
+        )
+        var settings = AppSettings.defaultValue
+        settings.autoSmartSwitch = true
+        settings.launchCodexAfterSwitch = false
+        let settingsRepository = TestSettingsRepository(settings: settings)
+        let authRepository = SmokeAuthRepository(currentAccountKey: "account-current")
+        let accountsCoordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: settingsRepository,
+            authRepository: authRepository,
+            usageService: SmokeMappedUsageService(
+                snapshotsByAccountID: [
+                    "account-current": UsageSnapshot(
+                        fetchedAt: now,
+                        planType: "pro",
+                        fiveHour: UsageWindow(usedPercent: 99, windowSeconds: 18_000, resetAt: nil),
+                        oneWeek: UsageWindow(usedPercent: 95, windowSeconds: 604_800, resetAt: nil),
+                        credits: nil
+                    ),
+                    "account-next": UsageSnapshot(
+                        fetchedAt: now,
+                        planType: "pro",
+                        fiveHour: UsageWindow(usedPercent: 10, windowSeconds: 18_000, resetAt: nil),
+                        oneWeek: UsageWindow(usedPercent: 20, windowSeconds: 604_800, resetAt: nil),
+                        credits: nil
+                    )
+                ]
+            ),
+            chatGPTOAuthLoginService: SmokeChatLoginService(),
+            codexCLIService: SmokeCodexCLIService(),
+            editorAppService: SmokeEditorAppService(),
+            opencodeAuthSyncService: SmokeOpencodeAuthSyncService(),
+            dateProvider: SmokeDateProvider(now: now)
+        )
+        let settingsCoordinator = SettingsCoordinator(
+            settingsRepository: settingsRepository,
+            launchAtStartupService: SmokeLaunchAtStartupService()
+        )
+        let trayModel = TrayMenuModel(
+            accountsCoordinator: accountsCoordinator,
+            settingsCoordinator: settingsCoordinator,
+            cloudSyncService: nil,
+            currentAccountSelectionSyncService: nil,
+            backgroundRefreshPolicy: .init(
+                initialRefreshDelay: .zero,
+                cloudReconciliationInterval: .seconds(30),
+                usageRefreshInterval: .seconds(30),
+                refreshUsageOnRecurringTick: false,
+                cloudSyncMode: .pushLocalAccounts,
+                applyRemoteSelectionSwitchEffects: false
+            ),
+            dateProvider: SmokeDateProvider(now: now),
+            initialAccounts: try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
+        )
+        trayModel.autoSmartSwitchEnabled = true
+        let accountsModel = AccountsPageModel(
+            coordinator: accountsCoordinator,
+            manualRefreshService: trayModel,
+            localAccountsMutationSyncService: trayModel,
+            currentAccountSelectionSyncService: SmokeCurrentAccountSelectionSyncService(),
+            cloudSyncAvailabilityService: CloudSyncAvailabilityService(),
+            onLocalAccountsChanged: { accounts in
+                trayModel.acceptLocalAccountsSnapshot(accounts)
+            },
+            initialAccounts: try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
+        )
+        let accountsSyncCancellable = trayModel.$accounts
+            .removeDuplicates()
+            .sink { accounts in
+                accountsModel.acceptExternalAccountsSnapshot(accounts)
+            }
+        defer { _ = accountsSyncCancellable }
+
+        await accountsModel.loadIfNeeded()
+        let latestAccounts = try await trayModel.refreshLocalAccounts(
+            forceUsageRefresh: true,
+            prefersSerialUsageRefresh: false,
+            bypassUsageThrottle: true,
+            targetAccountIDs: nil,
+            onPartialUpdate: nil
+        )
+        trayModel.acceptLocalAccountsSnapshot(latestAccounts)
+
+        XCTAssertEqual(authRepository.currentAccountKey, "account-next")
+        guard case .content(let accounts) = accountsModel.state else {
+            return XCTFail("Expected accounts page content state")
+        }
+        XCTAssertEqual(accounts.first(where: \.isCurrent)?.id, "acct-next")
+    }
 }
 
 private func makeSmokeUsageSnapshot(fetchedAt: Int64) -> UsageSnapshot {
@@ -225,6 +358,18 @@ private struct SmokeUsageService: UsageService {
     func fetchUsage(accessToken: String, accountID: String) async throws -> UsageSnapshot {
         _ = accessToken
         _ = accountID
+        return snapshot
+    }
+}
+
+private struct SmokeMappedUsageService: UsageService {
+    let snapshotsByAccountID: [String: UsageSnapshot]
+
+    func fetchUsage(accessToken: String, accountID: String) async throws -> UsageSnapshot {
+        _ = accessToken
+        guard let snapshot = snapshotsByAccountID[accountID] else {
+            throw AppError.invalidData("Missing smoke usage snapshot for \(accountID)")
+        }
         return snapshot
     }
 }

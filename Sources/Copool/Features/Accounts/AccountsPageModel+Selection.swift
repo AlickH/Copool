@@ -13,16 +13,14 @@ extension AccountsPageModel {
         }
 
         do {
-            let execution = try await coordinator.switchAccountAndApplySettings(id: id)
-            let accounts = try await coordinator.listAccounts()
-            guard let selectedAccount = accounts.first(where: { $0.id == id }) else {
-                throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
-            }
+            let switchResult = try await coordinator.switchAccountAndReload(id: id)
+            let accounts = switchResult.accounts
+            let selectedAccount = switchResult.selectedAccount
             applyAccountsForAccountSwitch(accounts)
             await refreshPendingWorkspaceAuthorizations(from: accounts, preferredSourceAccountID: selectedAccount.id)
             publishAndSyncLocalAccountsMutation(accounts)
             syncCurrentAccountSelectionInBackground(accountID: selectedAccount.accountID)
-            notice = buildSwitchNotice(execution: execution)
+            notice = buildSwitchNotice(execution: switchResult.execution)
         } catch {
             notice = NoticeMessage(style: .error, text: error.localizedDescription)
         }
@@ -41,14 +39,15 @@ extension AccountsPageModel {
                 return
             }
 
-            let execution = try await coordinator.switchAccountAndApplySettings(id: best.id)
-            let accounts = try await coordinator.listAccounts()
+            let switchResult = try await coordinator.switchAccountAndReload(id: best.id)
+            let accounts = switchResult.accounts
+            let selectedAccount = switchResult.selectedAccount
             applyAccountsForAccountSwitch(accounts)
-            await refreshPendingWorkspaceAuthorizations(from: accounts, preferredSourceAccountID: best.id)
+            await refreshPendingWorkspaceAuthorizations(from: accounts, preferredSourceAccountID: selectedAccount.id)
             publishAndSyncLocalAccountsMutation(accounts)
-            syncCurrentAccountSelectionInBackground(accountID: best.accountID)
-            var switchNotice = buildSwitchNotice(execution: execution)
-            switchNotice.text = L10n.tr("accounts.notice.smart_switched_prefix_format", best.label, switchNotice.text)
+            syncCurrentAccountSelectionInBackground(accountID: selectedAccount.accountID)
+            var switchNotice = buildSwitchNotice(execution: switchResult.execution)
+            switchNotice.text = L10n.tr("accounts.notice.smart_switched_prefix_format", selectedAccount.label, switchNotice.text)
             notice = switchNotice
         } catch {
             notice = NoticeMessage(style: .error, text: error.localizedDescription)

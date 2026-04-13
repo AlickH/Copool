@@ -6,6 +6,10 @@ import AppKit
 
 @MainActor
 final class AppContainer {
+    private final class AccountsStoreChangeHandlerBox: @unchecked Sendable {
+        var handler: (@Sendable () -> Void)?
+    }
+
     let accountsModel: AccountsPageModel
     let settingsModel: SettingsPageModel
     let trayModel: TrayMenuModel
@@ -16,6 +20,7 @@ final class AppContainer {
     private let proxyCoordinator: ProxyCoordinator
     private let proxyControlCloudSyncService: CloudKitProxyControlSyncService
     private var accountsWidgetSnapshotCancellable: AnyCancellable?
+    private var accountsPageSnapshotCancellable: AnyCancellable?
     private var widgetUsageProgressDisplayMode: UsageProgressDisplayMode
 
     lazy var proxyControlBridge: ProxyControlBridge = ProxyControlBridge(
@@ -69,12 +74,16 @@ final class AppContainer {
                 storeRepository: storeRepository,
                 authRepository: authRepository
             )
+            let accountsStoreChangeHandlerBox = AccountsStoreChangeHandlerBox()
             let proxyCoordinator = ProxyCoordinator(
                 proxyService: SwiftNativeProxyRuntimeService(
                     paths: paths,
                     storeRepository: storeRepository,
                     settingsRepository: settingsRepository,
-                    authRepository: authRepository
+                    authRepository: authRepository,
+                    onAccountsStoreChanged: {
+                        accountsStoreChangeHandlerBox.handler?()
+                    }
                 ),
                 cloudflaredService: CloudflaredService(paths: paths),
                 remoteService: RemoteProxyService(
@@ -123,6 +132,16 @@ final class AppContainer {
                 backgroundRefreshPolicy: .forPlatform(PlatformCapabilities.currentPlatform),
                 initialAccounts: initialAccounts
             )
+            accountsStoreChangeHandlerBox.handler = { [weak trayModel] in
+                guard let trayModel else { return }
+                Task { @MainActor in
+                    let accounts = try? await trayModel.accountsCoordinator.listAccounts(
+                        refreshWorkspaceMetadata: false
+                    )
+                    guard let accounts else { return }
+                    trayModel.acceptLocalAccountsSnapshot(accounts)
+                }
+            }
             let accountsModel = AccountsPageModel(
                 coordinator: accountsCoordinator,
                 settingsCoordinator: settingsCoordinator,
@@ -221,6 +240,11 @@ final class AppContainer {
                         usageProgressDisplayMode: self.widgetUsageProgressDisplayMode
                     )
                 }
+            }
+        accountsPageSnapshotCancellable = trayModel.$accounts
+            .removeDuplicates()
+            .sink { [weak accountsModel] accounts in
+                accountsModel?.acceptExternalAccountsSnapshot(accounts)
             }
         Task {
             await accountsWidgetSnapshotWriter.write(
