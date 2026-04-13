@@ -91,13 +91,13 @@ extension SwiftNativeProxyRuntimeService {
         }
 
         return available.sorted { lhs, rhs in
+            if lhs.isPreferredCurrent != rhs.isPreferredCurrent {
+                return lhs.isPreferredCurrent
+            }
             let lhsSticky = lhs.accountID == stickyAccountID
             let rhsSticky = rhs.accountID == stickyAccountID
             if lhsSticky != rhsSticky {
                 return lhsSticky
-            }
-            if lhs.isPreferredCurrent != rhs.isPreferredCurrent {
-                return lhs.isPreferredCurrent
             }
             if lhs.remainingScore != rhs.remainingScore {
                 return lhs.remainingScore > rhs.remainingScore

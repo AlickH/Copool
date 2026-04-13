@@ -1701,15 +1701,29 @@ async fn order_proxy_candidates_for_runtime(
         .collect::<Vec<_>>();
 
     let sticky_account_id = sticky_account_id.as_deref();
-    ordered.sort_by(|left, right| {
-        let left_sticky = sticky_account_id == Some(left.account_id.as_str());
-        let right_sticky = sticky_account_id == Some(right.account_id.as_str());
-        match right_sticky.cmp(&left_sticky) {
-            Ordering::Equal => compare_proxy_candidates(left, right),
-            ordering => ordering,
-        }
-    });
+    ordered.sort_by(|left, right| compare_runtime_proxy_candidates(sticky_account_id, left, right));
     ordered
+}
+
+fn compare_runtime_proxy_candidates(
+    sticky_account_id: Option<&str>,
+    left: &ProxyCandidate,
+    right: &ProxyCandidate,
+) -> Ordering {
+    match right
+        .is_preferred_current
+        .cmp(&left.is_preferred_current)
+    {
+        Ordering::Equal => {}
+        ordering => return ordering,
+    }
+
+    let left_sticky = sticky_account_id == Some(left.account_id.as_str());
+    let right_sticky = sticky_account_id == Some(right.account_id.as_str());
+    match right_sticky.cmp(&left_sticky) {
+        Ordering::Equal => compare_proxy_candidates(left, right),
+        ordering => ordering,
+    }
 }
 
 fn cooldown_duration_seconds(category: RetryFailureCategory) -> i64 {
@@ -1745,7 +1759,6 @@ async fn record_successful_candidate(context: &ProxyContext, candidate: &ProxyCa
             .cooldown_until_by_account_id
             .remove(&candidate.account_id);
     }
-    let _ = persist_current_selection(&context.storage, candidate).await;
 }
 
 async fn refresh_proxy_candidate_auth(
@@ -3018,6 +3031,7 @@ fn parse_proxy_request_body_limit_mib(value: Option<&str>) -> Option<usize> {
 #[cfg(test)]
 mod tests {
     use super::compare_proxy_candidates;
+    use super::compare_runtime_proxy_candidates;
     use super::convert_completed_response_to_chat_completion;
     use super::convert_openai_chat_request_to_codex;
     use super::current_selection_matches;
@@ -3701,6 +3715,21 @@ data: {"type":"response.completed","response":{"id":"resp_123","created_at":1,"m
         assert_eq!(compare_proxy_candidates(&preferred, &richer), std::cmp::Ordering::Less);
         assert_eq!(compare_proxy_candidates(&richer, &older), std::cmp::Ordering::Less);
         assert_eq!(compare_proxy_candidates(&older, &newer), std::cmp::Ordering::Less);
+    }
+
+    #[test]
+    fn compare_runtime_proxy_candidates_prefers_current_selection_over_sticky_account() {
+        let sticky = make_proxy_candidate("sticky", "acc-a", false, None, None, 1);
+        let selected = make_proxy_candidate("selected", "acc-b", true, None, None, 2);
+
+        assert_eq!(
+            compare_runtime_proxy_candidates(Some("acc-a"), &selected, &sticky),
+            std::cmp::Ordering::Less
+        );
+        assert_eq!(
+            compare_runtime_proxy_candidates(Some("acc-a"), &sticky, &selected),
+            std::cmp::Ordering::Greater
+        );
     }
 
     fn make_proxy_candidate(

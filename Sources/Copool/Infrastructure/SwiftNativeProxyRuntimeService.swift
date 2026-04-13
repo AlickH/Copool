@@ -606,11 +606,6 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
         activeAccountLabel = candidate.label
         stickyAccountID = candidate.accountID
         cooldownUntilByAccountID.removeValue(forKey: candidate.accountID)
-        try persistCurrentSelection(for: candidate)
-        if shouldSyncCurrentAuthOnSuccessfulProxyResponse() {
-            try authRepository.writeCurrentAuth(candidate.authJSON)
-        }
-        onAccountsStoreChanged?()
         lastError = nil
     }
 

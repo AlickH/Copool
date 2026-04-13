@@ -1,12 +1,12 @@
 import XCTest
 import Network
+import Darwin
 @testable import Copool
 
 final class SimpleHTTPServerTests: XCTestCase {
     func testStartThrowsWhenPortAlreadyInUse() async throws {
-        let occupiedPort: UInt16 = 19155
-        let occupier = try PortOccupier(port: occupiedPort)
-        try await occupier.start()
+        let occupier = try PortOccupier(port: 0)
+        let occupiedPort = occupier.port
 
         let server = try SimpleHTTPServer(port: occupiedPort) { _ in
             HTTPResponse.text(statusCode: 200, text: "ok")
@@ -21,8 +21,7 @@ final class SimpleHTTPServerTests: XCTestCase {
     }
 
     func testStreamingResponseUsesChunkedEncoding() async throws {
-        let port: UInt16 = 19156
-        let server = try SimpleHTTPServer(port: port) { _ in
+        let server = try SimpleHTTPServer(port: 0) { _ in
             HTTPResponse.stream(
                 statusCode: 200,
                 headers: ["Content-Type": "text/event-stream; charset=utf-8"],
@@ -35,6 +34,7 @@ final class SimpleHTTPServerTests: XCTestCase {
 
         try await server.start()
         defer { server.stop() }
+        let port = try XCTUnwrap(server.port)
 
         let payload = try await rawHTTPResponse(
             port: port,
@@ -43,41 +43,62 @@ final class SimpleHTTPServerTests: XCTestCase {
 
         let text = String(decoding: payload, as: UTF8.self)
         XCTAssertTrue(text.contains("Transfer-Encoding: chunked"))
-        XCTAssertTrue(text.contains("\r\n\r\ndata: first\n\n"))
-        XCTAssertTrue(text.contains("\r\ndata: second\n\n\r\n0\r\n\r\n"))
+        XCTAssertTrue(text.contains("\r\n\r\nd\r\ndata: first\n\n\r\n"))
+        XCTAssertTrue(text.contains("\r\ne\r\ndata: second\n\n\r\n0\r\n\r\n"))
     }
 }
 
 private final class PortOccupier {
-    private let listener: NWListener
-    private let queue = DispatchQueue(label: "SimpleHTTPServerTests.PortOccupier")
+    private let fileDescriptor: Int32
+    let port: UInt16
 
     init(port: UInt16) throws {
-        guard let nwPort = NWEndpoint.Port(rawValue: port) else {
-            throw XCTSkip("Invalid test port")
+        let fd = socket(AF_INET, SOCK_STREAM, 0)
+        guard fd >= 0 else {
+            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
         }
-        listener = try NWListener(using: .tcp, on: nwPort)
+
+        var address = sockaddr_in()
+        address.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        address.sin_family = sa_family_t(AF_INET)
+        address.sin_port = port.bigEndian
+        address.sin_addr = in_addr(s_addr: inet_addr("127.0.0.1"))
+
+        let bindResult = withUnsafePointer(to: &address) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockaddrPointer in
+                bind(fd, sockaddrPointer, socklen_t(MemoryLayout<sockaddr_in>.size))
+            }
+        }
+        guard bindResult == 0 else {
+            let code = POSIXErrorCode(rawValue: errno) ?? .EIO
+            close(fd)
+            throw POSIXError(code)
+        }
+
+        guard listen(fd, 1) == 0 else {
+            let code = POSIXErrorCode(rawValue: errno) ?? .EIO
+            close(fd)
+            throw POSIXError(code)
+        }
+
+        var boundAddress = sockaddr_in()
+        var length = socklen_t(MemoryLayout<sockaddr_in>.size)
+        let nameResult = withUnsafeMutablePointer(to: &boundAddress) { pointer in
+            pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockaddrPointer in
+                getsockname(fd, sockaddrPointer, &length)
+            }
+        }
+        guard nameResult == 0 else {
+            let code = POSIXErrorCode(rawValue: errno) ?? .EIO
+            close(fd)
+            throw POSIXError(code)
+        }
+        self.fileDescriptor = fd
+        self.port = UInt16(bigEndian: boundAddress.sin_port)
     }
 
     deinit {
-        listener.cancel()
-    }
-
-    func start() async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            let resumeState = TestResumeState()
-            listener.stateUpdateHandler = { state in
-                switch resumeState.consume(state: state) {
-                case .resume:
-                    continuation.resume()
-                case .throwError(let error):
-                    continuation.resume(throwing: error)
-                case .none:
-                    break
-                }
-            }
-            listener.start(queue: queue)
-        }
+        close(fileDescriptor)
     }
 }
 

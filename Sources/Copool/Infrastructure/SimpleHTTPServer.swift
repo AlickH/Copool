@@ -75,6 +75,7 @@ final class SimpleHTTPServer: @unchecked Sendable {
     private let handler: RequestHandler
     private let stateLock = NSLock()
     private var isStarted = false
+    var port: UInt16? { listener.port?.rawValue }
 
     init(port: UInt16, handler: @escaping RequestHandler) throws {
         guard let nwPort = NWEndpoint.Port(rawValue: port) else {

@@ -73,6 +73,30 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         XCTAssertEqual(candidates.map(\.accountID), ["acct-b", "acct-a"])
     }
 
+    func testCurrentCandidatesPrefersManualSelectionOverStickyAccount() async throws {
+        let runtime = makeRuntime(
+            store: AccountsStore(
+                accounts: [
+                    makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1),
+                    makeStoredAccount(id: "b", label: "Account B", accountID: "acct-b", addedAt: 2)
+                ],
+                currentSelection: CurrentAccountSelection(
+                    accountID: "acct-b",
+                    selectedAt: 2,
+                    sourceDeviceID: "macos-local",
+                    accountKey: "acct-b|acct-b"
+                )
+            )
+        )
+
+        let candidates = try await runtime.withIsolation { runtime in
+            runtime.stickyAccountID = "acct-a"
+            return try runtime.currentCandidates()
+        }
+
+        XCTAssertEqual(candidates.map(\.accountID), ["acct-b", "acct-a"])
+    }
+
     func testCurrentCandidatesSkipsAccountInCooldownWindow() async throws {
         let runtime = makeRuntime(
             store: AccountsStore(
@@ -127,7 +151,7 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         XCTAssertEqual(repository.store.currentSelection?.selectedAt, 123_456)
     }
 
-    func testRecordSuccessfulCandidateSyncsCurrentAuthWhenAllowed() async throws {
+    func testRecordSuccessfulCandidateDoesNotSyncCurrentAuth() async throws {
         let authRepository = RecordingAuthRepository()
         let runtime = makeRuntime(
             storeRepository: InMemoryAccountsStoreRepository(
@@ -161,10 +185,10 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
             try runtime.recordSuccessfulCandidate(candidate)
         }
 
-        XCTAssertEqual(authRepository.writeCurrentAuthCallCount, 1)
+        XCTAssertEqual(authRepository.writeCurrentAuthCallCount, 0)
     }
 
-    func testRecordSuccessfulCandidateCallsStoreChangeHandler() async throws {
+    func testRecordSuccessfulCandidateDoesNotCallStoreChangeHandler() async throws {
         let callback = StoreChangeCallback()
         let runtime = makeRuntime(
             storeRepository: InMemoryAccountsStoreRepository(
@@ -201,18 +225,26 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         }
 
         let callbackCount = callback.readCallCount()
-        XCTAssertEqual(callbackCount, 1)
+        XCTAssertEqual(callbackCount, 0)
     }
 
-    func testRecordSuccessfulCandidatePropagatesAuthWriteFailure() async throws {
-        let runtime = makeRuntime(
-            storeRepository: InMemoryAccountsStoreRepository(
-                store: AccountsStore(
-                    accounts: [
-                        makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1)
-                    ]
+    func testRecordSuccessfulCandidatePreservesManualSelection() async throws {
+        let repository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [
+                    makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1),
+                    makeStoredAccount(id: "b", label: "Account B", accountID: "acct-b", addedAt: 2)
+                ],
+                currentSelection: CurrentAccountSelection(
+                    accountID: "acct-b",
+                    selectedAt: 2,
+                    sourceDeviceID: "macos-local",
+                    accountKey: "acct-b|acct-b"
                 )
-            ),
+            )
+        )
+        let runtime = makeRuntime(
+            storeRepository: repository,
             authRepository: FailingWriteAuthRepository()
         )
         let candidate = ProxyCandidate(
@@ -233,14 +265,12 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
             fiveHourUsed: nil
         )
 
-        do {
-            try await runtime.withIsolation { runtime in
-                try runtime.recordSuccessfulCandidate(candidate)
-            }
-            XCTFail("Expected auth write failure")
-        } catch {
-            XCTAssertEqual(error.localizedDescription, "write failed")
+        try await runtime.withIsolation { runtime in
+            try runtime.recordSuccessfulCandidate(candidate)
         }
+
+        XCTAssertEqual(repository.store.currentSelection?.accountID, "acct-b")
+        XCTAssertEqual(repository.store.currentSelection?.accountKey, "acct-b|acct-b")
     }
 
     func testNormalizesReasoningSummaryForUpstream() {
@@ -952,8 +982,8 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
     func testExtractCompletedResponseBackfillsOutputFromOutputItemDoneEvent() async throws {
         let runtime = makeRuntime(store: AccountsStore())
 
-        let response = try await runtime.withIsolation { runtime in
-            try runtime.extractCompletedResponse(
+        let outputText = try await runtime.withIsolation { runtime in
+            let response = try runtime.extractCompletedResponse(
                 fromSSE: Data("""
                 event: response.output_item.done
                 data: {"type":"response.output_item.done","item":{"id":"msg_123","type":"message","role":"assistant","status":"completed","content":[{"type":"output_text","text":"OK"}]},"output_index":1,"sequence_number":9}
@@ -963,11 +993,12 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
 
                 """.utf8)
             )
+            let output = response["output"] as? [[String: Any]]
+            let content = output?.first?["content"] as? [[String: Any]]
+            return content?.first?["text"] as? String
         }
 
-        let output = response["output"] as? [[String: Any]]
-        let content = output?.first?["content"] as? [[String: Any]]
-        XCTAssertEqual(content?.first?["text"] as? String, "OK")
+        XCTAssertEqual(outputText, "OK")
     }
 
     func testPayloadOversizeDetectionFromContentLengthHeader() {
