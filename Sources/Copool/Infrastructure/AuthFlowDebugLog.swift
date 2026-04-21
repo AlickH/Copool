@@ -120,3 +120,9 @@ enum AccountSwitchDebugLog {
         return String(format: "%.2f", value)
     }
 }
+
+enum UsageDebugLog {
+    static func write(_ event: String, _ message: String) {
+        AuthFlowDebugLog.write("Usage.\(event)", message)
+    }
+}

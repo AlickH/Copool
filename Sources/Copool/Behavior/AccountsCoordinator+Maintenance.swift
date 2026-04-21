@@ -529,6 +529,10 @@ extension AccountsCoordinator {
     ) async -> StoredAccount {
         var account = account
         guard forceRefresh || UsageRefreshPolicy.shouldRefresh(account.usage, now: now) else {
+            UsageDebugLog.write(
+                "refreshAccount.skip",
+                "cardID=\(account.id) accountID=\(account.accountID) existing=\(describeUsage(account.usage))"
+            )
             return account
         }
 
@@ -553,6 +557,10 @@ extension AccountsCoordinator {
                 account.displayStatus = .list
             }
             account.principalID = refreshed.extractedAuth.principalID
+            UsageDebugLog.write(
+                "refreshAccount.success",
+                "cardID=\(account.id) accountID=\(account.accountID) usage=\(describeUsage(account.usage)) usageStateUpdatedAt=\(account.usageStateUpdatedAt)"
+            )
         } catch {
             if let deactivatedError = AppError.workspaceDeactivatedIfMatched(error) {
                 account.workspaceStatus = .deactivated
@@ -564,6 +572,10 @@ extension AccountsCoordinator {
                 account.usageError = userFacingUsageErrorMessage(for: error)
             }
             account.usageStateUpdatedAt = now
+            UsageDebugLog.write(
+                "refreshAccount.failure",
+                "cardID=\(account.id) accountID=\(account.accountID) oldUsage=\(describeUsage(account.usage)) error=\(account.usageError ?? "nil") usageStateUpdatedAt=\(account.usageStateUpdatedAt)"
+            )
         }
 
         account.updatedAt = now
@@ -587,6 +599,7 @@ extension AccountsCoordinator {
             merged.updatedAt = refreshed.updatedAt
             merged.usage = refreshed.usage
             merged.usageError = refreshed.usageError
+            merged.usageStateUpdatedAt = refreshed.usageStateUpdatedAt
             merged.workspaceStatus = refreshed.workspaceStatus
             merged.displayStatus = refreshed.displayStatus
             merged.principalID = refreshed.principalID
@@ -610,6 +623,16 @@ extension AccountsCoordinator {
             authRepository: authRepository
         )
         return latestStore
+    }
+
+    private static func describeUsage(_ usage: UsageSnapshot?) -> String {
+        guard let usage else { return "nil" }
+        return "fetchedAt=\(usage.fetchedAt) fiveHourUsed=\(describePercent(usage.fiveHour?.usedPercent)) fiveHourReset=\(usage.fiveHour?.resetAt.map(String.init) ?? "nil") oneWeekUsed=\(describePercent(usage.oneWeek?.usedPercent)) oneWeekReset=\(usage.oneWeek?.resetAt.map(String.init) ?? "nil")"
+    }
+
+    private static func describePercent(_ value: Double?) -> String {
+        guard let value else { return "nil" }
+        return String(format: "%.2f", value)
     }
 
     private static func reconcileWorkspaceDirectory(

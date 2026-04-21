@@ -432,6 +432,59 @@ final class AccountsCoordinatorTests: XCTestCase {
         XCTAssertEqual(usageService.callCount, 1)
     }
 
+    func testRefreshUsagePersistsUsageStateTimestamp() async throws {
+        let oldTimestamp: Int64 = 1_763_216_000
+        let now: Int64 = oldTimestamp + 300
+        let oldUsage = makeUsageSnapshot(fetchedAt: oldTimestamp)
+        let newUsage = UsageSnapshot(
+            fetchedAt: now,
+            planType: "pro",
+            fiveHour: UsageWindow(usedPercent: 100, windowSeconds: 18_000, resetAt: now + 300),
+            oneWeek: UsageWindow(usedPercent: 20, windowSeconds: 604_800, resetAt: now + 10_000),
+            credits: nil
+        )
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                version: 1,
+                accounts: [
+                    StoredAccount(
+                        id: "acct-1",
+                        label: "Test",
+                        email: "test@example.com",
+                        accountID: "account-1",
+                        planType: "pro",
+                        teamName: nil,
+                        teamAlias: nil,
+                        authJSON: .object(["account_id": .string("account-1")]),
+                        addedAt: oldTimestamp,
+                        updatedAt: oldTimestamp,
+                        usage: oldUsage,
+                        usageError: nil,
+                        usageStateUpdatedAt: oldTimestamp
+                    )
+                ],
+                currentSelection: nil
+            )
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: StubAuthRepository(),
+            usageService: CountingUsageService(result: newUsage),
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+
+        _ = try await coordinator.refreshUsage(force: true)
+
+        let savedStore = try storeRepository.loadStore()
+        XCTAssertEqual(savedStore.accounts.first?.usage?.fiveHour?.usedPercent, 100)
+        XCTAssertEqual(savedStore.accounts.first?.usageStateUpdatedAt, now)
+    }
+
     func testSelectiveUsageRefreshOnlyRequestsTargetAccounts() async throws {
         let now: Int64 = 1_763_216_000
         let store = AccountsStore(
