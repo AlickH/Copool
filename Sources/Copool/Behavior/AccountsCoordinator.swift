@@ -22,6 +22,15 @@ actor AccountsCoordinator {
     let dateProvider: DateProviding
     let runtimePlatform: RuntimePlatform
 
+    private var currentAccountProjectionWriter: CurrentAccountProjectionWriter {
+        CurrentAccountProjectionWriter(
+            storeRepository: storeRepository,
+            authRepository: authRepository,
+            dateProvider: dateProvider,
+            runtimePlatform: runtimePlatform
+        )
+    }
+
     init(
         storeRepository: AccountsStoreRepository,
         settingsRepository: SettingsRepository,
@@ -119,7 +128,7 @@ actor AccountsCoordinator {
         store.accounts[index].updatedAt = dateProvider.unixSecondsNow()
         try storeRepository.saveStore(store)
 
-        return toSummary(store.accounts[index], currentAccountKey: authRepository.currentAuthAccountKey())
+        return toSummary(store.accounts[index])
     }
 
     func updateAccountDisplayStatus(id: String, status: AccountDisplayStatus) throws -> AccountSummary {
@@ -132,7 +141,7 @@ actor AccountsCoordinator {
         store.accounts[index].updatedAt = dateProvider.unixSecondsNow()
         try storeRepository.saveStore(store)
 
-        return toSummary(store.accounts[index], currentAccountKey: authRepository.currentAuthAccountKey())
+        return toSummary(store.accounts[index])
     }
 
     func switchAccount(id: String) throws {
@@ -141,7 +150,7 @@ actor AccountsCoordinator {
             throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
         }
 
-        try updateCurrentAccountProjection(authJSON: account.authJSON)
+        try updateCurrentAccountProjection(account: account)
     }
 
     func switchAccountAndApplySettings(id: String, workspacePath: String? = nil) throws -> SwitchAccountExecutionResult {
@@ -150,12 +159,62 @@ actor AccountsCoordinator {
             throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
         }
 
-        try updateCurrentAccountProjection(authJSON: account.authJSON)
+        AccountSwitchDebugLog.write(
+            "switchAccountAndApplySettings.begin",
+            "requestedCardID=\(id) \(AccountSwitchDebugLog.describe(account: account)) \(AccountSwitchDebugLog.describe(store: store, currentAuthAccountKey: authRepository.currentAuthAccountKey()))"
+        )
+        try updateCurrentAccountProjection(account: account)
         let settings = try settingsRepository.loadSettings()
-        return try applySwitchSideEffects(
+        let result = try applySwitchSideEffects(
             for: account,
             settings: settings,
             workspacePath: workspacePath
+        )
+        let latestStore = try storeRepository.loadStore()
+        let restartedEditorNames = result.restartedEditorApps.map(\.rawValue).joined(separator: ",")
+        AccountSwitchDebugLog.write(
+            "switchAccountAndApplySettings.end",
+            "requestedCardID=\(id) \(AccountSwitchDebugLog.describe(store: latestStore, currentAuthAccountKey: authRepository.currentAuthAccountKey())) opencodeSynced=\(result.opencodeSynced) restartedEditors=\(restartedEditorNames) usedFallbackCLI=\(result.usedFallbackCLI)"
+        )
+        return result
+    }
+
+    func applyCurrentSelection(
+        cardID: String,
+        selection: CurrentAccountSelection,
+        writeAuth: Bool = false
+    ) throws {
+        let store = try storeRepository.loadStore()
+        guard let account = store.accounts.first(where: { $0.id == cardID }) else {
+            throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
+        }
+
+        AccountSwitchDebugLog.write(
+            "applyCurrentSelection.begin",
+            "cardID=\(cardID) selection=\(AccountSwitchDebugLog.describe(selection: selection)) before=\(AccountSwitchDebugLog.describe(store: store, currentAuthAccountKey: authRepository.currentAuthAccountKey()))"
+        )
+        let latestStore = try currentAccountProjectionWriter.apply(
+            selection: selection,
+            account: account,
+            writeAuth: writeAuth
+        )
+        AccountSwitchDebugLog.write(
+            "applyCurrentSelection.end",
+            "cardID=\(cardID) after=\(AccountSwitchDebugLog.describe(store: latestStore, currentAuthAccountKey: authRepository.currentAuthAccountKey()))"
+        )
+    }
+
+    func applyCurrentCardID(_ cardID: String) throws {
+        let store = try storeRepository.loadStore()
+        guard store.accounts.contains(where: { $0.id == cardID }) else {
+            throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
+        }
+        let latestStore = try storeRepository.mutateStore { store in
+            store.currentAccountID = cardID
+        }
+        AccountSwitchDebugLog.write(
+            "applyCurrentCardID",
+            "cardID=\(cardID) after=\(AccountSwitchDebugLog.describe(store: latestStore, currentAuthAccountKey: authRepository.currentAuthAccountKey()))"
         )
     }
 
@@ -169,6 +228,10 @@ actor AccountsCoordinator {
         guard let selectedAccount = accounts.first(where: { $0.id == id }) else {
             throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
         }
+        AccountSwitchDebugLog.write(
+            "switchAccountAndReload.end",
+            "requestedCardID=\(id) selected=\(AccountSwitchDebugLog.describe(account: selectedAccount)) \(AccountSwitchDebugLog.describe(accounts: accounts))"
+        )
         return (selectedAccount, accounts, execution)
     }
 
@@ -185,28 +248,40 @@ actor AccountsCoordinator {
         execution: SwitchAccountExecutionResult
     )? {
         let accounts = try await listAccounts()
+        let decisionLog = AccountSwitchDebugLog.describeAutoSwitch(accounts: accounts)
+        AccountSwitchDebugLog.write(
+            "autoSmartSwitchIfNeeded.inspect",
+            decisionLog
+        )
         guard let target = AccountRanking.pickAutoSwitchTarget(accounts) else {
+            AccountSwitchDebugLog.write(
+                "autoSmartSwitchIfNeeded.skip",
+                decisionLog
+            )
             return nil
         }
+        AccountSwitchDebugLog.write(
+            "autoSmartSwitchIfNeeded.target",
+            "target=\(AccountSwitchDebugLog.describe(account: target)) \(decisionLog)"
+        )
         return try await switchAccountAndReload(id: target.id)
     }
 
-    private func updateCurrentAccountProjection(authJSON: JSONValue) throws {
-        let extracted = try authRepository.extractAuth(from: authJSON)
-        var store = try storeRepository.loadStore()
-        guard let matchedAccount = Self.matchingStoredAccount(for: extracted, in: store.accounts) else {
+    private func updateCurrentAccountProjection(account: StoredAccount) throws {
+        let store = try storeRepository.loadStore()
+        guard store.accounts.contains(where: { $0.id == account.id }) else {
             throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
         }
 
-        store.currentSelection = CurrentAccountSelection(
-            accountID: extracted.accountID,
-            selectedAt: dateProvider.unixMillisecondsNow(),
-            sourceDeviceID: runtimePlatform == .macOS ? "macos-local" : "ios-local",
-            accountKey: matchedAccount.accountKey
+        AccountSwitchDebugLog.write(
+            "updateCurrentAccountProjection.begin",
+            "target=\(AccountSwitchDebugLog.describe(account: account)) before=\(AccountSwitchDebugLog.describe(store: store, currentAuthAccountKey: authRepository.currentAuthAccountKey()))"
         )
-        store.currentAccountID = matchedAccount.id
-        try storeRepository.saveStore(store)
-        try authRepository.writeCurrentAuth(authJSON)
+        let latestStore = try currentAccountProjectionWriter.apply(account: account)
+        AccountSwitchDebugLog.write(
+            "updateCurrentAccountProjection.end",
+            "target=\(AccountSwitchDebugLog.describe(account: account)) after=\(AccountSwitchDebugLog.describe(store: latestStore, currentAuthAccountKey: authRepository.currentAuthAccountKey()))"
+        )
     }
 
     private func normalizeTeamAlias(_ alias: String?) -> String? {

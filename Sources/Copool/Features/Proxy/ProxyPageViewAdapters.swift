@@ -12,6 +12,7 @@ struct RemoteServerCardActions {
     let onStop: () -> Void
     let onLogs: () -> Void
     let onUninstall: () -> Void
+    let onDismissDeployFeedback: () -> Void
     let onChooseIdentityFile: () -> String?
 }
 
@@ -111,6 +112,9 @@ extension ProxyPageModel {
             },
             onUninstall: {
                 Task { await self.uninstallRemote(server: server) }
+            },
+            onDismissDeployFeedback: {
+                self.dismissRemoteDeployFeedback(for: server.id)
             },
             onChooseIdentityFile: chooseIdentityFilePath
         )

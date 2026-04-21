@@ -183,6 +183,12 @@ actor ProxyControlBridge: ProxyLocalCommandServiceProtocol {
         } catch {
             lastHandledCommandID = command.id
             lastCommandError = error.localizedDescription
+            if command.kind == .deployRemote {
+                AuthFlowDebugLog.write(
+                    "RemoteDeploy.bridge.error",
+                    "commandID=\(command.id) serverID=\(command.remoteServerID ?? command.remoteServer?.id ?? "nil") error=\(error.localizedDescription)"
+                )
+            }
         }
 
         _ = try await publishSnapshot(
@@ -449,7 +455,15 @@ actor ProxyControlBridge: ProxyLocalCommandServiceProtocol {
             return .noRemoteStatusRefresh
         case .deployRemote:
             guard let server = try await serverForCommand(command) else { return .noRemoteStatusRefresh }
+            AuthFlowDebugLog.write(
+                "RemoteDeploy.bridge.begin",
+                "commandID=\(command.id) serverID=\(server.id) label=\(server.label) host=\(server.host)"
+            )
             cachedRemoteStatuses[server.id] = try await proxyCoordinator.deployRemote(server: server)
+            AuthFlowDebugLog.write(
+                "RemoteDeploy.bridge.success",
+                "commandID=\(command.id) serverID=\(server.id) running=\(cachedRemoteStatuses[server.id]?.running == true)"
+            )
             lastRemoteStatusRefreshAt = dateProvider.unixMillisecondsNow()
             return .noRemoteStatusRefresh
         case .syncRemoteAccounts:

@@ -139,6 +139,17 @@ extension ProxyPageModel {
 
     func deployRemote(server: RemoteServerConfig) async {
         guard canManageRemoteServers else { return }
+        setRemoteDeployFeedback(
+            RemoteDeployFeedback(
+                state: .deploying,
+                message: L10n.tr("proxy.notice.remote_deploying_format", server.label)
+            ),
+            for: server.id
+        )
+        AuthFlowDebugLog.write(
+            "RemoteDeploy.page.begin",
+            "serverID=\(server.id) label=\(server.label) host=\(server.host) mode=\(usesRemoteMacControl ? "remote-control" : "local")"
+        )
         if usesRemoteMacControl {
             await performRemoteCommand(
                 kind: .deployRemote,
@@ -155,8 +166,30 @@ extension ProxyPageModel {
                     kind: .deployRemote,
                     remoteServerID: server.id
                 )
+                setRemoteDeployFeedback(
+                    RemoteDeployFeedback(
+                        state: .success,
+                        message: L10n.tr("proxy.notice.remote_deploy_done_format", server.label)
+                    ),
+                    for: server.id
+                )
+                AuthFlowDebugLog.write(
+                    "RemoteDeploy.page.success",
+                    "serverID=\(server.id) label=\(server.label)"
+                )
                 notice = NoticeMessage(style: .success, text: L10n.tr("proxy.notice.remote_deploy_done_format", server.label))
             } catch {
+                setRemoteDeployFeedback(
+                    RemoteDeployFeedback(
+                        state: .failure,
+                        message: error.localizedDescription
+                    ),
+                    for: server.id
+                )
+                AuthFlowDebugLog.write(
+                    "RemoteDeploy.page.error",
+                    "serverID=\(server.id) label=\(server.label) error=\(error.localizedDescription)"
+                )
                 showError(error)
             }
         }
@@ -330,6 +363,37 @@ extension ProxyPageModel {
 
     private func showError(_ error: Error) {
         notice = NoticeMessage(style: .error, text: error.localizedDescription)
+    }
+
+    func dismissRemoteDeployFeedback(for serverID: String) {
+        setRemoteDeployFeedback(nil, for: serverID)
+    }
+
+    func setRemoteDeployFeedback(_ feedback: RemoteDeployFeedback?, for serverID: String) {
+        remoteDeployFeedbackDismissTasks[serverID]?.cancel()
+        remoteDeployFeedbackDismissTasks.removeValue(forKey: serverID)
+
+        guard let feedback else {
+            remoteDeployFeedbacks.removeValue(forKey: serverID)
+            return
+        }
+
+        remoteDeployFeedbacks[serverID] = feedback
+
+        guard feedback.state == .success else { return }
+        let dismissDelay = remoteDeploySuccessAutoDismissDelay
+
+        remoteDeployFeedbackDismissTasks[serverID] = Task { [weak self] in
+            try? await Task.sleep(for: dismissDelay)
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                guard let self else { return }
+                if self.remoteDeployFeedbacks[serverID]?.state == .success {
+                    self.remoteDeployFeedbacks.removeValue(forKey: serverID)
+                }
+                self.remoteDeployFeedbackDismissTasks.removeValue(forKey: serverID)
+            }
+        }
     }
 
     private func remoteDiscoveryNotice(for serverID: String) -> NoticeMessage {

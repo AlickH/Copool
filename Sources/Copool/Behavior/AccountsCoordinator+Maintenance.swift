@@ -15,7 +15,12 @@ extension AccountsCoordinator {
         if didReconcile || didEnrich {
             try storeRepository.saveStore(store)
         }
-        return store.accountSummaries(currentAccountKey: authRepository.currentAuthAccountKey())
+        let summaries = store.accountSummaries()
+        AccountSwitchDebugLog.write(
+            "listAccounts",
+            "refreshWorkspaceMetadata=\(refreshWorkspaceMetadata) reconciled=\(didReconcile) enriched=\(didEnrich) \(AccountSwitchDebugLog.describe(store: store, currentAuthAccountKey: authRepository.currentAuthAccountKey())) \(AccountSwitchDebugLog.describe(accounts: summaries))"
+        )
+        return summaries
     }
 
     @discardableResult
@@ -226,7 +231,6 @@ extension AccountsCoordinator {
         let snapshot = try storeRepository.loadStore()
         let authRepository = self.authRepository
         let usageService = self.usageService
-        let currentAccountKey = authRepository.currentAuthAccountKey()
         let targetIDSet = accountIDs.map(Set.init)
         let refreshTargets = snapshot.accounts.filter { account in
             guard account.displayStatus != .deleted, account.displayStatus != .pending else { return false }
@@ -235,7 +239,7 @@ extension AccountsCoordinator {
         }
 
         guard !refreshTargets.isEmpty else {
-            return snapshot.accountSummaries(currentAccountKey: authRepository.currentAuthAccountKey())
+            return snapshot.accountSummaries()
         }
 
         var latest = snapshot
@@ -245,15 +249,17 @@ extension AccountsCoordinator {
                     account,
                     now: now,
                     forceRefresh: force,
-                    currentAccountKey: currentAccountKey,
                     authRepository: authRepository,
                     usageService: usageService
                 )
-                latest = Self.mergeRefreshedAccount(refreshed, into: latest)
-                try storeRepository.saveStore(latest)
+                latest = try Self.mergeRefreshedAccount(
+                    refreshed,
+                    using: storeRepository,
+                    authRepository: authRepository
+                )
                 if let onPartialUpdate {
                     await onPartialUpdate(
-                        latest.accountSummaries(currentAccountKey: authRepository.currentAuthAccountKey())
+                        latest.accountSummaries()
                     )
                 }
             }
@@ -265,25 +271,27 @@ extension AccountsCoordinator {
                             account,
                             now: now,
                             forceRefresh: force,
-                            currentAccountKey: currentAccountKey,
                             authRepository: authRepository,
                             usageService: usageService
                         )
                     }
                 }
                 for try await refreshed in group {
-                    latest = Self.mergeRefreshedAccount(refreshed, into: latest)
-                    try storeRepository.saveStore(latest)
+                    latest = try Self.mergeRefreshedAccount(
+                        refreshed,
+                        using: storeRepository,
+                        authRepository: authRepository
+                    )
                     if let onPartialUpdate {
                         await onPartialUpdate(
-                            latest.accountSummaries(currentAccountKey: authRepository.currentAuthAccountKey())
+                            latest.accountSummaries()
                         )
                     }
                 }
             }
         }
 
-        return latest.accountSummaries(currentAccountKey: authRepository.currentAuthAccountKey())
+        return latest.accountSummaries()
     }
 
     func refreshWorkspaceMetadata(forceRemoteCheck: Bool) async throws -> [AccountSummary] {
@@ -298,7 +306,7 @@ extension AccountsCoordinator {
         if didChange {
             try storeRepository.saveStore(store)
         }
-        return store.accountSummaries(currentAccountKey: authRepository.currentAuthAccountKey())
+        return store.accountSummaries()
     }
 
     private func importAccount(
@@ -309,7 +317,6 @@ extension AccountsCoordinator {
         authFlowLogger.log("importAccount started")
         AuthFlowDebugLog.write("AccountsAuthFlow", "importAccount started")
         let now = dateProvider.unixSecondsNow()
-        let currentAccountKey = authRepository.currentAuthAccountKey()
         var authJSON = authJSON
         var extracted = try authRepository.extractAuth(from: authJSON)
         authFlowLogger.log("importAccount extracted account \(extracted.accountID, privacy: .public)")
@@ -427,22 +434,19 @@ extension AccountsCoordinator {
         try storeRepository.saveStore(store)
         authFlowLogger.log("importAccount saved store")
         AuthFlowDebugLog.write("AccountsAuthFlow", "importAccount saved store")
-        Self.persistCurrentAuthIfNeeded(
-            authJSON,
-            extracted: extracted,
-            currentAccountKey: currentAccountKey,
-            authRepository: authRepository
-        )
+        let savedAccount = Self.matchingStoredAccount(for: extracted, in: store.accounts)!
+        if store.currentAccountID == savedAccount.id {
+            try? authRepository.writeCurrentAuth(authJSON)
+        }
         authFlowLogger.log("importAccount persisted current auth if needed")
         AuthFlowDebugLog.write("AccountsAuthFlow", "importAccount persisted current auth if needed")
-        let savedAccount = Self.matchingStoredAccount(for: extracted, in: store.accounts)!
         authFlowLogger.log("importAccount finished for \(savedAccount.accountID, privacy: .public)")
         AuthFlowDebugLog.write("AccountsAuthFlow", "importAccount finished for \(savedAccount.accountID)")
-        return toSummary(savedAccount, currentAccountKey: authRepository.currentAuthAccountKey())
+        return toSummary(savedAccount)
     }
 
-    func toSummary(_ account: StoredAccount, currentAccountKey: String?) -> AccountSummary {
-        AccountsStore(accounts: [account]).accountSummaries(currentAccountKey: currentAccountKey)[0]
+    func toSummary(_ account: StoredAccount) -> AccountSummary {
+        AccountsStore(accounts: [account], currentAccountID: account.id).accountSummaries()[0]
     }
 
     private func enrichStoredWorkspaceMetadataIfNeeded(
@@ -520,7 +524,6 @@ extension AccountsCoordinator {
         _ account: StoredAccount,
         now: Int64,
         forceRefresh: Bool,
-        currentAccountKey: String?,
         authRepository: AuthRepository,
         usageService: UsageService
     ) async -> StoredAccount {
@@ -550,12 +553,6 @@ extension AccountsCoordinator {
                 account.displayStatus = .list
             }
             account.principalID = refreshed.extractedAuth.principalID
-            persistCurrentAuthIfNeeded(
-                refreshed.authJSON,
-                extracted: refreshed.extractedAuth,
-                currentAccountKey: currentAccountKey,
-                authRepository: authRepository
-            )
         } catch {
             if let deactivatedError = AppError.workspaceDeactivatedIfMatched(error) {
                 account.workspaceStatus = .deactivated
@@ -597,6 +594,22 @@ extension AccountsCoordinator {
         }
         reconcileWorkspaceDirectory(for: refreshed, in: &store)
         return store
+    }
+
+    private static func mergeRefreshedAccount(
+        _ refreshed: StoredAccount,
+        using storeRepository: AccountsStoreRepository,
+        authRepository: AuthRepository
+    ) throws -> AccountsStore {
+        let latestStore = try storeRepository.mutateStore { store in
+            store = mergeRefreshedAccount(refreshed, into: store)
+        }
+        try persistCurrentAuthIfNeeded(
+            refreshedAccount: refreshed,
+            in: latestStore,
+            authRepository: authRepository
+        )
+        return latestStore
     }
 
     private static func reconcileWorkspaceDirectory(
@@ -681,16 +694,14 @@ extension AccountsCoordinator {
     }
 
     private static func persistCurrentAuthIfNeeded(
-        _ authJSON: JSONValue,
-        extracted: ExtractedAuth,
-        currentAccountKey: String?,
+        refreshedAccount: StoredAccount,
+        in store: AccountsStore,
         authRepository: AuthRepository
-    ) {
-        guard let currentAccountKey,
-              currentAccountKey == AccountIdentity.key(for: extracted) else {
+    ) throws {
+        guard store.currentAccountID == refreshedAccount.id else {
             return
         }
-        try? authRepository.writeCurrentAuth(authJSON)
+        try authRepository.writeCurrentAuth(refreshedAccount.authJSON)
     }
 
     private static func reconcileStoredAccountMetadata(
@@ -704,10 +715,6 @@ extension AccountsCoordinator {
             guard let reconciled = try? authRepository.extractAuth(from: storedAccount.authJSON) else {
                 continue
             }
-            let wasCurrentSelection = store.currentSelection.map {
-                AccountIdentity.matches(selection: $0, account: storedAccount)
-            } ?? false
-
             if store.accounts[index].email != reconciled.email {
                 store.accounts[index].email = reconciled.email
                 didChange = true
@@ -730,26 +737,12 @@ extension AccountsCoordinator {
                 didChange = true
             }
 
-            if wasCurrentSelection,
-               store.currentSelection?.accountKey != store.accounts[index].accountKey {
-                store.currentSelection?.accountID = store.accounts[index].accountID
-                store.currentSelection?.accountKey = store.accounts[index].accountKey
-                didChange = true
-            }
         }
 
         if let currentAccountID = store.currentAccountID,
            !store.accounts.contains(where: { $0.id == currentAccountID }) {
             store.currentAccountID = nil
             didChange = true
-        }
-
-        if store.currentAccountID == nil {
-            let summaries = store.accountSummaries(currentAccountKey: authRepository.currentAuthAccountKey())
-            if let current = summaries.first(where: \.isCurrent) {
-                store.currentAccountID = current.id
-                didChange = true
-            }
         }
 
         return didChange

@@ -3,6 +3,16 @@ import Foundation
 protocol AccountsStoreRepository: Sendable {
     func loadStore() throws -> AccountsStore
     func saveStore(_ store: AccountsStore) throws
+    func mutateStore(_ transform: (inout AccountsStore) throws -> Void) throws -> AccountsStore
+}
+
+extension AccountsStoreRepository {
+    func mutateStore(_ transform: (inout AccountsStore) throws -> Void) throws -> AccountsStore {
+        var store = try loadStore()
+        try transform(&store)
+        try saveStore(store)
+        return store
+    }
 }
 
 protocol SettingsRepository: Sendable {
@@ -140,7 +150,7 @@ protocol ProxyLocalCommandServiceProtocol: Sendable {
 }
 
 protocol CurrentAccountSelectionSyncServiceProtocol: Sendable {
-    func recordLocalSelection(accountID: String) async throws
+    func recordLocalSelection(cardID: String) async throws
     func pushLocalSelectionIfNeeded() async throws
     func pullRemoteSelectionIfNeeded() async throws -> CurrentAccountSelectionPullResult
     func ensurePushSubscriptionIfNeeded() async throws

@@ -183,36 +183,54 @@ struct AccountsStore: Codable, Equatable {
         version = try container.decodeIfPresent(Int.self, forKey: .version) ?? 1
         accounts = try container.decodeIfPresent([StoredAccount].self, forKey: .accounts) ?? []
         workspaceDirectory = try container.decodeIfPresent([WorkspaceDirectoryEntry].self, forKey: .workspaceDirectory) ?? []
-        currentAccountID = try container.decodeIfPresent(String.self, forKey: .currentAccountID)
         currentSelection = try container.decodeIfPresent(CurrentAccountSelection.self, forKey: .currentSelection)
+        currentAccountID = try container.decodeIfPresent(String.self, forKey: .currentAccountID)
     }
 }
 
-struct CurrentAccountSelection: Codable, Equatable {
-    var accountID: String
+struct CurrentAccountSelection: Codable, Equatable, Sendable {
+    var cardID: String
     var selectedAt: Int64
     var sourceDeviceID: String
-    var accountKey: String? = nil
 
     enum CodingKeys: String, CodingKey {
-        case accountID = "accountId"
+        case cardID = "cardId"
+        case legacyAccountID = "accountId"
         case selectedAt
         case sourceDeviceID
-        case accountKey
+    }
+
+    init(cardID: String, selectedAt: Int64, sourceDeviceID: String) {
+        self.cardID = cardID
+        self.selectedAt = selectedAt
+        self.sourceDeviceID = sourceDeviceID
+    }
+
+    init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        cardID = try container.decodeIfPresent(String.self, forKey: .cardID)
+            ?? container.decode(String.self, forKey: .legacyAccountID)
+        selectedAt = try container.decode(Int64.self, forKey: .selectedAt)
+        sourceDeviceID = try container.decode(String.self, forKey: .sourceDeviceID)
+    }
+
+    func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(cardID, forKey: .cardID)
+        try container.encode(selectedAt, forKey: .selectedAt)
+        try container.encode(sourceDeviceID, forKey: .sourceDeviceID)
     }
 }
 
 struct CurrentAccountSelectionPullResult: Equatable, Sendable {
     var didUpdateSelection: Bool
     var changedCurrentAccount: Bool
-    var accountID: String?
-    var accountKey: String?
+    var cardID: String?
 
     static let noChange = CurrentAccountSelectionPullResult(
         didUpdateSelection: false,
         changedCurrentAccount: false,
-        accountID: nil,
-        accountKey: nil
+        cardID: nil
     )
 }
 
@@ -399,9 +417,7 @@ struct AccountSummary: Equatable, Identifiable {
 }
 
 extension AccountsStore {
-    func accountSummaries(currentAccountKey: String?) -> [AccountSummary] {
-        let resolvedCurrentAccountID = resolvedCurrentAccountID(currentAccountKey)
-
+    func accountSummaries() -> [AccountSummary] {
         return accounts.map { account in
             AccountSummary(
                 id: account.id,
@@ -417,38 +433,10 @@ extension AccountsStore {
                 usageError: account.usageError,
                 workspaceStatus: account.workspaceStatus,
                 displayStatus: account.displayStatus,
-                isCurrent: resolvedCurrentAccountID == account.id,
+                isCurrent: currentAccountID == account.id,
                 principalID: account.principalID
             )
         }
-    }
-
-    private func resolvedCurrentAccountID(_ currentAccountKey: String?) -> String? {
-        if let currentAccountID,
-           accounts.contains(where: { $0.id == currentAccountID }) {
-            return currentAccountID
-        }
-
-        if let selectionKey = AccountIdentity.normalizedSelectionKey(currentSelection?.accountKey),
-           let selected = accounts.first(where: { $0.accountKey == selectionKey }) {
-            return selected.id
-        }
-
-        if let selectionAccountID = currentSelection?.accountID {
-            let matches = accounts.filter {
-                AccountIdentity.normalizedAccountID($0.accountID) == AccountIdentity.normalizedAccountID(selectionAccountID)
-            }
-            if matches.count == 1 {
-                return matches[0].id
-            }
-        }
-
-        if let currentAccountKey = AccountIdentity.normalizedSelectionKey(currentAccountKey),
-           let current = accounts.first(where: { $0.accountKey == currentAccountKey }) {
-            return current.id
-        }
-
-        return nil
     }
 }
 

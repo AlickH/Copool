@@ -75,6 +75,17 @@ final class AppContainer {
                 authRepository: authRepository
             )
             let accountsStoreChangeHandlerBox = AccountsStoreChangeHandlerBox()
+            let accountsCoordinator = AccountsCoordinator(
+                storeRepository: storeRepository,
+                settingsRepository: settingsRepository,
+                authRepository: authRepository,
+                usageService: usageService,
+                workspaceMetadataService: workspaceMetadataService,
+                chatGPTOAuthLoginService: chatGPTOAuthLoginService,
+                codexCLIService: codexCLIService,
+                editorAppService: editorAppService,
+                opencodeAuthSyncService: opencodeSyncService
+            )
             let proxyCoordinator = ProxyCoordinator(
                 proxyService: SwiftNativeProxyRuntimeService(
                     paths: paths,
@@ -83,6 +94,9 @@ final class AppContainer {
                     authRepository: authRepository,
                     onAccountsStoreChanged: {
                         accountsStoreChangeHandlerBox.handler?()
+                    },
+                    switchAccount: { cardID in
+                        _ = try await accountsCoordinator.switchAccountAndApplySettings(id: cardID)
                     }
                 ),
                 cloudflaredService: CloudflaredService(paths: paths),
@@ -107,17 +121,6 @@ final class AppContainer {
                         ?? AppLocale.systemDefault.identifier
                     return Locale(identifier: AppLocale.resolve(identifier).identifier)
                 }
-            )
-            let accountsCoordinator = AccountsCoordinator(
-                storeRepository: storeRepository,
-                settingsRepository: settingsRepository,
-                authRepository: authRepository,
-                usageService: usageService,
-                workspaceMetadataService: workspaceMetadataService,
-                chatGPTOAuthLoginService: chatGPTOAuthLoginService,
-                codexCLIService: codexCLIService,
-                editorAppService: editorAppService,
-                opencodeAuthSyncService: opencodeSyncService
             )
             let remoteAccountsMutationSyncService = RemoteAccountsMutationSyncService(
                 settingsCoordinator: settingsCoordinator,
@@ -271,6 +274,6 @@ final class AppContainer {
         using storeRepository: StoreFileRepository
     ) throws -> [AccountSummary] {
         let store = try storeRepository.loadStore()
-        return store.accountSummaries(currentAccountKey: nil)
+        return store.accountSummaries()
     }
 }

@@ -127,13 +127,13 @@ final class StoreFileRepositoryTests: XCTestCase {
 
         let repository = StoreFileRepository(paths: paths)
         let store = try repository.loadStore()
-        let summaries = store.accountSummaries(currentAccountKey: nil as String?)
+        let summaries = store.accountSummaries()
 
         XCTAssertEqual(store.accounts.count, 1)
         XCTAssertNil(store.accounts[0].principalID)
-        XCTAssertNil(store.currentSelection?.accountKey)
-        XCTAssertEqual(summaries.filter(\.isCurrent).count, 1)
-        XCTAssertEqual(summaries.first(where: \.isCurrent)?.accountID, "legacy-account")
+        XCTAssertNil(store.currentAccountID)
+        XCTAssertEqual(store.currentSelection?.cardID, "legacy-account")
+        XCTAssertTrue(summaries.filter(\.isCurrent).isEmpty)
     }
 
     func testLoadStoreUsesCurrentAccountIDAsSingleCurrentSource() throws {
@@ -190,7 +190,7 @@ final class StoreFileRepositoryTests: XCTestCase {
 
         let repository = StoreFileRepository(paths: paths)
         let store = try repository.loadStore()
-        let summaries = store.accountSummaries(currentAccountKey: nil as String?)
+        let summaries = store.accountSummaries()
 
         XCTAssertEqual(summaries.filter(\.isCurrent).map(\.id), ["acct-2"])
     }
@@ -357,7 +357,7 @@ final class StoreFileRepositoryTests: XCTestCase {
         XCTAssertEqual(migrated, legacySettings)
         XCTAssertEqual(storedSettings, legacySettings)
         XCTAssertEqual(migratedAccounts.accounts, [account])
-        XCTAssertEqual(migratedAccounts.currentSelection?.accountID, "legacy-account")
+        XCTAssertEqual(migratedAccounts.currentSelection?.cardID, "legacy-account")
     }
 
     func testCloudKitAccountsStoreMergePreservesSelection() {
@@ -365,7 +365,7 @@ final class StoreFileRepositoryTests: XCTestCase {
             version: 1,
             accounts: [],
             currentSelection: CurrentAccountSelection(
-                accountID: "current-account",
+                    cardID: "current-account",
                 selectedAt: 123,
                 sourceDeviceID: "device-a"
             )
@@ -412,7 +412,7 @@ final class StoreFileRepositoryTests: XCTestCase {
             version: 1,
             accounts: [localAccount],
             currentSelection: CurrentAccountSelection(
-                accountID: "local-account",
+                    cardID: "local-account",
                 selectedAt: 123,
                 sourceDeviceID: "device-a"
             )
@@ -756,15 +756,15 @@ final class StoreFileRepositoryTests: XCTestCase {
         let store = AccountsStore(
             version: 1,
             accounts: [firstAccount, secondAccount],
+            currentAccountID: secondAccount.id,
             currentSelection: CurrentAccountSelection(
-                accountID: "account-1",
+                cardID: secondAccount.id,
                 selectedAt: 123,
-                sourceDeviceID: "device-a",
-                accountKey: secondAccount.accountKey
+                sourceDeviceID: "device-a"
             )
         )
 
-        let summaries = store.accountSummaries(currentAccountKey: secondAccount.accountKey)
+        let summaries = store.accountSummaries()
 
         XCTAssertEqual(summaries.filter(\.isCurrent).count, 1)
         XCTAssertEqual(summaries.first(where: \.isCurrent)?.id, secondAccount.id)
@@ -772,17 +772,17 @@ final class StoreFileRepositoryTests: XCTestCase {
 
     func testCloudKitSelectionMergeOnlyAppliesNewerSelection() {
         let local = CurrentAccountSelection(
-            accountID: "account-a",
+                    cardID: "account-a",
             selectedAt: 100,
             sourceDeviceID: "device-a"
         )
         let remoteSameTimestamp = CurrentAccountSelection(
-            accountID: "account-b",
+                    cardID: "account-b",
             selectedAt: 100,
             sourceDeviceID: "device-z"
         )
         let newerRemote = CurrentAccountSelection(
-            accountID: "account-c",
+                    cardID: "account-c",
             selectedAt: 101,
             sourceDeviceID: "device-x"
         )
@@ -813,7 +813,7 @@ final class StoreFileRepositoryTests: XCTestCase {
         )
     }
 
-    func testAccountSummariesPreferStoredCurrentSelectionOverAuthFallback() {
+    func testAccountSummariesUseCurrentAccountIDAsSingleCurrentSource() {
         let account = StoredAccount(
             id: "acct-1",
             label: "Remote Selected",
@@ -845,14 +845,15 @@ final class StoreFileRepositoryTests: XCTestCase {
         let store = AccountsStore(
             version: 1,
             accounts: [account, otherAccount],
+            currentAccountID: account.id,
             currentSelection: CurrentAccountSelection(
-                accountID: "remote-account",
+                cardID: "remote-account",
                 selectedAt: 123,
                 sourceDeviceID: "device-a"
             )
         )
 
-        let summaries = store.accountSummaries(currentAccountKey: otherAccount.accountKey)
+        let summaries = store.accountSummaries()
 
         XCTAssertEqual(
             summaries.first(where: { $0.accountID == "remote-account" })?.isCurrent,

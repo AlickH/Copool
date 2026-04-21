@@ -163,11 +163,11 @@ final class AccountsCoordinatorTests: XCTestCase {
         let storeRepository = InMemoryAccountsStoreRepository(
             store: AccountsStore(
                 accounts: [selected, other],
+                currentAccountID: selected.id,
                 currentSelection: CurrentAccountSelection(
-                    accountID: selected.accountID,
+                    cardID: selected.id,
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "macos-local",
-                    accountKey: selected.accountKey
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -187,8 +187,8 @@ final class AccountsCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(accounts.filter(\.isCurrent).map(\.id), ["acct-selected"])
         XCTAssertEqual(
-            try storeRepository.loadStore().currentSelection?.accountKey,
-            accounts.first(where: { $0.id == "acct-selected" })?.accountKey
+            try storeRepository.loadStore().currentSelection?.cardID,
+            accounts.first(where: { $0.id == "acct-selected" })?.id
         )
     }
 
@@ -508,9 +508,12 @@ final class AccountsCoordinatorTests: XCTestCase {
             result: makeUsageSnapshot(fetchedAt: now, fiveHourResetAt: now + 300)
         )
         let authRepository = RefreshingAuthRepository(refreshedAuth: refreshedAuth)
+        var settings = AppSettings.defaultValue
+        settings.autoSmartSwitch = true
+        let settingsRepository = TestSettingsRepository(settings: settings)
         let coordinator = AccountsCoordinator(
             storeRepository: storeRepository,
-            settingsRepository: TestSettingsRepository(),
+            settingsRepository: settingsRepository,
             authRepository: authRepository,
             usageService: usageService,
             chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
@@ -565,9 +568,12 @@ final class AccountsCoordinatorTests: XCTestCase {
         )
         let message = "Your refresh token has already been used to generate a new access token. Please try signing in again."
         let authRepository = FailingRefreshingAuthRepository(message: message)
+        var settings = AppSettings.defaultValue
+        settings.autoSmartSwitch = true
+        let settingsRepository = TestSettingsRepository(settings: settings)
         let coordinator = AccountsCoordinator(
             storeRepository: storeRepository,
-            settingsRepository: TestSettingsRepository(),
+            settingsRepository: settingsRepository,
             authRepository: authRepository,
             usageService: usageService,
             chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
@@ -1137,7 +1143,7 @@ final class AccountsCoordinatorTests: XCTestCase {
         XCTAssertEqual(authRepository.writtenAccountCount, 1)
         XCTAssertEqual(codexService.launchCallCount, 0)
         XCTAssertEqual(editorService.restartCallCount, 0)
-        XCTAssertEqual(try storeRepository.loadStore().currentSelection?.accountID, account.accountID)
+        XCTAssertEqual(try storeRepository.loadStore().currentSelection?.cardID, account.id)
     }
 
     func testSwitchAccountWritesCurrentAccountIDToStore() async throws {
@@ -1147,11 +1153,11 @@ final class AccountsCoordinatorTests: XCTestCase {
         let storeRepository = InMemoryAccountsStoreRepository(
             store: AccountsStore(
                 accounts: [first, second],
+                currentAccountID: first.id,
                 currentSelection: CurrentAccountSelection(
-                    accountID: first.accountID,
+                    cardID: first.id,
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "macos-local",
-                    accountKey: first.accountKey
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -1198,11 +1204,11 @@ final class AccountsCoordinatorTests: XCTestCase {
         let storeRepository = InMemoryAccountsStoreRepository(
             store: AccountsStore(
                 accounts: [first, second],
+                currentAccountID: first.id,
                 currentSelection: CurrentAccountSelection(
-                    accountID: first.accountID,
+                    cardID: first.id,
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "macos-local",
-                    accountKey: first.accountKey
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -1227,6 +1233,86 @@ final class AccountsCoordinatorTests: XCTestCase {
 
         XCTAssertEqual(result?.selectedAccount.id, second.id)
         XCTAssertEqual(result?.selectedAccount.isCurrent, true)
+    }
+
+    func testAutoSmartSwitchUsesSelectedCardWhenAccountsShareIdentity() async throws {
+        let now: Int64 = 1_763_216_000
+        let first = StoredAccount(
+            id: "acct-1",
+            label: "Old Card",
+            email: nil,
+            accountID: "shared-account",
+            planType: "pro",
+            teamName: nil,
+            teamAlias: nil,
+            authJSON: .object([
+                "account_id": .string("shared-account"),
+                "slot": .string("old")
+            ]),
+            addedAt: now,
+            updatedAt: now,
+            usage: UsageSnapshot(
+                fetchedAt: now,
+                planType: "pro",
+                fiveHour: UsageWindow(usedPercent: 100, windowSeconds: 18_000, resetAt: nil),
+                oneWeek: UsageWindow(usedPercent: 100, windowSeconds: 604_800, resetAt: nil),
+                credits: nil
+            ),
+            usageError: nil
+        )
+        let second = StoredAccount(
+            id: "acct-2",
+            label: "New Card",
+            email: nil,
+            accountID: "shared-account",
+            planType: "pro",
+            teamName: nil,
+            teamAlias: nil,
+            authJSON: .object([
+                "account_id": .string("shared-account"),
+                "slot": .string("new")
+            ]),
+            addedAt: now + 1,
+            updatedAt: now + 1,
+            usage: UsageSnapshot(
+                fetchedAt: now,
+                planType: "pro",
+                fiveHour: UsageWindow(usedPercent: 10, windowSeconds: 18_000, resetAt: nil),
+                oneWeek: UsageWindow(usedPercent: 20, windowSeconds: 604_800, resetAt: nil),
+                credits: nil
+            ),
+            usageError: nil
+        )
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [first, second],
+                currentAccountID: first.id,
+                currentSelection: CurrentAccountSelection(
+                    cardID: first.id,
+                    selectedAt: now * 1_000,
+                    sourceDeviceID: "macos-local"
+                )
+            )
+        )
+        let authRepository = RecordingSharedIdentityAuthRepository()
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: authRepository,
+            usageService: CountingUsageService(result: makeUsageSnapshot(fetchedAt: now)),
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+
+        let result = try await coordinator.autoSmartSwitchIfNeeded()
+
+        XCTAssertEqual(result?.selectedAccount.id, second.id)
+        XCTAssertEqual(try storeRepository.loadStore().currentAccountID, second.id)
+        XCTAssertEqual(result?.accounts.first(where: \.isCurrent)?.id, second.id)
+        XCTAssertEqual(authRepository.writtenSlots, ["new"])
     }
 
     @MainActor
@@ -1282,11 +1368,11 @@ final class AccountsCoordinatorTests: XCTestCase {
                     makeStoredAccount(id: "acct-1", accountID: "account-1", now: now),
                     makeStoredAccount(id: "acct-2", accountID: "account-2", now: now + 1)
                 ],
+                currentAccountID: "acct-1",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "account-1",
+                    cardID: "acct-1",
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "macos-local",
-                    accountKey: nil
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -1315,10 +1401,9 @@ final class AccountsCoordinatorTests: XCTestCase {
 
         var mutatedStore = try storeRepository.loadStore()
         mutatedStore.currentSelection = CurrentAccountSelection(
-            accountID: "account-2",
+            cardID: "acct-2",
             selectedAt: now * 1_000 + 1,
-            sourceDeviceID: "remote-proxy",
-            accountKey: nil
+            sourceDeviceID: "remote-proxy"
         )
         mutatedStore.currentAccountID = "acct-2"
         try storeRepository.saveStore(mutatedStore)
@@ -1801,9 +1886,37 @@ final class AccountsCoordinatorTests: XCTestCase {
             currentAccountSelectionSyncService: FailingCurrentAccountSelectionSyncService(message: "selection sync failed")
         )
 
-        await model.syncCurrentAccountSelection(accountID: "account-1")
+        await model.syncCurrentAccountSelection(cardID: "acct-1")
 
         XCTAssertEqual(model.notice?.text, "selection sync failed")
+    }
+
+    func testCurrentSelectionSyncDoesNotRewriteLocalStore() async throws {
+        let now: Int64 = 1_763_216_000
+        let first = makeStoredAccount(id: "acct-1", accountID: "shared-account", now: now)
+        let second = makeStoredAccount(id: "acct-2", accountID: "shared-account", now: now + 1)
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [first, second],
+                currentAccountID: first.id,
+                currentSelection: CurrentAccountSelection(
+                    cardID: first.id,
+                    selectedAt: now * 1_000,
+                    sourceDeviceID: "macos-local"
+                )
+            )
+        )
+        let service = CloudKitCurrentAccountSelectionSyncService(
+            storeRepository: storeRepository,
+            authRepository: StubAuthRepository(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+
+        try await service.recordLocalSelection(cardID: second.id)
+
+        let store = try storeRepository.loadStore()
+        XCTAssertEqual(store.currentAccountID, first.id)
+        XCTAssertEqual(store.currentSelection?.cardID, first.id)
     }
 
     @MainActor
@@ -3470,7 +3583,7 @@ final class AccountsCoordinatorTests: XCTestCase {
                         )
                     ],
                     currentSelection: CurrentAccountSelection(
-                        accountID: "account-1",
+                    cardID: "account-1",
                         selectedAt: now,
                         sourceDeviceID: "device"
                     )
@@ -3745,7 +3858,7 @@ final class AccountsCoordinatorTests: XCTestCase {
                         )
                     ],
                     currentSelection: CurrentAccountSelection(
-                        accountID: "account-1",
+                    cardID: "account-1",
                         selectedAt: now,
                         sourceDeviceID: "device"
                     )
@@ -4901,11 +5014,11 @@ final class AccountsCoordinatorTests: XCTestCase {
                 accounts: [
                     makeStoredAccount(id: "acct-1", accountID: "account-1", now: now - 60)
                 ],
+                currentAccountID: "acct-1",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "account-1",
+                    cardID: "acct-1",
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "macos-local",
-                    accountKey: nil
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -4961,11 +5074,11 @@ final class AccountsCoordinatorTests: XCTestCase {
                     makeStoredAccount(id: "acct-1", accountID: "account-1", now: now - 60),
                     makeStoredAccount(id: "acct-2", accountID: "account-2", now: now - 60)
                 ],
+                currentAccountID: "acct-1",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "account-1",
+                    cardID: "acct-1",
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "macos-local",
-                    accountKey: nil
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -5034,8 +5147,8 @@ final class AccountsCoordinatorTests: XCTestCase {
 
         let recordedAccountIDs = await currentSelectionSyncService.readRecordedAccountIDs()
         let pushCallCount = await currentSelectionSyncService.readPushCallCount()
-        XCTAssertEqual(try storeRepository.loadStore().currentSelection?.accountID, "account-2")
-        XCTAssertEqual(recordedAccountIDs, ["account-2"])
+        XCTAssertEqual(try storeRepository.loadStore().currentSelection?.cardID, "acct-2")
+        XCTAssertEqual(recordedAccountIDs, ["acct-2"])
         XCTAssertEqual(pushCallCount, 1)
     }
 
@@ -5049,11 +5162,11 @@ final class AccountsCoordinatorTests: XCTestCase {
                     makeStoredAccount(id: "acct-1", accountID: "account-1", now: now - 60),
                     makeStoredAccount(id: "acct-2", accountID: "account-2", now: now - 60)
                 ],
+                currentAccountID: "acct-1",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "account-1",
+                    cardID: "acct-1",
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "macos-local",
-                    accountKey: nil
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -5139,11 +5252,11 @@ final class AccountsCoordinatorTests: XCTestCase {
                     makeStoredAccount(id: "acct-1", accountID: "account-1", now: now - 60),
                     makeStoredAccount(id: "acct-2", accountID: "account-2", now: now - 60)
                 ],
+                currentAccountID: "acct-1",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "account-1",
+                    cardID: "acct-1",
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "macos-local",
-                    accountKey: nil
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -5205,9 +5318,130 @@ final class AccountsCoordinatorTests: XCTestCase {
             onPartialUpdate: nil
         )
 
-        XCTAssertEqual(authRepository.writtenAccountIDs, ["account-2"])
+        XCTAssertEqual(authRepository.writtenAccountIDs.last, "account-2")
         XCTAssertEqual(codexService.launchCallCount, 1)
-        XCTAssertEqual(try storeRepository.loadStore().currentSelection?.accountID, "account-2")
+        XCTAssertEqual(try storeRepository.loadStore().currentSelection?.cardID, "acct-2")
+    }
+
+    @MainActor
+    func testExecuteRefreshKeepsAutoSwitchedAccountWhenRemoteSelectionArrivesInSameCycle() async throws {
+        let now: Int64 = 1_763_216_000
+        let authRepository = RecordingMultiAccountAuthRepository(
+            extractedByAccountID: [
+                "account-1": makeExtractedAuth(accountID: "account-1"),
+                "account-2": makeExtractedAuth(accountID: "account-2")
+            ]
+        )
+        var first = makeStoredAccount(id: "acct-1", accountID: "account-1", now: now - 60)
+        first.usage = UsageSnapshot(
+            fetchedAt: now,
+            planType: "pro",
+            fiveHour: UsageWindow(usedPercent: 100, windowSeconds: 18_000, resetAt: nil),
+            oneWeek: UsageWindow(usedPercent: 100, windowSeconds: 604_800, resetAt: nil),
+            credits: nil
+        )
+        var second = makeStoredAccount(id: "acct-2", accountID: "account-2", now: now - 60)
+        second.usage = UsageSnapshot(
+            fetchedAt: now,
+            planType: "pro",
+            fiveHour: UsageWindow(usedPercent: 10, windowSeconds: 18_000, resetAt: nil),
+            oneWeek: UsageWindow(usedPercent: 20, windowSeconds: 604_800, resetAt: nil),
+            credits: nil
+        )
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [
+                    first,
+                    second
+                ],
+                currentAccountID: "acct-1",
+                currentSelection: CurrentAccountSelection(
+                    cardID: "acct-1",
+                    selectedAt: now * 1_000,
+                    sourceDeviceID: "macos-local"
+                )
+            )
+        )
+        let usageService = RecordingAccountUsageService(
+            results: [
+                "account-1": UsageSnapshot(
+                    fetchedAt: now,
+                    planType: "pro",
+                    fiveHour: UsageWindow(usedPercent: 100, windowSeconds: 18_000, resetAt: nil),
+                    oneWeek: UsageWindow(usedPercent: 100, windowSeconds: 604_800, resetAt: nil),
+                    credits: nil
+                ),
+                "account-2": UsageSnapshot(
+                    fetchedAt: now,
+                    planType: "pro",
+                    fiveHour: UsageWindow(usedPercent: 10, windowSeconds: 18_000, resetAt: nil),
+                    oneWeek: UsageWindow(usedPercent: 20, windowSeconds: 604_800, resetAt: nil),
+                    credits: nil
+                )
+            ]
+        )
+        var settings = AppSettings.defaultValue
+        settings.autoSmartSwitch = true
+        let settingsRepository = TestSettingsRepository(settings: settings)
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: settingsRepository,
+            authRepository: authRepository,
+            usageService: usageService,
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let currentSelectionSyncService = SameCycleRemoteOverrideCurrentSelectionSyncService(
+            remoteCardID: "acct-1",
+            remoteSelection: CurrentAccountSelection(
+                cardID: "acct-1",
+                selectedAt: now * 1_000 + 10_000,
+                sourceDeviceID: "remote-device"
+            )
+        )
+        let directAutoSwitch = try await coordinator.autoSmartSwitchIfNeeded()
+        XCTAssertEqual(directAutoSwitch?.selectedAccount.accountID, "account-2")
+        XCTAssertEqual(try storeRepository.loadStore().currentSelection?.cardID, "acct-2")
+
+        var resetStore = try storeRepository.loadStore()
+        resetStore.currentSelection = CurrentAccountSelection(
+            cardID: "acct-1",
+            selectedAt: now * 1_000,
+            sourceDeviceID: "macos-local"
+        )
+        resetStore.currentAccountID = "acct-1"
+        try storeRepository.saveStore(resetStore)
+        let trayModel = TrayMenuModel(
+            accountsCoordinator: coordinator,
+            settingsCoordinator: SettingsCoordinator(
+                settingsRepository: settingsRepository,
+                launchAtStartupService: StubLaunchAtStartupService()
+            ),
+            cloudSyncService: nil,
+            currentAccountSelectionSyncService: currentSelectionSyncService,
+            backgroundRefreshPolicy: .init(
+                initialRefreshDelay: .zero,
+                cloudReconciliationInterval: .seconds(30),
+                usageRefreshInterval: .seconds(30),
+                refreshUsageOnRecurringTick: false,
+                cloudSyncMode: .pushLocalAccounts,
+                applyRemoteSelectionSwitchEffects: true
+            ),
+            dateProvider: FixedDateProvider(now: now),
+            initialAccounts: []
+        )
+
+        let latestAccounts = try await trayModel.executeRefresh(
+            forceUsageRefresh: true,
+            failOnCloudSyncError: false
+        )
+
+        XCTAssertEqual(latestAccounts.first(where: \.isCurrent)?.accountID, "account-2")
+        XCTAssertEqual(try storeRepository.loadStore().currentSelection?.cardID, "acct-2")
+        XCTAssertEqual(authRepository.writtenAccountIDs.last, "account-2")
     }
 
     func testIOSBackgroundRefreshPolicyAppliesRemoteSelectionSwitchEffects() {
@@ -5279,11 +5513,11 @@ final class AccountsCoordinatorTests: XCTestCase {
                 accounts: [
                     makeStoredAccount(id: "acct-1", accountID: "account-1", now: now)
                 ],
+                currentAccountID: "acct-1",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "account-1",
+                    cardID: "acct-1",
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "macos-local",
-                    accountKey: nil
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -5473,11 +5707,11 @@ final class AccountsCoordinatorTests: XCTestCase {
                     makeStoredAccount(id: "acct-1", accountID: "account-1", now: now),
                     makeStoredAccount(id: "acct-2", accountID: "account-2", now: now + 1)
                 ],
+                currentAccountID: "acct-1",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "account-1",
+                    cardID: "acct-1",
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "ios-local",
-                    accountKey: nil
+                    sourceDeviceID: "ios-local"
                 )
             )
         )
@@ -5496,12 +5730,11 @@ final class AccountsCoordinatorTests: XCTestCase {
         XCTAssertEqual(initialAccounts.first(where: \.isCurrent)?.accountID, "account-1")
 
         let currentSelectionSyncService = PushDrivenCurrentAccountSelectionSyncService(
-            storeRepository: storeRepository,
+            remoteCardID: "acct-2",
             remoteSelection: CurrentAccountSelection(
-                accountID: "account-2",
+                cardID: "acct-2",
                 selectedAt: now * 1_000 + 1,
-                sourceDeviceID: "macos-remote",
-                accountKey: nil
+                sourceDeviceID: "macos-remote"
             )
         )
         let trayModel = TrayMenuModel(
@@ -5561,10 +5794,9 @@ final class AccountsCoordinatorTests: XCTestCase {
                 ],
                 currentAccountID: "acct-1",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "account-1",
+                    cardID: "acct-1",
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "macos-local",
-                    accountKey: "account-1"
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -5598,10 +5830,92 @@ final class AccountsCoordinatorTests: XCTestCase {
             initialAccounts: []
         )
 
-        try await trayModel.applyRemoteSelectionSwitchEffects(accountKey: "missing-account-key")
+        try await trayModel.applyRemoteSelectionSwitchEffects(cardID: "missing-card-id")
 
         XCTAssertEqual(authRepository.writtenAccountIDs.count, 0)
         XCTAssertEqual(try storeRepository.loadStore().currentAccountID, "acct-1")
+    }
+
+    func testRefreshUsageDoesNotOverwriteConcurrentProxySwitchProjection() async throws {
+        let now: Int64 = 1_763_216_000
+        let first = makeStoredAccount(id: "acct-1", accountID: "account-1", now: now - 60)
+        let second = makeStoredAccount(id: "acct-2", accountID: "account-2", now: now - 60)
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [first, second],
+                currentAccountID: first.id,
+                currentSelection: CurrentAccountSelection(
+                    cardID: first.id,
+                    selectedAt: now * 1_000,
+                    sourceDeviceID: "macos-local"
+                )
+            )
+        )
+        let authRepository = MutableCurrentAuthRepository(
+            extractedByAccountID: [
+                "account-1": makeExtractedAuth(accountID: "account-1"),
+                "account-2": makeExtractedAuth(accountID: "account-2")
+            ],
+            currentAuth: first.authJSON
+        )
+        let usageService = ControlledUsageService(
+            resultsByAccountID: [
+                "account-1": makeUsageSnapshot(fetchedAt: now),
+                "account-2": makeUsageSnapshot(fetchedAt: now)
+            ]
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: authRepository,
+            usageService: usageService,
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let runtime = SwiftNativeProxyRuntimeService(
+            paths: makeTestFileSystemPaths(),
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: authRepository,
+            switchAccount: { cardID in
+                _ = try await coordinator.switchAccountAndApplySettings(id: cardID)
+            },
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let switchedCandidate = ProxyCandidate(
+            id: second.id,
+            label: second.label,
+            accountID: second.accountID,
+            accountKey: second.accountKey,
+            accessToken: "token-\(second.accountID)",
+            authJSON: second.authJSON,
+            addedAt: second.addedAt,
+            isPreferredCurrent: false,
+            oneWeekUsed: second.usage?.oneWeek?.usedPercent,
+            fiveHourUsed: second.usage?.fiveHour?.usedPercent
+        )
+
+        let refreshTask = Task {
+            try await coordinator.refreshUsage(force: true)
+        }
+        await usageService.waitForFirstFetchToStart()
+
+        try await runtime.recordSuccessfulCandidate(switchedCandidate)
+        await usageService.resumeFirstFetch()
+
+        _ = try await refreshTask.value
+
+        let store = try storeRepository.loadStore()
+        XCTAssertEqual(store.currentAccountID, second.id)
+        XCTAssertEqual(store.currentSelection?.cardID, second.id)
+        XCTAssertEqual(authRepository.readCurrentExtractedAuth()?.accountID, second.accountID)
+        XCTAssertEqual(authRepository.writtenAccountIDs.last, second.accountID)
+
+        let accounts = try await coordinator.listAccounts(refreshWorkspaceMetadata: false)
+        XCTAssertEqual(accounts.first(where: \.isCurrent)?.id, second.id)
     }
 }
 
@@ -5797,6 +6111,47 @@ private final class DelayedAccountsStoreRepository: AccountsStoreRepository, @un
     func saveStore(_ store: AccountsStore) throws {
         Thread.sleep(forTimeInterval: saveDelay)
         self.store = store
+    }
+}
+
+private actor ControlledUsageService: UsageService {
+    private let resultsByAccountID: [String: UsageSnapshot]
+    private var firstFetchStartedContinuation: CheckedContinuation<Void, Never>?
+    private var firstFetchResumeContinuation: CheckedContinuation<Void, Never>?
+    private var didStartFirstFetch = false
+
+    init(resultsByAccountID: [String: UsageSnapshot]) {
+        self.resultsByAccountID = resultsByAccountID
+    }
+
+    func fetchUsage(accessToken: String, accountID: String) async throws -> UsageSnapshot {
+        _ = accessToken
+        if !didStartFirstFetch {
+            didStartFirstFetch = true
+            firstFetchStartedContinuation?.resume()
+            firstFetchStartedContinuation = nil
+            await withCheckedContinuation { continuation in
+                firstFetchResumeContinuation = continuation
+            }
+        }
+        guard let result = resultsByAccountID[accountID] else {
+            throw AppError.invalidData("Missing usage result for test account")
+        }
+        return result
+    }
+
+    func waitForFirstFetchToStart() async {
+        if didStartFirstFetch {
+            return
+        }
+        await withCheckedContinuation { continuation in
+            firstFetchStartedContinuation = continuation
+        }
+    }
+
+    func resumeFirstFetch() {
+        firstFetchResumeContinuation?.resume()
+        firstFetchResumeContinuation = nil
     }
 }
 
@@ -6408,6 +6763,106 @@ private final class RecordingMultiAccountAuthRepository: AuthRepository, @unchec
     }
 }
 
+private final class MutableCurrentAuthRepository: AuthRepository, @unchecked Sendable {
+    private let extractedByAccountID: [String: ExtractedAuth]
+    private(set) var writtenAccountIDs: [String] = []
+    private var currentAuth: JSONValue
+
+    init(extractedByAccountID: [String: ExtractedAuth], currentAuth: JSONValue) {
+        self.extractedByAccountID = extractedByAccountID
+        self.currentAuth = currentAuth
+    }
+
+    func readCurrentAuth() throws -> JSONValue {
+        currentAuth
+    }
+
+    func readCurrentAuthOptional() throws -> JSONValue? {
+        currentAuth
+    }
+
+    func readAuth(from url: URL) throws -> JSONValue {
+        _ = url
+        return currentAuth
+    }
+
+    func writeCurrentAuth(_ auth: JSONValue) throws {
+        guard case .object(let payload) = auth,
+              case .string(let accountID)? = payload["account_id"] else {
+            throw AppError.invalidData("Missing written auth payload for test")
+        }
+        currentAuth = auth
+        writtenAccountIDs.append(accountID)
+    }
+
+    func removeCurrentAuth() throws {}
+
+    func makeChatGPTAuth(from tokens: ChatGPTOAuthTokens) throws -> JSONValue {
+        _ = tokens
+        return .null
+    }
+
+    func extractAuth(from auth: JSONValue) throws -> ExtractedAuth {
+        guard case .object(let payload) = auth,
+              case .string(let accountID)? = payload["account_id"],
+              let extracted = extractedByAccountID[accountID] else {
+            throw AppError.invalidData("Missing extracted auth for test payload")
+        }
+        return extracted
+    }
+}
+
+private final class RecordingSharedIdentityAuthRepository: AuthRepository, @unchecked Sendable {
+    private(set) var writtenSlots: [String] = []
+
+    func readCurrentAuth() throws -> JSONValue { .null }
+    func readCurrentAuthOptional() throws -> JSONValue? { nil }
+    func readAuth(from url: URL) throws -> JSONValue {
+        _ = url
+        return .null
+    }
+    func writeCurrentAuth(_ auth: JSONValue) throws {
+        guard case .object(let payload) = auth,
+              case .string(let slot)? = payload["slot"] else {
+            throw AppError.invalidData("Missing written auth slot for test")
+        }
+        writtenSlots.append(slot)
+    }
+    func removeCurrentAuth() throws {}
+    func makeChatGPTAuth(from tokens: ChatGPTOAuthTokens) throws -> JSONValue {
+        _ = tokens
+        return .null
+    }
+    func extractAuth(from auth: JSONValue) throws -> ExtractedAuth {
+        guard case .object(let payload) = auth,
+              case .string(let accountID)? = payload["account_id"] else {
+            throw AppError.invalidData("Missing extracted auth account for test")
+        }
+        return ExtractedAuth(
+            accountID: accountID,
+            accessToken: "token-\(accountID)",
+            email: nil,
+            planType: "pro",
+            teamName: nil,
+            principalID: nil
+        )
+    }
+}
+
+private func makeTestFileSystemPaths() -> FileSystemPaths {
+    let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    return FileSystemPaths(
+        applicationSupportDirectory: tempDir,
+        accountStorePath: tempDir.appendingPathComponent("accounts.json"),
+        settingsStorePath: tempDir.appendingPathComponent("settings.json"),
+        codexAuthPath: tempDir.appendingPathComponent("auth.json"),
+        codexConfigPath: tempDir.appendingPathComponent("config.toml"),
+        proxyDaemonDataDirectory: tempDir.appendingPathComponent("proxyd", isDirectory: true),
+        proxyDaemonKeyPath: tempDir.appendingPathComponent("proxyd/api-proxy.key"),
+        cloudflaredLogDirectory: tempDir.appendingPathComponent("cloudflared-logs", isDirectory: true)
+    )
+}
+
 private final class URLMappedAuthRepository: AuthRepository, @unchecked Sendable {
     private let currentAuth: JSONValue
     private let importedAuthByURL: [URL: JSONValue]
@@ -6613,8 +7068,8 @@ private actor RecordingCurrentAccountSelectionSyncService: CurrentAccountSelecti
     private var recordedAccountIDs: [String] = []
     private var pushCallCount = 0
 
-    func recordLocalSelection(accountID: String) async throws {
-        recordedAccountIDs.append(accountID)
+    func recordLocalSelection(cardID: String) async throws {
+        recordedAccountIDs.append(cardID)
     }
 
     func pushLocalSelectionIfNeeded() async throws {
@@ -6643,8 +7098,8 @@ private actor FailingCurrentAccountSelectionSyncService: CurrentAccountSelection
         self.message = message
     }
 
-    func recordLocalSelection(accountID: String) async throws {
-        _ = accountID
+    func recordLocalSelection(cardID: String) async throws {
+        _ = cardID
         throw AppError.io(message)
     }
 
@@ -6660,40 +7115,31 @@ private actor FailingCurrentAccountSelectionSyncService: CurrentAccountSelection
 }
 
 private actor PushDrivenCurrentAccountSelectionSyncService: CurrentAccountSelectionSyncServiceProtocol {
-    private let storeRepository: AccountsStoreRepository
+    private let remoteCardID: String
     private let remoteSelection: CurrentAccountSelection
     private var ensurePushSubscriptionCallCount = 0
     private var pullCallCount = 0
 
     init(
-        storeRepository: AccountsStoreRepository,
+        remoteCardID: String,
         remoteSelection: CurrentAccountSelection
     ) {
-        self.storeRepository = storeRepository
+        self.remoteCardID = remoteCardID
         self.remoteSelection = remoteSelection
     }
 
-    func recordLocalSelection(accountID: String) async throws {
-        _ = accountID
+    func recordLocalSelection(cardID: String) async throws {
+        _ = cardID
     }
 
     func pushLocalSelectionIfNeeded() async throws {}
 
     func pullRemoteSelectionIfNeeded() async throws -> CurrentAccountSelectionPullResult {
         pullCallCount += 1
-        var store = try storeRepository.loadStore()
-        store.currentSelection = remoteSelection
-        if let matchedAccount = store.accounts.first(where: {
-            AccountIdentity.matches(selection: remoteSelection, account: $0)
-        }) {
-            store.currentAccountID = matchedAccount.id
-        }
-        try storeRepository.saveStore(store)
         return CurrentAccountSelectionPullResult(
             didUpdateSelection: true,
             changedCurrentAccount: false,
-            accountID: remoteSelection.accountID,
-            accountKey: remoteSelection.accountKey
+            cardID: remoteCardID
         )
     }
 
@@ -6708,6 +7154,38 @@ private actor PushDrivenCurrentAccountSelectionSyncService: CurrentAccountSelect
     func readPullCallCount() -> Int {
         pullCallCount
     }
+}
+
+private actor SameCycleRemoteOverrideCurrentSelectionSyncService: CurrentAccountSelectionSyncServiceProtocol {
+    private let remoteCardID: String
+    private let remoteSelection: CurrentAccountSelection
+    private var pullCallCount = 0
+
+    init(
+        remoteCardID: String,
+        remoteSelection: CurrentAccountSelection
+    ) {
+        self.remoteCardID = remoteCardID
+        self.remoteSelection = remoteSelection
+    }
+
+    func recordLocalSelection(cardID: String) async throws {
+        _ = cardID
+    }
+
+    func pushLocalSelectionIfNeeded() async throws {}
+
+    func pullRemoteSelectionIfNeeded() async throws -> CurrentAccountSelectionPullResult {
+        pullCallCount += 1
+        guard pullCallCount > 1 else { return .noChange }
+        return CurrentAccountSelectionPullResult(
+            didUpdateSelection: true,
+            changedCurrentAccount: true,
+            cardID: remoteCardID
+        )
+    }
+
+    func ensurePushSubscriptionIfNeeded() async throws {}
 }
 
 private actor WorkspaceLoginRecorder {

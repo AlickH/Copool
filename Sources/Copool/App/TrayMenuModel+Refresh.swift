@@ -1,5 +1,10 @@
 import Foundation
 
+struct LocalAccountsRefreshResult {
+    let accounts: [AccountSummary]
+    let didAutoSwitch: Bool
+}
+
 @MainActor
 extension TrayMenuModel {
     func refreshNow(forceUsageRefresh: Bool) async {
@@ -51,19 +56,30 @@ extension TrayMenuModel {
         _ = try await reconcileCurrentAccountSelection(failOnError: false)
         let prefersSerialUsageRefresh = backgroundRefreshPolicy.cloudSyncMode == .pullRemoteAccounts
         let shouldPushSnapshot = backgroundRefreshPolicy.cloudSyncMode != .disabled
-        var latestAccounts = try await refreshLocalAccounts(
+        let localRefreshResult = try await refreshLocalAccounts(
             forceUsageRefresh: true,
             prefersSerialUsageRefresh: prefersSerialUsageRefresh,
             bypassUsageThrottle: true,
             targetAccountIDs: nil,
             onPartialUpdate: onPartialUpdate
         )
+        var latestAccounts = localRefreshResult.accounts
+        AccountSwitchDebugLog.write(
+            "tray.performManualRefresh.afterLocalRefresh",
+            "didAutoSwitch=\(localRefreshResult.didAutoSwitch) \(AccountSwitchDebugLog.describe(accounts: latestAccounts))"
+        )
 
         if shouldPushSnapshot, !latestAccounts.isEmpty {
             try await pushCloudAccountsIfNeeded(failOnError: false)
         }
-        _ = try await reconcileCurrentAccountSelection(failOnError: false)
-        latestAccounts = try await accountsCoordinator.listAccounts()
+        if !localRefreshResult.didAutoSwitch {
+            let selectionPullResult = try await reconcileCurrentAccountSelection(failOnError: false)
+            AccountSwitchDebugLog.write(
+                "tray.performManualRefresh.afterSelectionReconcile",
+                "\(AccountSwitchDebugLog.describe(pullResult: selectionPullResult))"
+            )
+            latestAccounts = try await accountsCoordinator.listAccounts()
+        }
 
         accounts = latestAccounts
         scheduleWorkspaceMetadataRefresh(forceRemoteCheck: true)
@@ -144,12 +160,17 @@ extension TrayMenuModel {
             from: try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false),
             now: now
         )
-        var latestAccounts = try await refreshLocalAccounts(
+        let localRefreshResult = try await refreshLocalAccounts(
             forceUsageRefresh: shouldRefreshUsage,
             prefersSerialUsageRefresh: prefersSerialUsageRefresh,
             bypassUsageThrottle: false,
             targetAccountIDs: targetAccountIDs,
             onPartialUpdate: nil
+        )
+        var latestAccounts = localRefreshResult.accounts
+        AccountSwitchDebugLog.write(
+            "tray.executeRefresh.afterLocalRefresh",
+            "forceUsageRefresh=\(forceUsageRefresh) shouldRefreshUsage=\(shouldRefreshUsage) didAutoSwitch=\(localRefreshResult.didAutoSwitch) \(AccountSwitchDebugLog.describe(accounts: latestAccounts))"
         )
 
         if cloudPullResult.didUpdateAccounts {
@@ -162,12 +183,17 @@ extension TrayMenuModel {
             try await pushCloudAccountsIfNeeded(failOnError: failOnCloudSyncError)
         }
 
-        if try await reconcileCurrentAccountSelection(
+        if !localRefreshResult.didAutoSwitch,
+           try await reconcileCurrentAccountSelection(
             failOnError: failOnCloudSyncError
         ).didUpdateSelection {
             latestAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
         }
 
+        AccountSwitchDebugLog.write(
+            "tray.executeRefresh.end",
+            "\(AccountSwitchDebugLog.describe(accounts: latestAccounts))"
+        )
         return latestAccounts
     }
 
@@ -199,12 +225,16 @@ extension TrayMenuModel {
         bypassUsageThrottle: Bool,
         targetAccountIDs: [String]?,
         onPartialUpdate: (@MainActor ([AccountSummary]) -> Void)?
-    ) async throws -> [AccountSummary] {
+    ) async throws -> LocalAccountsRefreshResult {
         let latestAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
+        AccountSwitchDebugLog.write(
+            "tray.refreshLocalAccounts.begin",
+            "forceUsageRefresh=\(forceUsageRefresh) bypassUsageThrottle=\(bypassUsageThrottle) autoSmartSwitchEnabled=\(autoSmartSwitchEnabled) \(AccountSwitchDebugLog.describe(accounts: latestAccounts))"
+        )
         if forceUsageRefresh {
             let resolvedTargetAccountIDs = targetAccountIDs ?? latestAccounts.map(\.id)
             guard !resolvedTargetAccountIDs.isEmpty else {
-                return latestAccounts
+                return LocalAccountsRefreshResult(accounts: latestAccounts, didAutoSwitch: false)
             }
             beginRemoteUsageRefreshActivity(for: resolvedTargetAccountIDs)
             defer { endRemoteUsageRefreshActivity(for: resolvedTargetAccountIDs) }
@@ -222,11 +252,23 @@ extension TrayMenuModel {
             )
             if autoSmartSwitchEnabled,
                let switchResult = try await accountsCoordinator.autoSmartSwitchIfNeeded() {
-                await syncCurrentAccountSelectionIfNeeded(accountID: switchResult.selectedAccount.accountID)
-                return switchResult.accounts
+                AccountSwitchDebugLog.write(
+                    "tray.refreshLocalAccounts.autoSwitched",
+                    "selected=\(AccountSwitchDebugLog.describe(account: switchResult.selectedAccount)) \(AccountSwitchDebugLog.describe(accounts: switchResult.accounts))"
+                )
+                await syncCurrentAccountSelectionIfNeeded(cardID: switchResult.selectedAccount.id)
+                return LocalAccountsRefreshResult(accounts: switchResult.accounts, didAutoSwitch: true)
             }
         }
-        return try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
+        let refreshedAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
+        AccountSwitchDebugLog.write(
+            "tray.refreshLocalAccounts.end",
+            "didAutoSwitch=false \(AccountSwitchDebugLog.describe(accounts: refreshedAccounts))"
+        )
+        return LocalAccountsRefreshResult(
+            accounts: refreshedAccounts,
+            didAutoSwitch: false
+        )
     }
 
     func pullCloudAccountsIfNeeded(
@@ -328,13 +370,25 @@ extension TrayMenuModel {
         }
     }
 
-    private func syncCurrentAccountSelectionIfNeeded(accountID: String) async {
+    private func syncCurrentAccountSelectionIfNeeded(cardID: String) async {
         guard let currentAccountSelectionSyncService else { return }
 
         do {
-            try await currentAccountSelectionSyncService.recordLocalSelection(accountID: accountID)
+            AccountSwitchDebugLog.write(
+                "tray.syncCurrentSelection.begin",
+                "cardID=\(cardID)"
+            )
+            try await currentAccountSelectionSyncService.recordLocalSelection(cardID: cardID)
             try await currentAccountSelectionSyncService.pushLocalSelectionIfNeeded()
+            AccountSwitchDebugLog.write(
+                "tray.syncCurrentSelection.end",
+                "cardID=\(cardID)"
+            )
         } catch {
+            AccountSwitchDebugLog.write(
+                "tray.syncCurrentSelection.error",
+                "cardID=\(cardID) error=\(error.localizedDescription)"
+            )
             notice = error.localizedDescription
         }
     }

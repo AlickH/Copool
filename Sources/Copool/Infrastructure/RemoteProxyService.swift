@@ -79,10 +79,18 @@ final class RemoteProxyService: RemoteProxyServiceProtocol, @unchecked Sendable 
 
     func deploy(server: RemoteServerConfig) async throws -> RemoteProxyStatus {
         let server = try validate(server)
+        AuthFlowDebugLog.write(
+            "RemoteDeploy.service.begin",
+            "serverID=\(server.id) label=\(server.label) host=\(server.host) remoteDir=\(server.remoteDir) listenPort=\(server.listenPort)"
+        )
         try ensureSSHToolsAvailable(for: server)
         let commandRunner = makeCommandRunner()
 
         let binaryPath = try ensureDaemonBinary(for: server)
+        AuthFlowDebugLog.write(
+            "RemoteDeploy.service.binaryReady",
+            "serverID=\(server.id) binaryPath=\(binaryPath.path)"
+        )
         let serviceName = RemoteProxyDeploymentPlan.serviceName(for: server.id)
         let serviceContent = RemoteProxyDeploymentPlan.renderSystemdUnit(
             server: server,
@@ -101,12 +109,20 @@ final class RemoteProxyService: RemoteProxyServiceProtocol, @unchecked Sendable 
         let accountsData = try makeAccountsPayloadBuilder().build()
         try accountsData.write(to: localAccounts, options: .atomic)
         try serviceContent.write(to: localService, atomically: true, encoding: .utf8)
+        AuthFlowDebugLog.write(
+            "RemoteDeploy.service.stagePrepared",
+            "serverID=\(server.id) stageTemp=\(temp.path) accountsBytes=\(accountsData.count)"
+        )
 
         let stageDir = RemoteProxyDeploymentPlan.stageDirectory(
             serverID: server.id,
             unixTime: Int(Date().timeIntervalSince1970)
         )
         _ = try commandRunner.runSSH(server: server, command: "mkdir -p \(commandRunner.shellQuote(stageDir))")
+        AuthFlowDebugLog.write(
+            "RemoteDeploy.service.remoteStageCreated",
+            "serverID=\(server.id) stageDir=\(stageDir)"
+        )
 
         try commandRunner.runSCP(
             server: server,
@@ -115,6 +131,10 @@ final class RemoteProxyService: RemoteProxyServiceProtocol, @unchecked Sendable 
             timeout: Constants.fileTransferTimeout,
             connectTimeout: Constants.defaultConnectTimeoutSeconds
         )
+        AuthFlowDebugLog.write(
+            "RemoteDeploy.service.binaryUploaded",
+            "serverID=\(server.id) remotePath=\(stageDir)/codex-tools-proxyd"
+        )
         try commandRunner.runSCP(
             server: server,
             localPath: localAccounts.path,
@@ -122,12 +142,20 @@ final class RemoteProxyService: RemoteProxyServiceProtocol, @unchecked Sendable 
             timeout: Constants.fileTransferTimeout,
             connectTimeout: Constants.defaultConnectTimeoutSeconds
         )
+        AuthFlowDebugLog.write(
+            "RemoteDeploy.service.accountsUploaded",
+            "serverID=\(server.id) remotePath=\(stageDir)/accounts.json"
+        )
         try commandRunner.runSCP(
             server: server,
             localPath: localService.path,
             remotePath: "\(stageDir)/\(serviceName)",
             timeout: Constants.fileTransferTimeout,
             connectTimeout: Constants.defaultConnectTimeoutSeconds
+        )
+        AuthFlowDebugLog.write(
+            "RemoteDeploy.service.unitUploaded",
+            "serverID=\(server.id) remotePath=\(stageDir)/\(serviceName)"
         )
 
         let installCommand = RemoteProxyDeploymentPlan.renderInstallCommand(
@@ -143,8 +171,17 @@ final class RemoteProxyService: RemoteProxyServiceProtocol, @unchecked Sendable 
             timeout: Constants.defaultCommandTimeout,
             connectTimeout: Constants.defaultConnectTimeoutSeconds
         )
+        AuthFlowDebugLog.write(
+            "RemoteDeploy.service.installFinished",
+            "serverID=\(server.id) serviceName=\(serviceName)"
+        )
 
-        return await status(server: server)
+        let status = await status(server: server)
+        AuthFlowDebugLog.write(
+            "RemoteDeploy.service.status",
+            "serverID=\(server.id) installed=\(status.installed) running=\(status.running) lastError=\(status.lastError ?? "nil")"
+        )
+        return status
     }
 
     func syncAccounts(server: RemoteServerConfig) async throws -> RemoteProxyStatus {

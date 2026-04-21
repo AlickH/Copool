@@ -135,7 +135,7 @@ extension AccountsPageModel {
                 setAsCurrent: setAsCurrent
             )
             if setAsCurrent {
-                syncCurrentAccountSelectionInBackground(accountID: imported.accountID)
+                syncCurrentAccountSelectionInBackground(cardID: imported.id)
             }
             let accounts = try await coordinator.listAccounts()
             applyAccounts(accounts)

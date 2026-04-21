@@ -118,6 +118,10 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
     }
 
     func acceptLocalAccountsSnapshot(_ accounts: [AccountSummary]) {
+        AccountSwitchDebugLog.write(
+            "tray.acceptLocalSnapshot",
+            "incoming=\(AccountSwitchDebugLog.describe(accounts: accounts))"
+        )
         self.accounts = accounts
     }
 

@@ -53,6 +53,10 @@ extension AccountsPageModel {
     func reloadFromLocalStoreAfterExternalMutation() async {
         do {
             let accounts = try await coordinator.listAccounts(refreshWorkspaceMetadata: false)
+            AccountSwitchDebugLog.write(
+                "accountsPage.reloadFromLocalStore",
+                "reloaded=\(AccountSwitchDebugLog.describe(accounts: accounts))"
+            )
             await applyReloadedAccounts(accounts)
         } catch {}
     }

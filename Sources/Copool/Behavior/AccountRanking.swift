@@ -1,7 +1,7 @@
 import Foundation
 
 enum AccountRanking {
-    private static let autoSwitchUsedThreshold = 99.0
+    private static let autoSwitchUsedThreshold = 100.0
 
     static func remainingScore(for account: AccountSummary) -> Double {
         let oneWeekUsed = account.usage?.oneWeek?.usedPercent ?? 100

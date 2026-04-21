@@ -90,10 +90,9 @@ final class RemoteProxyAccountsPayloadBuilderTests: XCTestCase {
             ],
             currentAccountID: accountID,
             currentSelection: CurrentAccountSelection(
-                accountID: "acc-1",
+                cardID: "acct-current",
                 selectedAt: 123,
-                sourceDeviceID: "macos-local",
-                accountKey: "test@example.com|acc-1"
+                sourceDeviceID: "macos-local"
             )
         )
 
@@ -105,8 +104,7 @@ final class RemoteProxyAccountsPayloadBuilderTests: XCTestCase {
 
         let builtStore = try JSONDecoder().decode(AccountsStore.self, from: payload)
         XCTAssertEqual(builtStore.currentAccountID, "acct-current")
-        XCTAssertEqual(builtStore.currentSelection?.accountID, "acc-1")
-        XCTAssertEqual(builtStore.currentSelection?.accountKey, "test@example.com|acc-1")
+        XCTAssertNil(builtStore.currentSelection)
     }
 
     private func makeJWT(email: String, accountID: String, planType: String) -> String {

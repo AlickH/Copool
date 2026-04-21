@@ -80,6 +80,7 @@ final class AccountsIdentityRegressionTests: XCTestCase {
                         principalID: "principal-2"
                     )
                 ],
+                currentAccountID: "acct-2",
                 currentSelection: nil
             )
         )
@@ -97,6 +98,70 @@ final class AccountsIdentityRegressionTests: XCTestCase {
 
         XCTAssertEqual(accounts.filter(\.isCurrent).count, 1)
         XCTAssertEqual(accounts.first(where: \.isCurrent)?.email, "second@example.com")
+    }
+
+    func testListAccountsKeepsCurrentCardIDWhenSelectionIsStale() async throws {
+        let authRepository = IdentityRegressionAuthRepository()
+        let storeRepository = IdentityRegressionStoreRepository(
+            store: AccountsStore(
+                version: 1,
+                accounts: [
+                    StoredAccount(
+                        id: "acct-1",
+                        label: "Old Card",
+                        email: "old@example.com",
+                        accountID: "account-1",
+                        planType: "pro",
+                        teamName: nil,
+                        teamAlias: nil,
+                        authJSON: makeAuth(
+                            principalID: "principal-1",
+                            email: "old@example.com",
+                            accountID: "account-1"
+                        ),
+                        addedAt: 1,
+                        updatedAt: 1,
+                        usage: nil,
+                        usageError: nil,
+                        principalID: "principal-1"
+                    ),
+                    StoredAccount(
+                        id: "acct-2",
+                        label: "New Card",
+                        email: "new@example.com",
+                        accountID: "account-2",
+                        planType: "pro",
+                        teamName: nil,
+                        teamAlias: nil,
+                        authJSON: makeAuth(
+                            principalID: "principal-2",
+                            email: "new@example.com",
+                            accountID: "account-2"
+                        ),
+                        addedAt: 2,
+                        updatedAt: 2,
+                        usage: nil,
+                        usageError: nil,
+                        principalID: "principal-2"
+                    )
+                ],
+                currentAccountID: "acct-1",
+                currentSelection: CurrentAccountSelection(
+                    cardID: "account-2",
+                    selectedAt: 2_000,
+                    sourceDeviceID: "macos-local"
+                )
+            )
+        )
+        let coordinator = makeCoordinator(
+            storeRepository: storeRepository,
+            authRepository: authRepository
+        )
+
+        let accounts = try await coordinator.listAccounts()
+
+        XCTAssertEqual(accounts.filter(\.isCurrent).count, 1)
+        XCTAssertEqual(accounts.first(where: \.isCurrent)?.id, "acct-1")
     }
 
     func testImportCurrentAuthPrefersExactPrincipalMatchOverLegacyWildcardRow() async throws {

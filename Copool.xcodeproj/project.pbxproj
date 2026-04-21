@@ -38,6 +38,7 @@
 		137936A0518C78C5549E91A1 /* AccountsPageControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A103A103A103A103A103A103 /* AccountsPageControls.swift */; };
 		1458D53663C6DDA922124FFD /* AccountSummaryPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 674BD908B276FA16BCABEAEC /* AccountSummaryPresentationTests.swift */; };
 		15C1AB961C5BB3B728A848E1 /* AccountsWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E655B80A368B9D3F2B6371 /* AccountsWidgetSnapshot.swift */; };
+		16C9AA1111C9AA1111C9AA11 /* CurrentAccountProjectionWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16C9AA1111C9AA1111C9AA13 /* CurrentAccountProjectionWriter.swift */; };
 		15DB5CC3DD62EDCC284D506A /* SwiftNativeProxyRuntimeService+RequestTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72F83775D81C98F1457C952A /* SwiftNativeProxyRuntimeService+RequestTranslation.swift */; };
 		16AF52DED4DD5AE588B64368 /* usage.rs in Resources */ = {isa = PBXBuildFile; fileRef = 2A597D670A72CDE27C08D586 /* usage.rs */; };
 		16AF52DED4DD5AE588B64369 /* proxyd-prebuilt-archives in Resources */ = {isa = PBXBuildFile; fileRef = FFEEDDCCBBAA998877665546 /* proxyd-prebuilt-archives */; };
@@ -46,6 +47,7 @@
 		17EFD9B9B9CF5294FD765876 /* RemoteProxyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36D2D735CB5E1753FB0DE639 /* RemoteProxyService.swift */; };
 		17F4E9A12A114B1AA9D0E110 /* AccountsSnapshotFreshnessPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F4E9A12A114B1AA9D0E111 /* AccountsSnapshotFreshnessPolicy.swift */; };
 		17F4E9A12A114B1AA9D0E112 /* AccountsSnapshotFreshnessPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F4E9A12A114B1AA9D0E111 /* AccountsSnapshotFreshnessPolicy.swift */; };
+		17C9AA1111C9AA1111C9AA12 /* CurrentAccountProjectionWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16C9AA1111C9AA1111C9AA13 /* CurrentAccountProjectionWriter.swift */; };
 		183F30DA3314F21DE014B4DA /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42479015F84989E486D80B6E /* Protocols.swift */; };
 		1856A9A4C1A74A8AA16A8B01 /* ChatGPTBaseOriginResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1856A9A4C1A74A8AA16A8B11 /* ChatGPTBaseOriginResolver.swift */; };
 		18828CB243BB1936642EF79E /* ProxyCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2843DB9CB43284AFB2E5A459 /* ProxyCoordinator.swift */; };
@@ -440,6 +442,7 @@
 		1659877DCD8B9150D665ED12 /* AuthFileRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFileRepositoryTests.swift; sourceTree = "<group>"; };
 		17E5EFBA0AA212B32AAB6710 /* RepositoryLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryLocator.swift; sourceTree = "<group>"; };
 		17F4E9A12A114B1AA9D0E111 /* AccountsSnapshotFreshnessPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsSnapshotFreshnessPolicy.swift; sourceTree = "<group>"; };
+		16C9AA1111C9AA1111C9AA13 /* CurrentAccountProjectionWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentAccountProjectionWriter.swift; sourceTree = "<group>"; };
 		1856A9A4C1A74A8AA16A8B11 /* ChatGPTBaseOriginResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTBaseOriginResolver.swift; sourceTree = "<group>"; };
 		18F1A141B031F5F42ACE838F /* CloudflareAPIClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CloudflareAPIClient.swift; sourceTree = "<group>"; };
 		1928844F787DAA8E86F1AE1A /* PlatformCapabilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformCapabilities.swift; sourceTree = "<group>"; };
@@ -714,6 +717,7 @@
 				0FBDA86A5354BD9FDCE671A2 /* AccountRanking.swift */,
 				975800F0AD21824941F02AD3 /* AccountsCoordinator.swift */,
 				17F4E9A12A114B1AA9D0E111 /* AccountsSnapshotFreshnessPolicy.swift */,
+				16C9AA1111C9AA1111C9AA13 /* CurrentAccountProjectionWriter.swift */,
 				3393D58FCF12CF53134D80E6 /* ProxyControlBridge.swift */,
 				2843DB9CB43284AFB2E5A459 /* ProxyCoordinator.swift */,
 				A106A106A106A106A106A106 /* RemoteServerConfiguration.swift */,
@@ -1280,6 +1284,7 @@
 				8E18C167F43FC9E6CC80A82A /* AccountRanking.swift in Sources */,
 				FBB66ADD684E1C948FB611E4 /* AccountsCoordinator.swift in Sources */,
 				17F4E9A12A114B1AA9D0E112 /* AccountsSnapshotFreshnessPolicy.swift in Sources */,
+				17C9AA1111C9AA1111C9AA12 /* CurrentAccountProjectionWriter.swift in Sources */,
 				FCB8E6490AA6D2891320E6A0 /* AccountCardPresentation.swift in Sources */,
 				A804A804A804A804A804A804 /* AccountCardInteractionPresentation.swift in Sources */,
 				A805A805A805A805A805A805 /* AccountCardPrimitives.swift in Sources */,
@@ -1475,6 +1480,7 @@
 				DCD28B83E4C2D0294C831627 /* AccountRanking.swift in Sources */,
 				08E6BB21C1E6371C4D7C56A9 /* AccountsCoordinator.swift in Sources */,
 				17F4E9A12A114B1AA9D0E110 /* AccountsSnapshotFreshnessPolicy.swift in Sources */,
+				16C9AA1111C9AA1111C9AA11 /* CurrentAccountProjectionWriter.swift in Sources */,
 				137936A0518C78C5549E919F /* AccountCardPresentation.swift in Sources */,
 				A824A824A824A824A824A824 /* AccountCardInteractionPresentation.swift in Sources */,
 				A825A825A825A825A825A825 /* AccountCardPrimitives.swift in Sources */,

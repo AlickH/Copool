@@ -14,6 +14,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
     let settingsRepository: SettingsRepository
     let authRepository: AuthRepository
     let onAccountsStoreChanged: (@Sendable () -> Void)?
+    let switchAccount: (@Sendable (String) async throws -> Void)?
     let dateProvider: DateProviding
 
     private var server: SimpleHTTPServer?
@@ -34,6 +35,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
         settingsRepository: SettingsRepository,
         authRepository: AuthRepository,
         onAccountsStoreChanged: (@Sendable () -> Void)? = nil,
+        switchAccount: (@Sendable (String) async throws -> Void)? = nil,
         dateProvider: DateProviding = SystemDateProvider()
     ) {
         self.paths = paths
@@ -41,6 +43,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
         self.settingsRepository = settingsRepository
         self.authRepository = authRepository
         self.onAccountsStoreChanged = onAccountsStoreChanged
+        self.switchAccount = switchAccount
         self.dateProvider = dateProvider
     }
 
@@ -263,7 +266,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
             do {
                 let response = try await sendUpstream(payload: payload, candidate: candidate, downstreamHeaders: downstreamHeaders)
                 if response.statusCode >= 200 && response.statusCode < 300 {
-                    try recordSuccessfulCandidate(candidate)
+                    try await recordSuccessfulCandidate(candidate)
                     return response
                 }
 
@@ -322,7 +325,7 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
                 )
 
                 if response.statusCode >= 200 && response.statusCode < 300 {
-                    try recordSuccessfulCandidate(candidate)
+                    try await recordSuccessfulCandidate(candidate)
                     return response
                 }
 
@@ -601,26 +604,31 @@ actor SwiftNativeProxyRuntimeService: ProxyRuntimeService {
         }
     }
 
-    func recordSuccessfulCandidate(_ candidate: ProxyCandidate) throws {
+    func recordSuccessfulCandidate(_ candidate: ProxyCandidate) async throws {
+        let storeBefore = try storeRepository.loadStore()
+        AccountSwitchDebugLog.write(
+            "proxy.recordSuccessfulCandidate.begin",
+            "candidateCardID=\(candidate.id) accountID=\(candidate.accountID) accountKey=\(candidate.accountKey) before=\(AccountSwitchDebugLog.describe(store: storeBefore, currentAuthAccountKey: authRepository.currentAuthAccountKey()))"
+        )
         activeAccountID = candidate.accountID
         activeAccountLabel = candidate.label
         stickyAccountID = candidate.accountID
         cooldownUntilByAccountID.removeValue(forKey: candidate.accountID)
-        lastError = nil
-    }
-
-    func persistCurrentSelection(for candidate: ProxyCandidate) throws {
-        var store = try storeRepository.loadStore()
-        guard store.accounts.contains(where: { $0.id == candidate.id }) else { return }
-        store.currentSelection = CurrentAccountSelection(
-            accountID: candidate.accountID,
-            selectedAt: currentUnixMilliseconds(),
-            sourceDeviceID: PlatformCapabilities.currentPlatform == .macOS ? "macos-local" : "ios-local",
-            accountKey: candidate.accountKey
-        )
-        store.currentAccountID = candidate.id
-        try storeRepository.saveStore(store)
+        guard storeBefore.accounts.contains(where: { $0.id == candidate.id }) else {
+            throw AppError.invalidData(L10n.tr("error.accounts.account_not_found_for_switch"))
+        }
+        guard let switchAccount else {
+            throw AppError.invalidData("Proxy runtime is missing the account switch handler.")
+        }
+        try await switchAccount(candidate.id)
+        let storeAfter = try storeRepository.loadStore()
         cachedCandidatesStoreModificationDate = nil
+        onAccountsStoreChanged?()
+        lastError = nil
+        AccountSwitchDebugLog.write(
+            "proxy.recordSuccessfulCandidate.end",
+            "candidateCardID=\(candidate.id) after=\(AccountSwitchDebugLog.describe(store: storeAfter, currentAuthAccountKey: authRepository.currentAuthAccountKey()))"
+        )
     }
 
 }

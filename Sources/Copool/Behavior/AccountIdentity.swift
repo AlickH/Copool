@@ -88,10 +88,7 @@ enum AccountIdentity {
     }
 
     static func matches(selection: CurrentAccountSelection, account: StoredAccount) -> Bool {
-        if let selectionKey = normalizedSelectionKey(selection.accountKey) {
-            return selectionKey == key(for: account)
-        }
-        return normalizedAccountID(selection.accountID) == normalizedAccountID(account.accountID)
+        selection.cardID == account.id
     }
 
     static func preferredMatchIndex(

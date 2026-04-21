@@ -4,6 +4,7 @@ final class StoreFileRepository: AccountsStoreRepository, @unchecked Sendable {
     private let paths: FileSystemPaths
     private let fileManager: FileManager
     private let dateProvider: DateProviding
+    private let lock = NSLock()
 
     init(paths: FileSystemPaths, fileManager: FileManager = .default, dateProvider: DateProviding = SystemDateProvider()) {
         self.paths = paths
@@ -12,6 +13,27 @@ final class StoreFileRepository: AccountsStoreRepository, @unchecked Sendable {
     }
 
     func loadStore() throws -> AccountsStore {
+        lock.lock()
+        defer { lock.unlock() }
+        return try loadStoreUnlocked()
+    }
+
+    func saveStore(_ store: AccountsStore) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        try saveStoreUnlocked(store)
+    }
+
+    func mutateStore(_ transform: (inout AccountsStore) throws -> Void) throws -> AccountsStore {
+        lock.lock()
+        defer { lock.unlock() }
+        var store = try loadStoreUnlocked()
+        try transform(&store)
+        try saveStoreUnlocked(store)
+        return store
+    }
+
+    private func loadStoreUnlocked() throws -> AccountsStore {
         let path = paths.accountStorePath
         guard fileManager.fileExists(atPath: path.path) else {
             return AccountsStore()
@@ -29,12 +51,12 @@ final class StoreFileRepository: AccountsStoreRepository, @unchecked Sendable {
         } catch {
             try backupCorruptedStore(raw: data)
             let emptyStore = AccountsStore()
-            try saveStore(emptyStore)
+            try saveStoreUnlocked(emptyStore)
             return emptyStore
         }
     }
 
-    func saveStore(_ store: AccountsStore) throws {
+    private func saveStoreUnlocked(_ store: AccountsStore) throws {
         try fileManager.createDirectory(at: paths.applicationSupportDirectory, withIntermediateDirectories: true)
 
         let encoder = JSONEncoder()

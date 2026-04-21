@@ -39,11 +39,11 @@ final class AppSmokeTests: XCTestCase {
                         usageError: nil
                     )
                 ],
+                currentAccountID: "acct-current",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "account-current",
+                    cardID: "acct-current",
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "smoke-device",
-                    accountKey: "account-current"
+                    sourceDeviceID: "smoke-device"
                 )
             )
         )
@@ -94,6 +94,103 @@ final class AppSmokeTests: XCTestCase {
 
         XCTAssertTrue(settingsModel.settings.autoStartApiProxy)
         XCTAssertEqual(try settingsRepository.loadSettings().autoStartApiProxy, true)
+    }
+
+    func testAccountsPageSmartSwitchUpdatesCurrentStateAndAuth() async throws {
+        let now: Int64 = 1_763_216_000
+        let storeRepository = SmokeAccountsStoreRepository(
+            store: AccountsStore(
+                version: 1,
+                accounts: [
+                    StoredAccount(
+                        id: "acct-current",
+                        label: "Current",
+                        email: "current@example.com",
+                        accountID: "account-current",
+                        planType: "pro",
+                        teamName: nil,
+                        teamAlias: nil,
+                        authJSON: .object(["id_token": .string("current-token")]),
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: UsageSnapshot(
+                            fetchedAt: now,
+                            planType: "pro",
+                            fiveHour: UsageWindow(usedPercent: 100, windowSeconds: 18_000, resetAt: nil),
+                            oneWeek: UsageWindow(usedPercent: 95, windowSeconds: 604_800, resetAt: nil),
+                            credits: nil
+                        ),
+                        usageError: nil
+                    ),
+                    StoredAccount(
+                        id: "acct-next",
+                        label: "Next",
+                        email: "next@example.com",
+                        accountID: "account-next",
+                        planType: "pro",
+                        teamName: nil,
+                        teamAlias: nil,
+                        authJSON: .object(["id_token": .string("next-token")]),
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: UsageSnapshot(
+                            fetchedAt: now,
+                            planType: "pro",
+                            fiveHour: UsageWindow(usedPercent: 10, windowSeconds: 18_000, resetAt: nil),
+                            oneWeek: UsageWindow(usedPercent: 20, windowSeconds: 604_800, resetAt: nil),
+                            credits: nil
+                        ),
+                        usageError: nil
+                    )
+                ],
+                currentAccountID: "acct-current",
+                currentSelection: CurrentAccountSelection(
+                    cardID: "acct-current",
+                    selectedAt: now * 1_000,
+                    sourceDeviceID: "smoke-device"
+                )
+            )
+        )
+        let settingsRepository = TestSettingsRepository()
+        let authRepository = SmokeAuthRepository(currentAccountKey: "account-current")
+        let accountsCoordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: settingsRepository,
+            authRepository: authRepository,
+            usageService: SmokeMappedUsageService(
+                snapshotsByAccountID: [
+                    "account-current": UsageSnapshot(
+                        fetchedAt: now,
+                        planType: "pro",
+                        fiveHour: UsageWindow(usedPercent: 100, windowSeconds: 18_000, resetAt: nil),
+                        oneWeek: UsageWindow(usedPercent: 95, windowSeconds: 604_800, resetAt: nil),
+                        credits: nil
+                    ),
+                    "account-next": UsageSnapshot(
+                        fetchedAt: now,
+                        planType: "pro",
+                        fiveHour: UsageWindow(usedPercent: 10, windowSeconds: 18_000, resetAt: nil),
+                        oneWeek: UsageWindow(usedPercent: 20, windowSeconds: 604_800, resetAt: nil),
+                        credits: nil
+                    )
+                ]
+            ),
+            chatGPTOAuthLoginService: SmokeChatLoginService(),
+            codexCLIService: SmokeCodexCLIService(),
+            editorAppService: SmokeEditorAppService(),
+            opencodeAuthSyncService: SmokeOpencodeAuthSyncService(),
+            dateProvider: SmokeDateProvider(now: now)
+        )
+        let model = AccountsPageModel(coordinator: accountsCoordinator)
+
+        await model.loadIfNeeded()
+        await model.smartSwitch()
+
+        guard case .content(let switchedAccounts) = model.state else {
+            return XCTFail("Expected switched accounts content state")
+        }
+        XCTAssertEqual(switchedAccounts.first(where: \.isCurrent)?.id, "acct-next")
+        XCTAssertEqual(authRepository.currentAccountKey, "account-next")
     }
 
     func testProxyPageStartAndStopFlow() async {
@@ -159,11 +256,11 @@ final class AppSmokeTests: XCTestCase {
                         usageError: nil
                     )
                 ],
+                currentAccountID: "acct-current",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "account-current",
+                    cardID: "acct-current",
                     selectedAt: now * 1_000,
-                    sourceDeviceID: "smoke-device",
-                    accountKey: "account-current"
+                    sourceDeviceID: "smoke-device"
                 )
             )
         )
@@ -181,7 +278,7 @@ final class AppSmokeTests: XCTestCase {
                     "account-current": UsageSnapshot(
                         fetchedAt: now,
                         planType: "pro",
-                        fiveHour: UsageWindow(usedPercent: 99, windowSeconds: 18_000, resetAt: nil),
+                        fiveHour: UsageWindow(usedPercent: 100, windowSeconds: 18_000, resetAt: nil),
                         oneWeek: UsageWindow(usedPercent: 95, windowSeconds: 604_800, resetAt: nil),
                         credits: nil
                     ),
@@ -240,13 +337,14 @@ final class AppSmokeTests: XCTestCase {
         defer { _ = accountsSyncCancellable }
 
         await accountsModel.loadIfNeeded()
-        let latestAccounts = try await trayModel.refreshLocalAccounts(
+        let localRefreshResult = try await trayModel.refreshLocalAccounts(
             forceUsageRefresh: true,
             prefersSerialUsageRefresh: false,
             bypassUsageThrottle: true,
             targetAccountIDs: nil,
             onPartialUpdate: nil
         )
+        let latestAccounts = localRefreshResult.accounts
         trayModel.acceptLocalAccountsSnapshot(latestAccounts)
 
         XCTAssertEqual(authRepository.currentAccountKey, "account-next")
@@ -427,8 +525,8 @@ private final class SmokeLaunchAtStartupService: LaunchAtStartupServiceProtocol,
 }
 
 private actor SmokeCurrentAccountSelectionSyncService: CurrentAccountSelectionSyncServiceProtocol {
-    func recordLocalSelection(accountID: String) async throws {
-        _ = accountID
+    func recordLocalSelection(cardID: String) async throws {
+        _ = cardID
     }
 
     func pushLocalSelectionIfNeeded() async throws {}

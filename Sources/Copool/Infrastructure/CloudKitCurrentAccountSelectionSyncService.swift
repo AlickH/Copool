@@ -21,8 +21,6 @@ actor CloudKitCurrentAccountSelectionSyncService: CurrentAccountSelectionSyncSer
     private let storeRepository: AccountsStoreRepository
     private let authRepository: AuthRepository
     private let database: CKDatabase?
-    private let dateProvider: DateProviding
-    private let runtimePlatform: RuntimePlatform
     private let deviceID: String
     private var pushSubscriptionEnsured = false
 
@@ -35,32 +33,38 @@ actor CloudKitCurrentAccountSelectionSyncService: CurrentAccountSelectionSyncSer
         self.storeRepository = storeRepository
         self.authRepository = authRepository
         self.database = Self.makeDatabase()
-        self.dateProvider = dateProvider
-        self.runtimePlatform = runtimePlatform
+        _ = dateProvider
+        _ = runtimePlatform
         self.deviceID = Self.resolveDeviceID()
     }
 
-    func recordLocalSelection(accountID: String) async throws {
+    func recordLocalSelection(cardID: String) async throws {
         let store = try storeRepository.loadStore()
-        guard let account = resolveLocalSelectionAccount(preferredAccountID: accountID, in: store) else {
+        guard let account = store.accounts.first(where: { $0.id == cardID }) else {
             throw AppError.invalidData("Cannot record a current account selection for an unknown account.")
         }
 
-        let selection = CurrentAccountSelection(
-            accountID: account.accountID,
-            selectedAt: dateProvider.unixMillisecondsNow(),
-            sourceDeviceID: deviceID,
-            accountKey: account.accountKey
+        AccountSwitchDebugLog.write(
+            "cloudSelection.recordLocal.begin",
+            "cardID=\(cardID) target=\(AccountSwitchDebugLog.describe(account: account)) before=\(AccountSwitchDebugLog.describe(store: store, currentAuthAccountKey: authRepository.currentAuthAccountKey()))"
         )
-        try saveCurrentSelection(selection)
+        AccountSwitchDebugLog.write(
+            "cloudSelection.recordLocal.end",
+            "cardID=\(cardID) unchanged=\(AccountSwitchDebugLog.describe(store: store, currentAuthAccountKey: authRepository.currentAuthAccountKey()))"
+        )
     }
 
     func pushLocalSelectionIfNeeded() async throws {
         guard database != nil else { return }
         let store = try storeRepository.loadStore()
-        guard let selection = store.currentSelection,
-              matchingAccount(for: selection, in: store.accounts) != nil else { return }
+        guard let currentCardID = store.currentAccountID,
+              store.accounts.contains(where: { $0.id == currentCardID }) else { return }
 
+        let selection = CurrentAccountSelection(
+            cardID: currentCardID,
+            selectedAt: store.currentSelection?.selectedAt ?? currentUnixMilliseconds(),
+            sourceDeviceID: deviceID
+        )
         try await saveSelectionRecord(selection)
     }
 
@@ -110,31 +114,35 @@ actor CloudKitCurrentAccountSelectionSyncService: CurrentAccountSelectionSyncSer
             remoteSelection,
             over: previousSelection
         ) else {
+            AccountSwitchDebugLog.write(
+                "cloudSelection.pullRemote.skipOlder",
+                "remote=\(AccountSwitchDebugLog.describe(selection: remoteSelection)) local=\(AccountSwitchDebugLog.describe(selection: previousSelection))"
+            )
             return .noChange
         }
 
-        guard let matchingAccount = matchingAccount(for: remoteSelection, in: store.accounts) else {
+        guard store.accounts.contains(where: { $0.id == remoteSelection.cardID }) else {
+            AccountSwitchDebugLog.write(
+                "cloudSelection.pullRemote.skipMissingAccount",
+                "remote=\(AccountSwitchDebugLog.describe(selection: remoteSelection))"
+            )
             return .noChange
         }
 
-        let changedCurrentAccount = currentAuthAccount(in: store)?.accountKey != matchingAccount.accountKey
-        if runtimePlatform == .macOS, changedCurrentAccount {
-            try authRepository.writeCurrentAuth(matchingAccount.authJSON)
-        }
-
-        let appliedSelection = CurrentAccountSelection(
-            accountID: matchingAccount.accountID,
-            selectedAt: remoteSelection.selectedAt,
-            sourceDeviceID: remoteSelection.sourceDeviceID,
-            accountKey: matchingAccount.accountKey
+        let changedCurrentAccount = store.currentAccountID != remoteSelection.cardID
+        AccountSwitchDebugLog.write(
+            "cloudSelection.pullRemote.resolved",
+            "remote=\(AccountSwitchDebugLog.describe(selection: remoteSelection)) changedCurrentAccount=\(changedCurrentAccount)"
         )
-        try saveCurrentSelection(appliedSelection)
         return CurrentAccountSelectionPullResult(
-            didUpdateSelection: changedCurrentAccount || previousSelection != appliedSelection,
+            didUpdateSelection: changedCurrentAccount || previousSelection != remoteSelection,
             changedCurrentAccount: changedCurrentAccount,
-            accountID: matchingAccount.accountID,
-            accountKey: matchingAccount.accountKey
+            cardID: remoteSelection.cardID
         )
+    }
+
+    private func currentUnixMilliseconds() -> Int64 {
+        Int64(Date().timeIntervalSince1970 * 1_000)
     }
 
     private var recordID: CKRecord.ID {
@@ -198,60 +206,6 @@ actor CloudKitCurrentAccountSelectionSyncService: CurrentAccountSelectionSyncSer
         } catch {
             throw AppError.invalidData("Failed to serialize current account selection: \(error.localizedDescription)")
         }
-    }
-
-    private func saveCurrentSelection(_ selection: CurrentAccountSelection) throws {
-        var latestStore = try storeRepository.loadStore()
-        latestStore.currentSelection = selection
-        latestStore.currentAccountID = matchingAccount(for: selection, in: latestStore.accounts)?.id
-        try storeRepository.saveStore(latestStore)
-    }
-
-    private func resolveLocalSelectionAccount(
-        preferredAccountID: String,
-        in store: AccountsStore
-    ) -> StoredAccount? {
-        if let selection = store.currentSelection,
-           let matching = matchingAccount(for: selection, in: store.accounts),
-           matching.accountID == preferredAccountID {
-            return matching
-        }
-
-        if let currentAccount = currentAuthAccount(in: store),
-           currentAccount.accountID == preferredAccountID {
-            return currentAccount
-        }
-
-        let matches = store.accounts.filter { $0.accountID == preferredAccountID }
-        guard matches.count == 1 else { return nil }
-        return matches[0]
-    }
-
-    private func currentAuthAccount(in store: AccountsStore) -> StoredAccount? {
-        guard let extracted = authRepository.readCurrentExtractedAuth() else {
-            return nil
-        }
-
-        guard let index = AccountIdentity.preferredMatchIndex(for: extracted, in: store.accounts) else {
-            return nil
-        }
-        return store.accounts[index]
-    }
-
-    private func matchingAccount(
-        for selection: CurrentAccountSelection,
-        in accounts: [StoredAccount]
-    ) -> StoredAccount? {
-        if let selectionKey = AccountIdentity.normalizedSelectionKey(selection.accountKey),
-           let exact = accounts.first(where: { $0.accountKey == selectionKey }) {
-            return exact
-        }
-
-        let matches = accounts.filter {
-            AccountIdentity.normalizedAccountID($0.accountID) == AccountIdentity.normalizedAccountID(selection.accountID)
-        }
-        guard matches.count == 1 else { return nil }
-        return matches[0]
     }
 
     private func saveSelectionRecord(_ selection: CurrentAccountSelection) async throws {

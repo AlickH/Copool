@@ -49,20 +49,42 @@ extension TrayMenuModel {
 
         do {
             let pullResult = try await currentAccountSelectionSyncService.pullRemoteSelectionIfNeeded()
+            AccountSwitchDebugLog.write(
+                "tray.reconcileCurrentSelection.pull",
+                "\(AccountSwitchDebugLog.describe(pullResult: pullResult))"
+            )
 
             if pullResult.changedCurrentAccount,
                backgroundRefreshPolicy.applyRemoteSelectionSwitchEffects,
-               let remoteAccountKey = pullResult.accountKey {
-                try await applyRemoteSelectionSwitchEffects(accountKey: remoteAccountKey)
+               let remoteCardID = pullResult.cardID {
+                AccountSwitchDebugLog.write(
+                    "tray.reconcileCurrentSelection.applyRemoteEffects",
+                    "cardID=\(remoteCardID)"
+                )
+                try await applyRemoteSelectionSwitchEffects(cardID: remoteCardID)
+                return pullResult
+            }
+
+            if pullResult.didUpdateSelection,
+               let remoteCardID = pullResult.cardID {
+                try await accountsCoordinator.applyCurrentCardID(remoteCardID)
                 return pullResult
             }
 
             if !pullResult.didUpdateSelection {
                 try await currentAccountSelectionSyncService.pushLocalSelectionIfNeeded()
+                AccountSwitchDebugLog.write(
+                    "tray.reconcileCurrentSelection.pushLocal",
+                    "didUpdateSelection=false"
+                )
             }
 
             return pullResult
         } catch {
+            AccountSwitchDebugLog.write(
+                "tray.reconcileCurrentSelection.error",
+                "error=\(error.localizedDescription)"
+            )
             if failOnError {
                 throw error
             }
@@ -81,10 +103,14 @@ extension TrayMenuModel {
         }
     }
 
-    func applyRemoteSelectionSwitchEffects(accountKey: String) async throws {
+    func applyRemoteSelectionSwitchEffects(cardID: String) async throws {
         let accounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
-        let matchingAccount = accounts.first(where: { $0.accountKey == accountKey })
+        let matchingAccount = accounts.first(where: { $0.id == cardID })
         guard let matchingAccount else { return }
+        AccountSwitchDebugLog.write(
+            "tray.applyRemoteSelectionSwitchEffects",
+            "target=\(AccountSwitchDebugLog.describe(account: matchingAccount)) \(AccountSwitchDebugLog.describe(accounts: accounts))"
+        )
         _ = try await accountsCoordinator.switchAccountAndApplySettings(id: matchingAccount.id)
     }
 
@@ -142,8 +168,11 @@ extension TrayMenuModel {
 
         if result.changedCurrentAccount,
            backgroundRefreshPolicy.applyRemoteSelectionSwitchEffects,
-           let remoteAccountKey = result.accountKey {
-            try await applyRemoteSelectionSwitchEffects(accountKey: remoteAccountKey)
+           let remoteCardID = result.cardID {
+            try await applyRemoteSelectionSwitchEffects(cardID: remoteCardID)
+        } else if result.didUpdateSelection,
+                  let remoteCardID = result.cardID {
+            try await accountsCoordinator.applyCurrentCardID(remoteCardID)
         }
 
         return result

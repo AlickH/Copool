@@ -1,6 +1,21 @@
 import Foundation
 import Combine
 
+enum RemoteDeployFeedbackState: Equatable {
+    case deploying
+    case success
+    case failure
+}
+
+struct RemoteDeployFeedback: Equatable {
+    let state: RemoteDeployFeedbackState
+    let message: String
+
+    var isDismissible: Bool {
+        state == .failure
+    }
+}
+
 @MainActor
 final class ProxyPageModel: ObservableObject {
     let coordinator: ProxyCoordinator
@@ -25,6 +40,8 @@ final class ProxyPageModel: ObservableObject {
     var proxyPushCancellable: AnyCancellable?
     var localSnapshotCancellable: AnyCancellable?
     var pendingConfigurationSyncTask: Task<Void, Never>?
+    var remoteDeployFeedbackDismissTasks: [String: Task<Void, Never>] = [:]
+    var remoteDeploySuccessAutoDismissDelay: Duration = .seconds(3)
     var lastSyncedProxyConfiguration: ProxyConfiguration?
 
     @Published var proxyStatus: ApiProxyStatus = .idle
@@ -34,6 +51,7 @@ final class ProxyPageModel: ObservableObject {
     @Published var remoteDiscoveries: [String: [DiscoveredRemoteProxyInstance]] = [:]
     @Published var remoteLogs: [String: String] = [:]
     @Published var remoteActions: [String: RemoteServerAction] = [:]
+    @Published var remoteDeployFeedbacks: [String: RemoteDeployFeedback] = [:]
 
     @Published var preferredPortText = String(RemoteServerConfiguration.defaultProxyPort)
     @Published var cloudflaredTunnelMode: CloudflaredTunnelMode = .quick
@@ -81,6 +99,7 @@ final class ProxyPageModel: ObservableObject {
     deinit {
         remoteSnapshotTask?.cancel()
         pendingConfigurationSyncTask?.cancel()
+        remoteDeployFeedbackDismissTasks.values.forEach { $0.cancel() }
     }
 
     var canStartCloudflared: Bool {

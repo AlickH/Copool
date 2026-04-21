@@ -58,6 +58,10 @@ extension AccountsPageModel {
         if state != nextState {
             state = nextState
         }
+        AccountSwitchDebugLog.write(
+            "accountsPage.applyAccounts",
+            "applied=\(AccountSwitchDebugLog.describe(accounts: displayAccounts))"
+        )
     }
 
     func applyWorkspaceDirectory(_ entries: [WorkspaceDirectoryEntry]) {
@@ -66,19 +70,31 @@ extension AccountsPageModel {
         }
     }
 
-    func syncCurrentAccountSelection(accountID: String) async {
+    func syncCurrentAccountSelection(cardID: String) async {
         guard let currentAccountSelectionSyncService else { return }
         do {
-            try await currentAccountSelectionSyncService.recordLocalSelection(accountID: accountID)
+            AccountSwitchDebugLog.write(
+                "accountsPage.syncCurrentSelection.begin",
+                "cardID=\(cardID)"
+            )
+            try await currentAccountSelectionSyncService.recordLocalSelection(cardID: cardID)
             try await currentAccountSelectionSyncService.pushLocalSelectionIfNeeded()
+            AccountSwitchDebugLog.write(
+                "accountsPage.syncCurrentSelection.end",
+                "cardID=\(cardID)"
+            )
         } catch {
+            AccountSwitchDebugLog.write(
+                "accountsPage.syncCurrentSelection.error",
+                "cardID=\(cardID) error=\(error.localizedDescription)"
+            )
             notice = NoticeMessage(style: .error, text: error.localizedDescription)
         }
     }
 
-    func syncCurrentAccountSelectionInBackground(accountID: String) {
+    func syncCurrentAccountSelectionInBackground(cardID: String) {
         Task {
-            await syncCurrentAccountSelection(accountID: accountID)
+            await syncCurrentAccountSelection(cardID: cardID)
         }
     }
 
@@ -87,6 +103,10 @@ extension AccountsPageModel {
     }
 
     func acceptExternalAccountsSnapshot(_ accounts: [AccountSummary]) {
+        AccountSwitchDebugLog.write(
+            "accountsPage.acceptExternalSnapshot",
+            "incoming=\(AccountSwitchDebugLog.describe(accounts: accounts))"
+        )
         applyAccounts(accounts)
     }
 
@@ -95,5 +115,10 @@ extension AccountsPageModel {
         Task { @MainActor [weak self] in
             await self?.localAccountsMutationSyncService?.syncLocalAccountsMutationNow()
         }
+    }
+
+    func debugDisplayedAccounts() -> [AccountSummary] {
+        guard case .content(let accounts) = state else { return [] }
+        return accounts
     }
 }

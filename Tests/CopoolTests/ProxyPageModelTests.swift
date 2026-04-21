@@ -428,6 +428,79 @@ final class ProxyPageModelTests: XCTestCase {
         XCTAssertEqual(localCommandService.commands.last?.remoteServerID, "discovered-server")
     }
 
+    func testDeployRemoteUsesLocalCommandServiceAndSetsSuccessNotice() async {
+        let snapshot = makeSnapshot()
+        let localCommandService = SpyProxyLocalCommandService(snapshot: snapshot)
+        let model = makeModel(localProxyCommandService: localCommandService)
+        let server = snapshot.remoteServers[0]
+
+        await model.deployRemote(server: server)
+
+        XCTAssertEqual(localCommandService.commands.map(\.kind), [.deployRemote])
+        XCTAssertEqual(localCommandService.commands.first?.remoteServerID, server.id)
+        XCTAssertEqual(
+            model.notice,
+            NoticeMessage(
+                style: .success,
+                text: L10n.tr("proxy.notice.remote_deploy_done_format", server.label)
+            )
+        )
+        XCTAssertEqual(model.remoteStatuses, snapshot.remoteStatuses)
+    }
+
+    func testDeployRemoteShowsDeployingThenAutoDismissesSuccessFeedback() async {
+        let snapshot = makeSnapshot()
+        let localCommandService = SlowProxyLocalCommandService(
+            snapshot: snapshot,
+            delay: .milliseconds(80)
+        )
+        let model = makeModel(
+            localProxyCommandService: localCommandService
+        )
+        model.remoteDeploySuccessAutoDismissDelay = .milliseconds(80)
+        let server = snapshot.remoteServers[0]
+
+        let task = Task { await model.deployRemote(server: server) }
+        try? await Task.sleep(for: .milliseconds(20))
+
+        XCTAssertEqual(
+            model.remoteDeployFeedbacks[server.id],
+            RemoteDeployFeedback(state: .deploying, message: L10n.tr("proxy.notice.remote_deploying_format", server.label))
+        )
+
+        await task.value
+
+        XCTAssertEqual(
+            model.remoteDeployFeedbacks[server.id],
+            RemoteDeployFeedback(state: .success, message: L10n.tr("proxy.notice.remote_deploy_done_format", server.label))
+        )
+
+        try? await Task.sleep(for: .milliseconds(120))
+
+        XCTAssertNil(model.remoteDeployFeedbacks[server.id])
+    }
+
+    func testDeployRemoteKeepsFailureFeedbackUntilDismissed() async {
+        let model = makeModel(
+            localProxyCommandService: FailingProxyLocalCommandService(
+                error: AppError.io("sudo failed")
+            )
+        )
+        model.remoteDeploySuccessAutoDismissDelay = .milliseconds(20)
+        let server = makeSnapshot().remoteServers[0]
+
+        await model.deployRemote(server: server)
+
+        XCTAssertEqual(
+            model.remoteDeployFeedbacks[server.id],
+            RemoteDeployFeedback(state: .failure, message: "sudo failed")
+        )
+
+        model.dismissRemoteDeployFeedback(for: server.id)
+
+        XCTAssertNil(model.remoteDeployFeedbacks[server.id])
+    }
+
     private func makeModel(
         proxyControlCloudSyncService: ProxyControlCloudSyncServiceProtocol? = nil,
         localProxyCommandService: ProxyLocalCommandServiceProtocol? = nil,
@@ -446,7 +519,7 @@ final class ProxyPageModelTests: XCTestCase {
             launchAtStartupService: StubLaunchAtStartupService()
         )
 
-        return ProxyPageModel(
+        let model = ProxyPageModel(
             coordinator: proxyCoordinator,
             settingsCoordinator: settingsCoordinator,
             proxyControlCloudSyncService: proxyControlCloudSyncService,
@@ -454,6 +527,7 @@ final class ProxyPageModelTests: XCTestCase {
             runtimePlatform: runtimePlatform,
             chooseIdentityFilePath: chooseIdentityFilePath
         )
+        return model
     }
 
     private func makeSnapshot() -> ProxyControlSnapshot {
@@ -608,6 +682,31 @@ private final class SpyProxyLocalCommandService: ProxyLocalCommandServiceProtoco
     func performLocalCommand(_ command: ProxyControlCommand) async throws -> ProxyControlSnapshot {
         commands.append(command)
         return snapshot
+    }
+}
+
+private final class SlowProxyLocalCommandService: ProxyLocalCommandServiceProtocol, @unchecked Sendable {
+    private let snapshot: ProxyControlSnapshot
+    private let delay: Duration
+
+    init(snapshot: ProxyControlSnapshot, delay: Duration) {
+        self.snapshot = snapshot
+        self.delay = delay
+    }
+
+    func performLocalCommand(_ command: ProxyControlCommand) async throws -> ProxyControlSnapshot {
+        _ = command
+        try? await Task.sleep(for: delay)
+        return snapshot
+    }
+}
+
+private struct FailingProxyLocalCommandService: ProxyLocalCommandServiceProtocol {
+    let error: Error
+
+    func performLocalCommand(_ command: ProxyControlCommand) async throws -> ProxyControlSnapshot {
+        _ = command
+        throw error
     }
 }
 

@@ -9,11 +9,11 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
                     makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1),
                     makeStoredAccount(id: "b", label: "Account B", accountID: "acct-b", addedAt: 2)
                 ],
+                currentAccountID: "b",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "acct-b",
+                    cardID: "acct-b",
                     selectedAt: 2,
-                    sourceDeviceID: "macos-local",
-                    accountKey: "acct-b|acct-b"
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -23,6 +23,52 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         }
 
         XCTAssertEqual(candidates.map(\.accountID), ["acct-b", "acct-a"])
+    }
+
+    func testLoadCandidatesPrefersCurrentCardIDOverStaleSelection() async throws {
+        let runtime = makeRuntime(
+            store: AccountsStore(
+                accounts: [
+                    makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1),
+                    makeStoredAccount(id: "b", label: "Account B", accountID: "acct-b", addedAt: 2)
+                ],
+                currentAccountID: "b",
+                currentSelection: CurrentAccountSelection(
+                    cardID: "acct-a",
+                    selectedAt: 2,
+                    sourceDeviceID: "macos-local"
+                )
+            )
+        )
+
+        let candidates = try await runtime.withIsolation { runtime in
+            try runtime.loadCandidates()
+        }
+
+        XCTAssertEqual(candidates.map(\.accountID), ["acct-b", "acct-a"])
+    }
+
+    func testLoadCandidatesFallsBackToCurrentCardWhenSelectionIdentityIsAmbiguous() async throws {
+        let runtime = makeRuntime(
+            store: AccountsStore(
+                accounts: [
+                    makeStoredAccount(id: "a", label: "Account A", accountID: "shared-account", addedAt: 1),
+                    makeStoredAccount(id: "b", label: "Account B", accountID: "shared-account", addedAt: 2)
+                ],
+                currentAccountID: "b",
+                currentSelection: CurrentAccountSelection(
+                    cardID: "shared-account",
+                    selectedAt: 2,
+                    sourceDeviceID: "macos-local"
+                )
+            )
+        )
+
+        let candidates = try await runtime.withIsolation { runtime in
+            try runtime.loadCandidates()
+        }
+
+        XCTAssertEqual(candidates.map(\.id), ["b", "a"])
     }
 
     func testLoadCandidatesUsesAddedAtAsStableTieBreakerForEqualScores() async throws {
@@ -52,21 +98,21 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
             )
         )
 
-        let candidates = try await runtime.withIsolation { runtime in
-            try runtime.recordSuccessfulCandidate(
-                ProxyCandidate(
-                    id: "b",
-                    label: "Account B",
-                    accountID: "acct-b",
-                    accountKey: "acct-b|acct-b",
-                    accessToken: "token-acct-b",
-                    authJSON: .object([:]),
-                    addedAt: 2,
-                    isPreferredCurrent: false,
-                    oneWeekUsed: nil,
-                    fiveHourUsed: nil
-                )
+        try await runtime.recordSuccessfulCandidate(
+            ProxyCandidate(
+                id: "b",
+                label: "Account B",
+                accountID: "acct-b",
+                accountKey: "acct-b|acct-b",
+                accessToken: "token-acct-b",
+                authJSON: .object([:]),
+                addedAt: 2,
+                isPreferredCurrent: false,
+                oneWeekUsed: nil,
+                fiveHourUsed: nil
             )
+        )
+        let candidates = try await runtime.withIsolation { runtime in
             return try runtime.currentCandidates()
         }
 
@@ -80,11 +126,11 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
                     makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1),
                     makeStoredAccount(id: "b", label: "Account B", accountID: "acct-b", addedAt: 2)
                 ],
+                currentAccountID: "b",
                 currentSelection: CurrentAccountSelection(
-                    accountID: "acct-b",
+                    cardID: "acct-b",
                     selectedAt: 2,
-                    sourceDeviceID: "macos-local",
-                    accountKey: "acct-b|acct-b"
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
@@ -116,79 +162,7 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         XCTAssertEqual(candidates.map(\.accountID), ["acct-b"])
     }
 
-    func testPersistCurrentSelectionUsesSuccessfulCandidateAsCurrentSelection() async throws {
-        let repository = InMemoryAccountsStoreRepository(
-            store: AccountsStore(
-                accounts: [
-                    makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1),
-                ]
-            )
-        )
-        let runtime = makeRuntime(
-            storeRepository: repository,
-            dateProvider: FixedDateProvider(unixSeconds: 100, unixMilliseconds: 123_456)
-        )
-
-        try await runtime.withIsolation { runtime in
-            try runtime.persistCurrentSelection(
-                for: ProxyCandidate(
-                    id: "a",
-                    label: "Account A",
-                    accountID: "acct-a",
-                    accountKey: "acct-a|acct-a",
-                    accessToken: "token-acct-a",
-                    authJSON: .object([:]),
-                    addedAt: 1,
-                    isPreferredCurrent: false,
-                    oneWeekUsed: nil,
-                    fiveHourUsed: nil
-                )
-            )
-        }
-
-        XCTAssertEqual(repository.store.currentSelection?.accountID, "acct-a")
-        XCTAssertEqual(repository.store.currentSelection?.accountKey, "acct-a|acct-a")
-        XCTAssertEqual(repository.store.currentSelection?.selectedAt, 123_456)
-    }
-
-    func testRecordSuccessfulCandidateDoesNotSyncCurrentAuth() async throws {
-        let authRepository = RecordingAuthRepository()
-        let runtime = makeRuntime(
-            storeRepository: InMemoryAccountsStoreRepository(
-                store: AccountsStore(
-                    accounts: [
-                        makeStoredAccount(id: "a", label: "Account A", accountID: "acct-a", addedAt: 1)
-                    ]
-                )
-            ),
-            authRepository: authRepository
-        )
-        let candidate = ProxyCandidate(
-            id: "a",
-            label: "Account A",
-            accountID: "acct-a",
-            accountKey: "acct-a|acct-a",
-            accessToken: "token-acct-a",
-            authJSON: .object([
-                "tokens": .object([
-                    "access_token": .string("token-acct-a"),
-                    "account_id": .string("acct-a")
-                ])
-            ]),
-            addedAt: 1,
-            isPreferredCurrent: false,
-            oneWeekUsed: nil,
-            fiveHourUsed: nil
-        )
-
-        try await runtime.withIsolation { runtime in
-            try runtime.recordSuccessfulCandidate(candidate)
-        }
-
-        XCTAssertEqual(authRepository.writeCurrentAuthCallCount, 0)
-    }
-
-    func testRecordSuccessfulCandidateDoesNotCallStoreChangeHandler() async throws {
+    func testRecordSuccessfulCandidateCallsStoreChangeHandler() async throws {
         let callback = StoreChangeCallback()
         let runtime = makeRuntime(
             storeRepository: InMemoryAccountsStoreRepository(
@@ -220,15 +194,13 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
             fiveHourUsed: nil
         )
 
-        try await runtime.withIsolation { runtime in
-            try runtime.recordSuccessfulCandidate(candidate)
-        }
+        try await runtime.recordSuccessfulCandidate(candidate)
 
         let callbackCount = callback.readCallCount()
-        XCTAssertEqual(callbackCount, 0)
+        XCTAssertEqual(callbackCount, 1)
     }
 
-    func testRecordSuccessfulCandidatePreservesManualSelection() async throws {
+    func testRecordSuccessfulCandidateUsesSuccessfulCandidateAsCurrentSelection() async throws {
         let repository = InMemoryAccountsStoreRepository(
             store: AccountsStore(
                 accounts: [
@@ -236,16 +208,15 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
                     makeStoredAccount(id: "b", label: "Account B", accountID: "acct-b", addedAt: 2)
                 ],
                 currentSelection: CurrentAccountSelection(
-                    accountID: "acct-b",
+                    cardID: "acct-b",
                     selectedAt: 2,
-                    sourceDeviceID: "macos-local",
-                    accountKey: "acct-b|acct-b"
+                    sourceDeviceID: "macos-local"
                 )
             )
         )
         let runtime = makeRuntime(
             storeRepository: repository,
-            authRepository: FailingWriteAuthRepository()
+            authRepository: RecordingAuthRepository()
         )
         let candidate = ProxyCandidate(
             id: "a",
@@ -265,12 +236,9 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
             fiveHourUsed: nil
         )
 
-        try await runtime.withIsolation { runtime in
-            try runtime.recordSuccessfulCandidate(candidate)
-        }
+        try await runtime.recordSuccessfulCandidate(candidate)
 
-        XCTAssertEqual(repository.store.currentSelection?.accountID, "acct-b")
-        XCTAssertEqual(repository.store.currentSelection?.accountKey, "acct-b|acct-b")
+        XCTAssertEqual(repository.store.currentSelection?.cardID, "acct-a")
     }
 
     func testNormalizesReasoningSummaryForUpstream() {
@@ -1055,9 +1023,25 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
         storeRepository: AccountsStoreRepository,
         authRepository: AuthRepository = ExtractingAuthRepository(),
         onAccountsStoreChanged: (@Sendable () -> Void)? = nil,
+        switchAccount: (@Sendable (String) async throws -> Void)? = nil,
         dateProvider: DateProviding = SystemDateProvider()
     ) -> SwiftNativeProxyRuntimeService {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let resolvedSwitchAccount = switchAccount ?? { cardID in
+            let store = try storeRepository.loadStore()
+            guard let account = store.accounts.first(where: { $0.id == cardID }) else {
+                throw AppError.invalidData("Missing account for proxy runtime test switch")
+            }
+            var nextStore = store
+            nextStore.currentAccountID = account.id
+            nextStore.currentSelection = CurrentAccountSelection(
+                    cardID: account.accountID,
+                selectedAt: dateProvider.unixMillisecondsNow(),
+                sourceDeviceID: "test-runtime"
+            )
+            try storeRepository.saveStore(nextStore)
+            try authRepository.writeCurrentAuth(account.authJSON)
+        }
         return SwiftNativeProxyRuntimeService(
             paths: FileSystemPaths(
                 applicationSupportDirectory: tempDir,
@@ -1073,6 +1057,7 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
             settingsRepository: MockSettingsRepository(),
             authRepository: authRepository,
             onAccountsStoreChanged: onAccountsStoreChanged,
+            switchAccount: resolvedSwitchAccount,
             dateProvider: dateProvider
         )
     }

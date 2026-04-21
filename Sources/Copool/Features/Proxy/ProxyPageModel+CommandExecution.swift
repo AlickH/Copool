@@ -37,6 +37,12 @@ extension ProxyPageModel {
         do {
             try await proxyControlCloudSyncService.enqueueCommand(command)
             lastRemoteCommandID = command.id
+            if kind == .deployRemote {
+                AuthFlowDebugLog.write(
+                    "RemoteDeploy.command.enqueued",
+                    "commandID=\(command.id) serverID=\(remoteServerID ?? remoteServer?.id ?? "nil") source=\(command.sourceDeviceID)"
+                )
+            }
 
             if let pendingNotice {
                 notice = NoticeMessage(style: .info, text: pendingNotice)
@@ -47,14 +53,62 @@ extension ProxyPageModel {
                 if let error = acknowledgedSnapshot.lastCommandError,
                    acknowledgedSnapshot.lastHandledCommandID == command.id,
                    !error.isEmpty {
+                    if kind == .deployRemote, let serverID = remoteServerID ?? remoteServer?.id {
+                        setRemoteDeployFeedback(
+                            RemoteDeployFeedback(state: .failure, message: error),
+                            for: serverID
+                        )
+                    }
+                    if kind == .deployRemote {
+                        AuthFlowDebugLog.write(
+                            "RemoteDeploy.command.ackError",
+                            "commandID=\(command.id) serverID=\(remoteServerID ?? remoteServer?.id ?? "nil") error=\(error)"
+                        )
+                    }
                     notice = NoticeMessage(style: .error, text: error)
                 } else if let successNotice {
+                    if kind == .deployRemote, let serverID = remoteServerID ?? remoteServer?.id {
+                        setRemoteDeployFeedback(
+                            RemoteDeployFeedback(state: .success, message: successNotice),
+                            for: serverID
+                        )
+                    }
+                    if kind == .deployRemote {
+                        AuthFlowDebugLog.write(
+                            "RemoteDeploy.command.ackSuccess",
+                            "commandID=\(command.id) serverID=\(remoteServerID ?? remoteServer?.id ?? "nil")"
+                        )
+                    }
                     notice = NoticeMessage(style: .success, text: successNotice)
                 }
             } else if let successNotice {
+                if kind == .deployRemote {
+                    AuthFlowDebugLog.write(
+                        "RemoteDeploy.command.noAck",
+                        "commandID=\(command.id) serverID=\(remoteServerID ?? remoteServer?.id ?? "nil")"
+                    )
+                }
+                if kind == .deployRemote, let serverID = remoteServerID ?? remoteServer?.id {
+                    setRemoteDeployFeedback(
+                        RemoteDeployFeedback(state: .success, message: successNotice),
+                        for: serverID
+                    )
+                }
                 notice = NoticeMessage(style: .info, text: successNotice)
             }
         } catch {
+            if kind == .deployRemote, let serverID = remoteServerID ?? remoteServer?.id {
+                setRemoteDeployFeedback(
+                    RemoteDeployFeedback(state: .failure, message: error.localizedDescription),
+                    for: serverID
+                )
+            }
+            if kind == .deployRemote {
+                AuthFlowDebugLog.write(
+                    "RemoteDeploy.command.enqueueError",
+                    "serverID=\(remoteServerID ?? remoteServer?.id ?? "nil") error=\(error.localizedDescription)"
+                )
+            }
             notice = NoticeMessage(style: .error, text: error.localizedDescription)
         }
     }

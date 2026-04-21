@@ -5,6 +5,7 @@ struct RemoteServerCardView: View {
     let status: RemoteProxyStatus?
     let discoveredInstances: [DiscoveredRemoteProxyInstance]
     let logs: String?
+    let deployFeedback: RemoteDeployFeedback?
     let activeAction: RemoteServerAction?
     let actions: RemoteServerCardActions
 
@@ -16,6 +17,7 @@ struct RemoteServerCardView: View {
         status: RemoteProxyStatus?,
         discoveredInstances: [DiscoveredRemoteProxyInstance],
         logs: String?,
+        deployFeedback: RemoteDeployFeedback?,
         activeAction: RemoteServerAction?,
         actions: RemoteServerCardActions
     ) {
@@ -23,6 +25,7 @@ struct RemoteServerCardView: View {
         self.status = status
         self.discoveredInstances = discoveredInstances
         self.logs = logs
+        self.deployFeedback = deployFeedback
         self.activeAction = activeAction
         self.actions = actions
         _draft = State(initialValue: server)
@@ -55,6 +58,12 @@ struct RemoteServerCardView: View {
                     draft: $draft,
                     onChooseIdentityFile: actions.onChooseIdentityFile
                 )
+                if let deployFeedback {
+                    RemoteDeployFeedbackBanner(
+                        feedback: deployFeedback,
+                        onDismiss: actions.onDismissDeployFeedback
+                    )
+                }
                 ProxyActionStrip(
                     buttons: actionButtons,
                     layout: .adaptiveGrid(
@@ -133,5 +142,71 @@ struct RemoteServerCardView: View {
     private func useDiscoveredInstance(_ instance: DiscoveredRemoteProxyInstance) {
         draft = RemoteServerConfiguration.adoptingDiscoveredInstance(instance, into: draft)
         actions.onUseDiscoveredInstance(server.id, draft)
+    }
+}
+
+private struct RemoteDeployFeedbackBanner: View {
+    let feedback: RemoteDeployFeedback
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if feedback.state == .deploying {
+                ProgressView()
+                    .controlSize(.small)
+            } else {
+                Image(systemName: iconName)
+                    .foregroundStyle(accentColor)
+            }
+
+            Text(feedback.message)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if feedback.isDismissible {
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(accentColor.opacity(0.12))
+        )
+        .overlay(alignment: .leading) {
+            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                .fill(accentColor)
+                .frame(width: 3)
+                .padding(.vertical, 8)
+                .padding(.leading, 6)
+        }
+    }
+
+    private var accentColor: Color {
+        switch feedback.state {
+        case .deploying:
+            .blue
+        case .success:
+            .mint
+        case .failure:
+            .red
+        }
+    }
+
+    private var iconName: String {
+        switch feedback.state {
+        case .deploying:
+            ""
+        case .success:
+            "checkmark.circle.fill"
+        case .failure:
+            "exclamationmark.triangle.fill"
+        }
     }
 }

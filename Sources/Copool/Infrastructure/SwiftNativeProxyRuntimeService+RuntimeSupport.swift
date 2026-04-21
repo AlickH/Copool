@@ -44,7 +44,7 @@ extension SwiftNativeProxyRuntimeService {
 
     func loadCandidates() throws -> [ProxyCandidate] {
         let store = try storeRepository.loadStore()
-        let currentSelection = store.currentSelection
+        let currentAccountID = store.currentAccountID
 
         let candidates = try store.accounts.compactMap { account -> ProxyCandidate? in
             let extracted = try authRepository.extractAuth(from: account.authJSON)
@@ -56,7 +56,7 @@ extension SwiftNativeProxyRuntimeService {
                 accessToken: extracted.accessToken,
                 authJSON: account.authJSON,
                 addedAt: account.addedAt,
-                isPreferredCurrent: currentSelection.map { AccountIdentity.matches(selection: $0, account: account) } ?? false,
+                isPreferredCurrent: account.id == currentAccountID,
                 oneWeekUsed: account.usage?.oneWeek?.usedPercent,
                 fiveHourUsed: account.usage?.fiveHour?.usedPercent
             )
