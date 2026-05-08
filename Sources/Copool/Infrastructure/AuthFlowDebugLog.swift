@@ -44,8 +44,11 @@ enum AuthFlowDebugLog {
 }
 
 enum AccountSwitchDebugLog {
-    static func write(_ event: String, _ message: String) {
-        AuthFlowDebugLog.write("AccountSwitch.\(event)", message)
+    private static let isEnabled = false
+
+    static func write(_ event: String, _ message: @autoclosure () -> String) {
+        guard isEnabled else { return }
+        AuthFlowDebugLog.write("AccountSwitch.\(event)", message())
     }
 
     static func describe(store: AccountsStore, currentAuthAccountKey: String?) -> String {
