@@ -26,22 +26,41 @@ struct AccountsPageView: View {
     }
 
     var body: some View {
-        AccountsPageShell(
-            model: model,
-            currentLocale: currentLocale,
-            onSelectLocale: onSelectLocale,
-            areCardsPresented: areCardsPresented,
-            onTriggerAction: triggerAction,
-            onToggleCollapse: toggleCollapse,
-            onSwitchAccount: switchAccount,
-            onRefreshAccountUsage: refreshUsage,
-            onReauthenticateAccount: reauthenticateAccount,
-            onAuthorizeWorkspace: authorizeWorkspace,
-            onCancelAuthorizeWorkspace: cancelAuthorizeWorkspace,
-            onDeletePendingWorkspace: deletePendingWorkspace,
-            onDeleteAccount: deleteAccount
-        )
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        ZStack {
+            AccountsPageShell(
+                model: model,
+                currentLocale: currentLocale,
+                onSelectLocale: onSelectLocale,
+                areCardsPresented: areCardsPresented,
+                onTriggerAction: triggerAction,
+                onToggleCollapse: toggleCollapse,
+                onSwitchAccount: switchAccount,
+                onRefreshAccountUsage: refreshUsage,
+                onReauthenticateAccount: reauthenticateAccount,
+                onAuthorizeWorkspace: authorizeWorkspace,
+                onCancelAuthorizeWorkspace: cancelAuthorizeWorkspace,
+                onDeletePendingWorkspace: deletePendingWorkspace,
+                onDeleteAccount: deleteAccount
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+
+            #if os(macOS)
+            if isPresentingPasteImport {
+                Color.black.opacity(0.18)
+                    .ignoresSafeArea()
+
+                AccountsPasteImportSheet(
+                    text: $pastedImportText,
+                    isSubmitting: model.isAdding,
+                    onCancel: dismissPasteImport,
+                    onSubmit: submitPastedImport
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(24)
+                .zIndex(1)
+            }
+            #endif
+        }
         .fileImporter(
             isPresented: $isImportingAuthFile,
             allowedContentTypes: [.json],
@@ -49,17 +68,16 @@ struct AccountsPageView: View {
         ) { result in
             handleImportAuthFile(result)
         }
+        #if os(iOS)
         .sheet(isPresented: $isPresentingPasteImport) {
             AccountsPasteImportSheet(
                 text: $pastedImportText,
                 isSubmitting: model.isAdding,
-                onCancel: {
-                    pastedImportText = ""
-                    isPresentingPasteImport = false
-                },
+                onCancel: dismissPasteImport,
                 onSubmit: submitPastedImport
             )
         }
+        #endif
         .onAppear {
             triggerInitialCardEntranceIfNeeded(for: contentAccountCount)
         }
@@ -105,9 +123,13 @@ struct AccountsPageView: View {
 
     private func submitPastedImport() {
         let text = pastedImportText
+        dismissPasteImport()
+        Task { await model.importPastedAccounts(text) }
+    }
+
+    private func dismissPasteImport() {
         pastedImportText = ""
         isPresentingPasteImport = false
-        Task { await model.importPastedAccounts(text) }
     }
 
     private func toggleCollapse() {
