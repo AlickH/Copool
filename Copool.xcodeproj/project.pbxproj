@@ -301,6 +301,11 @@
 		D022FDC1F72C2FEE9B5078C8 /* ProxyPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3AE6ECBCE990356DEB5BBE0 /* ProxyPageView.swift */; };
 		D02B7B4BFDBDD89A002B4ED5 /* RemoteProxyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36D2D735CB5E1753FB0DE639 /* RemoteProxyService.swift */; };
 		D047CEC66C8024EB35E197E5 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8644DF48AF768B1D855A3404 /* AppError.swift */; };
+		E601E601E601E601E601E601 /* PastedRefreshTokenAccountParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = E601E601E601E601E601E611 /* PastedRefreshTokenAccountParser.swift */; };
+		E601E601E601E601E601E602 /* PastedRefreshTokenAccountParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = E601E601E601E601E601E611 /* PastedRefreshTokenAccountParser.swift */; };
+		E601E601E601E601E601E603 /* AccountsPasteImportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E601E601E601E601E601E612 /* AccountsPasteImportSheet.swift */; };
+		E601E601E601E601E601E604 /* AccountsPasteImportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E601E601E601E601E601E612 /* AccountsPasteImportSheet.swift */; };
+		E601E601E601E601E601E605 /* PastedRefreshTokenAccountParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E601E601E601E601E601E613 /* PastedRefreshTokenAccountParserTests.swift */; };
 		D0611DC1C82F7B37B8D91040 /* ProxyPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3AE6ECBCE990356DEB5BBE0 /* ProxyPageView.swift */; };
 		D0611DC1C82F7B37B8D91041 /* PlatformClipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A105A105A105A105A105A105 /* PlatformClipboard.swift */; };
 		D0D721335F066D21AAAD652D /* FileSystemPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D518BC8C9103B4FD9C16B27 /* FileSystemPaths.swift */; };
@@ -611,6 +616,9 @@
 		DF11B93A2C05CC3B851D671A /* StoreFileRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreFileRepositoryTests.swift; sourceTree = "<group>"; };
 		E072B2DEE9973F725135D145 /* SwiftNativeProxyRuntimeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftNativeProxyRuntimeService.swift; sourceTree = "<group>"; };
 		E147F11A1ED57CA55639875B /* AccountTagView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountTagView.swift; sourceTree = "<group>"; };
+		E601E601E601E601E601E611 /* PastedRefreshTokenAccountParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PastedRefreshTokenAccountParser.swift; sourceTree = "<group>"; };
+		E601E601E601E601E601E612 /* AccountsPasteImportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsPasteImportSheet.swift; sourceTree = "<group>"; };
+		E601E601E601E601E601E613 /* PastedRefreshTokenAccountParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PastedRefreshTokenAccountParserTests.swift; sourceTree = "<group>"; };
 		E2700A142EED2C109BC86E25 /* main.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = main.rs; sourceTree = "<group>"; };
 		E28E156763C3146AB652184A /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E31DCC850FA489BD46094EE0 /* UsageServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageServiceTests.swift; sourceTree = "<group>"; };
@@ -696,6 +704,7 @@
 				84C752A57468AA033ACB2ED9 /* CloudSyncAvailabilityService.swift */,
 				18F1A141B031F5F42ACE838F /* CloudflareAPIClient.swift */,
 				03E5D59CB180CA82AFDB0F45 /* OpenAIChatGPTOAuthSupport.swift */,
+				E601E601E601E601E601E611 /* PastedRefreshTokenAccountParser.swift */,
 				07AE0D1B3E52A22205FABF86 /* RemoteProxyAccountsPayloadBuilder.swift */,
 				09DB0132F4E5B5E3BBCEA78C /* RemoteProxyDeploymentPlan.swift */,
 				B3F56B95BC653A8D7B00CC50 /* RemoteProxyOutputParser.swift */,
@@ -829,6 +838,7 @@
 				A103A103A103A103A103A103 /* AccountsPageControls.swift */,
 				A703A703A703A703A703A703 /* AccountsPageSections.swift */,
 				A205A205A205A205A205A205 /* AccountsPageShells.swift */,
+				E601E601E601E601E601E612 /* AccountsPasteImportSheet.swift */,
 				8B90210EB2AAD603950A607C /* AccountsPageView.swift */,
 			);
 			path = Accounts;
@@ -988,6 +998,7 @@
 				0D1996F591AEC73ED65ED1F9 /* CommandRunnerTimeoutTests.swift */,
 				E6318743D5B32C4FA1244FAD /* LiquidProgressMetricsTests.swift */,
 				251BC10FF4D8538941CDC174 /* LocalizationConsistencyTests.swift */,
+				E601E601E601E601E601E613 /* PastedRefreshTokenAccountParserTests.swift */,
 				B210B210B210B210B210B210 /* PublicAccessSectionPresentationTests.swift */,
 				F5B56AEDF3689EA6421720B2 /* ProxyPageModelTests.swift */,
 				A10B6B54D0E14B9CB2CB0A71 /* ProxyControlBridgeTests.swift */,
@@ -1303,6 +1314,7 @@
 				FCB8E6490AA6D2891320E6A2 /* AccountsPageControls.swift in Sources */,
 				A803A803A803A803A803A803 /* AccountsPageSections.swift in Sources */,
 				A305A305A305A305A305A305 /* AccountsPageShells.swift in Sources */,
+				E601E601E601E601E601E603 /* AccountsPasteImportSheet.swift in Sources */,
 				FCB8E6490AA6D2891320E69F /* AccountsPageView.swift in Sources */,
 				92D4545930140988AE210FB7 /* AppContainer.swift in Sources */,
 				D047CEC66C8024EB35E197E5 /* AppError.swift in Sources */,
@@ -1330,6 +1342,7 @@
 				7D8AF7392FCDF21C618BE9A3 /* NoticeBanner.swift in Sources */,
 				FAF80D77474CF43421294E86 /* OpenAIChatGPTOAuthLoginService.swift in Sources */,
 				205B79773EA148F8437439CD /* OpencodeAuthSyncService.swift in Sources */,
+				E601E601E601E601E601E601 /* PastedRefreshTokenAccountParser.swift in Sources */,
 				54F5A32512F8226641F0655F /* PlatformClipboard.swift in Sources */,
 				881BE1D789DA6FB779A0BDD7 /* PlatformCapabilities.swift in Sources */,
 				183F30DA3314F21DE014B4DA /* Protocols.swift in Sources */,
@@ -1433,6 +1446,7 @@
 				BAC63D41038D37A503641728 /* CommandRunnerTimeoutTests.swift in Sources */,
 				50922F8C48CF01B728AD262F /* LiquidProgressMetricsTests.swift in Sources */,
 				4353553A171096B9C9653258 /* LocalizationConsistencyTests.swift in Sources */,
+				E601E601E601E601E601E605 /* PastedRefreshTokenAccountParserTests.swift in Sources */,
 				C242C242C242C242C242C242 /* PublicAccessSectionPresentationTests.swift in Sources */,
 				98E465C8F8BAA05142221C0D /* ProxyPageModelTests.swift in Sources */,
 				C4AEB739AA9D4A84ABBB9E21 /* ProxyControlBridgeTests.swift in Sources */,
@@ -1499,6 +1513,7 @@
 				137936A0518C78C5549E91A1 /* AccountsPageControls.swift in Sources */,
 				A823A823A823A823A823A823 /* AccountsPageSections.swift in Sources */,
 				A315A315A315A315A315A315 /* AccountsPageShells.swift in Sources */,
+				E601E601E601E601E601E604 /* AccountsPasteImportSheet.swift in Sources */,
 				137936A0518C78C5549E919E /* AccountsPageView.swift in Sources */,
 				A39DE0252B7DE1B089DB14D1 /* AppContainer.swift in Sources */,
 				A7144A42D2FC21D789B3FB49 /* AppError.swift in Sources */,
@@ -1526,6 +1541,7 @@
 				BAA8370E04EE38AD6F28F62E /* NoticeBanner.swift in Sources */,
 				63EF6C5310182A8B5DB70D66 /* OpenAIChatGPTOAuthLoginService.swift in Sources */,
 				683DA0BB33E165DCFEFE8633 /* OpencodeAuthSyncService.swift in Sources */,
+				E601E601E601E601E601E602 /* PastedRefreshTokenAccountParser.swift in Sources */,
 				BA5B276B09B95CA7284CDFA2 /* PlatformCapabilities.swift in Sources */,
 				7F539ED7076B2EA02CB6788C /* Protocols.swift in Sources */,
 				24AFC15BDC3390134F86990A /* ProxyControlBridge.swift in Sources */,
