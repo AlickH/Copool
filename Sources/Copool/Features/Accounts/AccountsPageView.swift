@@ -46,17 +46,18 @@ struct AccountsPageView: View {
 
             #if os(macOS)
             if isPresentingPasteImport {
-                Color.black.opacity(0.18)
-                    .ignoresSafeArea()
+                ZStack {
+                    Color.black.opacity(0.18)
+                        .ignoresSafeArea()
 
-                AccountsPasteImportSheet(
-                    text: $pastedImportText,
-                    isSubmitting: model.isAdding,
-                    onCancel: dismissPasteImport,
-                    onSubmit: submitPastedImport
-                )
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(24)
+                    AccountsPasteImportSheet(
+                        text: $pastedImportText,
+                        isSubmitting: model.isAdding,
+                        onCancel: dismissPasteImport,
+                        onSubmit: submitPastedImport
+                    )
+                    .padding(24)
+                }
                 .zIndex(1)
             }
             #endif
