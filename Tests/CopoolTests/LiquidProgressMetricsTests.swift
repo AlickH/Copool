@@ -28,6 +28,14 @@ final class LiquidProgressMetricsTests: XCTestCase {
         XCTAssertEqual(metrics.visibleFillWidth, metrics.rawFillWidth)
     }
 
+    func testCompactRingUsesDotThresholdAboveOnePercent() {
+        let metrics = LiquidRingMetrics(progress: 0.01, lineWidth: 7)
+        let threshold = metrics.dotThreshold(in: CGSize(width: 54, height: 54))
+
+        XCTAssertGreaterThan(threshold, 0.01)
+        XCTAssertLessThan(threshold, 0.1)
+    }
+
     func testDarkGroovePaletteKeepsRingTrackVisibleOnBlackBackground() {
         let palette = LiquidGroovePalette(colorScheme: .dark)
 

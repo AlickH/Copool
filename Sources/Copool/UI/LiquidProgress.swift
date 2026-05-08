@@ -212,7 +212,7 @@ private struct FlatProgressFill: View {
     }
 }
 
-private struct LiquidRingMetrics {
+struct LiquidRingMetrics {
     let progress: Double
     let lineWidth: CGFloat
 
@@ -252,12 +252,19 @@ private struct LiquidRingMetrics {
         max(1.8, fillWidth * 0.38)
     }
 
-    var dotThreshold: Double {
-        0.032
-    }
-
     var dotDiameter: CGFloat {
         max(5.8, fillWidth * 1.04)
+    }
+
+    func dotThreshold(in size: CGSize) -> Double {
+        let radius = max(
+            0,
+            min(size.width, size.height) * 0.5 - grooveCenterInset
+        )
+        guard radius > 0 else { return 0 }
+        let circumference = 2 * .pi * radius
+        guard circumference > 0 else { return 0 }
+        return min(1, Double(dotDiameter / circumference))
     }
 }
 
@@ -421,7 +428,7 @@ private struct LiquidProgressRingFill: View {
         GeometryReader { geometry in
             if progress <= 0 {
                 EmptyView()
-            } else if progress < metrics.dotThreshold {
+            } else if progress < metrics.dotThreshold(in: geometry.size) {
                 startDot(in: geometry.size)
             } else {
                 ringSegment(fillGradient, lineWidth: metrics.fillWidth)
