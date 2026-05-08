@@ -14,12 +14,12 @@ final class LiquidProgressMetricsTests: XCTestCase {
         XCTAssertTrue(LiquidProgressRenderModel(progress: 0.01).showsFill)
     }
 
-    func testLowProgressUsesFullLeadingCapWidth() {
+    func testLowProgressKeepsMeasuredFillWidth() {
         let metrics = LiquidProgressMetrics(progress: 0.01, totalWidth: 250)
 
         XCTAssertGreaterThan(metrics.rawFillWidth, 0)
         XCTAssertLessThan(metrics.rawFillWidth, metrics.grooveHeight)
-        XCTAssertEqual(metrics.visibleFillWidth, metrics.grooveHeight)
+        XCTAssertEqual(metrics.visibleFillWidth, metrics.rawFillWidth)
     }
 
     func testHigherProgressKeepsMeasuredFillWidth() {

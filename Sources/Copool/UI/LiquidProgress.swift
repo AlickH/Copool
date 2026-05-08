@@ -5,6 +5,8 @@ struct LiquidProgressBar: View {
     let tint: Color
     var height: CGFloat = LayoutRules.liquidProgressHeight
 
+    @Environment(\.colorScheme) private var colorScheme
+
     private var clampedProgress: Double {
         max(0, min(1, progress))
     }
@@ -18,10 +20,10 @@ struct LiquidProgressBar: View {
             )
 
             ZStack(alignment: .leading) {
-                LiquidProgressTrack()
+                FlatProgressTrack(colorScheme: colorScheme)
 
                 if metrics.visibleFillWidth > 0 {
-                    LiquidProgressFill(tint: tint)
+                    FlatProgressFill(tint: tint, colorScheme: colorScheme)
                         .frame(width: metrics.visibleFillWidth, height: metrics.grooveHeight)
                         .clipShape(Capsule())
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
@@ -133,16 +135,76 @@ struct LiquidProgressMetrics {
         return availableWidth * clampedProgress
     }
 
-    var minimumVisibleFillWidth: CGFloat {
-        grooveHeight
-    }
-
     var visibleFillWidth: CGFloat {
         guard rawFillWidth > 0 else {
             return 0
         }
+        return rawFillWidth
+    }
+}
 
-        return max(rawFillWidth, minimumVisibleFillWidth)
+private struct FlatProgressTrack: View {
+    let colorScheme: ColorScheme
+
+    var body: some View {
+        Capsule()
+            .fill(trackColor)
+            .overlay {
+                Capsule()
+                    .strokeBorder(borderColor, lineWidth: 1)
+            }
+    }
+
+    private var trackColor: Color {
+        switch colorScheme {
+        case .dark:
+            Color.white.opacity(0.10)
+        default:
+            Color.black.opacity(0.08)
+        }
+    }
+
+    private var borderColor: Color {
+        switch colorScheme {
+        case .dark:
+            Color.white.opacity(0.06)
+        default:
+            Color.black.opacity(0.06)
+        }
+    }
+}
+
+private struct FlatProgressFill: View {
+    let tint: Color
+    let colorScheme: ColorScheme
+
+    var body: some View {
+        Capsule()
+            .fill(
+                LinearGradient(
+                    colors: [leadingColor, trailingColor],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+    }
+
+    private var leadingColor: Color {
+        switch colorScheme {
+        case .dark:
+            tint.opacity(0.92)
+        default:
+            tint.opacity(0.84)
+        }
+    }
+
+    private var trailingColor: Color {
+        switch colorScheme {
+        case .dark:
+            tint.opacity(0.74)
+        default:
+            tint.opacity(0.96)
+        }
     }
 }
 
@@ -261,304 +323,6 @@ struct LiquidGroovePalette {
             startPoint: .top,
             endPoint: .bottom
         )
-    }
-}
-
-private struct LiquidProgressTrack: View {
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        let palette = LiquidGroovePalette(colorScheme: colorScheme)
-
-        ZStack {
-            if #available(iOS 26.0, macOS 26.0, *) {
-                Capsule()
-                    .fill(.clear)
-                    .glassEffect(.regular.tint(palette.glassTint), in: .capsule)
-            } else {
-                Capsule()
-                    .fill(palette.coreGradient)
-            }
-
-            Capsule()
-                .fill(palette.coreGradient)
-                .padding(1)
-        }
-        .overlay {
-            Capsule()
-                .stroke(palette.topEdge, lineWidth: 1)
-                .blur(radius: 0.35)
-                .mask(
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.black, Color.clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                )
-        }
-        .overlay {
-            Capsule()
-                .stroke(palette.bottomEdge, lineWidth: 1)
-                .blur(radius: 0.45)
-                .mask(
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.clear, Color.black],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                )
-        }
-        .overlay {
-            Capsule()
-                .fill(palette.centerGlow)
-                .padding(.horizontal, 3)
-                .padding(.vertical, 2.5)
-                .blur(radius: 2.5)
-                .mask(
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.clear, Color.black, Color.clear],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                )
-                .opacity(0.6)
-        }
-    }
-}
-
-private struct LiquidProgressFill: View {
-    let tint: Color
-
-    var body: some View {
-        Capsule()
-            .fill(
-                LinearGradient(
-                    stops: [
-                        .init(color: tint.opacity(0.34), location: 0),
-                        .init(color: tint.opacity(0.92), location: 0.18),
-                        .init(color: tint.opacity(1), location: 0.46),
-                        .init(color: tint.opacity(0.84), location: 0.76),
-                        .init(color: tint.opacity(0.58), location: 1)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .overlay {
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                tint.opacity(0.26),
-                                tint.opacity(0.1),
-                                Color.clear
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .padding(.horizontal, 2.5)
-                    .padding(.top, 1)
-                    .padding(.bottom, 4)
-                    .blur(radius: 0.45)
-            }
-            .overlay {
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            stops: [
-                                .init(color: Color.white.opacity(0.42), location: 0),
-                                .init(color: Color.white.opacity(0.22), location: 0.22),
-                                .init(color: Color.white.opacity(0.07), location: 0.52),
-                                .init(color: Color.clear, location: 1)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .padding(.horizontal, 3)
-                    .padding(.top, 1)
-                    .padding(.bottom, 4.5)
-                    .blur(radius: 0.55)
-                    .blendMode(.screen)
-            }
-            .overlay {
-                LiquidProgressSurfaceHighlights(tint: tint)
-            }
-            .overlay {
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.clear,
-                                Color.black.opacity(0.05),
-                                Color.black.opacity(0.1)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .padding(1)
-                    .opacity(0.62)
-            }
-            .overlay {
-                LiquidProgressBevel(tint: tint)
-            }
-            .shadow(color: tint.opacity(0.14), radius: 2.4, y: 0.9)
-    }
-}
-
-private struct LiquidProgressSurfaceHighlights: View {
-    let tint: Color
-
-    var body: some View {
-        GeometryReader { geometry in
-            let height = geometry.size.height
-            let width = geometry.size.width
-            let endGlowWidth = max(height * 1.05, min(width * 0.24, height * 1.85))
-
-            ZStack {
-                endHighlight
-                    .frame(width: endGlowWidth, height: height)
-                    .position(x: endGlowWidth * 0.5, y: height * 0.5)
-
-                endHighlight
-                    .scaleEffect(x: -1, y: 1)
-                    .frame(width: endGlowWidth, height: height)
-                    .position(x: width - endGlowWidth * 0.5, y: height * 0.5)
-
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            stops: [
-                                .init(color: Color.clear, location: 0),
-                                .init(color: Color.white.opacity(0.08), location: 0.18),
-                                .init(color: Color.white.opacity(0.15), location: 0.5),
-                                .init(color: Color.white.opacity(0.08), location: 0.82),
-                                .init(color: Color.clear, location: 1)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .padding(.horizontal, endGlowWidth * 0.55)
-                    .padding(.top, 1)
-                    .padding(.bottom, height * 0.42)
-                    .frame(width: width, height: height)
-                    .blendMode(.screen)
-                    .mask(
-                        Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.white, Color.white.opacity(0.7), Color.clear],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
-                    )
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .compositingGroup()
-        }
-        .allowsHitTesting(false)
-    }
-
-    private var endHighlight: some View {
-        ZStack {
-            Capsule()
-                .fill(
-                    RadialGradient(
-                        stops: [
-                            .init(color: Color.white.opacity(0.26), location: 0),
-                            .init(color: tint.opacity(0.34), location: 0),
-                            .init(color: Color.white.opacity(0.12), location: 0.14),
-                            .init(color: tint.opacity(0.18), location: 0.22),
-                            .init(color: tint.opacity(0.06), location: 0.5),
-                            .init(color: Color.clear, location: 1)
-                        ],
-                        center: UnitPoint(x: 0.16, y: 0.3),
-                        startRadius: 0,
-                        endRadius: 18
-                    )
-                )
-                .blendMode(.screen)
-
-            Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            tint.opacity(0.14),
-                            tint.opacity(0.04),
-                            Color.clear
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .padding(.vertical, 1)
-                .blendMode(.screen)
-        }
-        .mask(
-            Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white,
-                            Color.white.opacity(0.78),
-                            Color.clear
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-        )
-        .blur(radius: 0.06)
-    }
-}
-
-private struct LiquidProgressBevel: View {
-    let tint: Color
-
-    var body: some View {
-        ZStack {
-            Capsule()
-                .stroke(tint.opacity(0.18), lineWidth: 1)
-                .blur(radius: 0.4)
-                .mask(
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.black, Color.clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                )
-
-            Capsule()
-                .stroke(Color.black.opacity(0.12), lineWidth: 1)
-                .blur(radius: 0.6)
-                .mask(
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.clear, Color.black],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                )
-        }
-        .padding(0.5)
     }
 }
 
