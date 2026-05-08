@@ -221,7 +221,34 @@ actor CloudKitCurrentAccountSelectionSyncService: CurrentAccountSelectionSyncSer
 
         record[Constants.payloadKey] = payloadData as CKRecordValue
         record[Constants.selectedAtKey] = selection.selectedAt as CKRecordValue
-        _ = try await save(record)
+        do {
+            _ = try await save(record)
+        } catch let error as CKError where error.code == .serverRecordChanged {
+            guard let serverRecord = error.userInfo[CKRecordChangedErrorServerRecordKey] as? CKRecord,
+                  let serverPayloadData = serverRecord[Constants.payloadKey] as? Data,
+                  let serverSelection = try? decodeSelection(from: serverPayloadData).selection else {
+                throw error
+            }
+
+            guard !CloudKitSelectionMerge.shouldKeepServerSelection(
+                serverSelection,
+                over: selection
+            ) else {
+                AccountSwitchDebugLog.write(
+                    "cloudSelection.saveConflict.keepServer",
+                    "server=\(AccountSwitchDebugLog.describe(selection: serverSelection)) local=\(AccountSwitchDebugLog.describe(selection: selection))"
+                )
+                return
+            }
+
+            serverRecord[Constants.payloadKey] = payloadData as CKRecordValue
+            serverRecord[Constants.selectedAtKey] = selection.selectedAt as CKRecordValue
+            _ = try await save(serverRecord)
+            AccountSwitchDebugLog.write(
+                "cloudSelection.saveConflict.savedLocal",
+                "server=\(AccountSwitchDebugLog.describe(selection: serverSelection)) local=\(AccountSwitchDebugLog.describe(selection: selection))"
+            )
+        }
     }
 
     private static func resolveDeviceID() -> String {
