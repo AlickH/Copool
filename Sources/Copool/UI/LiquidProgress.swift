@@ -135,11 +135,15 @@ struct LiquidProgressMetrics {
         return availableWidth * clampedProgress
     }
 
+    var minimumVisibleFillWidth: CGFloat {
+        grooveHeight
+    }
+
     var visibleFillWidth: CGFloat {
         guard rawFillWidth > 0 else {
             return 0
         }
-        return rawFillWidth
+        return max(rawFillWidth, minimumVisibleFillWidth)
     }
 }
 
