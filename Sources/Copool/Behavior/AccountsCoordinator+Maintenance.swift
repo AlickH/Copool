@@ -48,6 +48,24 @@ extension AccountsCoordinator {
         return try await importAccount(authJSON: authJSON, customLabel: customLabel)
     }
 
+    func importPastedAccounts(from text: String, customLabel: String? = nil) async throws -> [AccountSummary] {
+        let records = try PastedRefreshTokenAccountParser.parse(text)
+        guard !records.isEmpty else {
+            throw AppError.invalidData(L10n.tr("error.accounts.paste_import_no_valid_lines"))
+        }
+
+        var imported: [AccountSummary] = []
+        imported.reserveCapacity(records.count)
+        for record in records {
+            let authJSON = try await authRepository.exchangeAuth(
+                email: record.email,
+                refreshToken: record.refreshToken
+            )
+            imported.append(try await importAccount(authJSON: authJSON, customLabel: customLabel))
+        }
+        return imported
+    }
+
     @discardableResult
     func addAccountViaLogin(customLabel: String?, timeoutSeconds: TimeInterval = 10 * 60) async throws -> AccountSummary {
         authFlowLogger.log("addAccountViaLogin started")

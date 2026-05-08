@@ -416,3 +416,10 @@
 "accounts.notice.workspace_authorized_format" = "ワークスペースを認証しました: %@";
 "error.accounts.sign_in_expired" = "ログインの有効期限が切れました。再度ログインしてください。";
 "error.accounts.workspace_deactivated" = "このワークスペースは現在無効です。";
+"accounts.action.paste_import" = "Paste import";
+"accounts.paste_import.title" = "Paste account rows";
+"accounts.paste_import.placeholder" = "Paste one or more lines in the format: email----anything----rt_xxx";
+"accounts.paste_import.submit" = "Import";
+"error.accounts.paste_import_no_valid_lines" = "インポート可能な貼り付けアカウントが見つかりません。";
+"error.accounts.paste_import_invalid_email_format" = "%lld 行目のメール形式が無効です。";
+"error.accounts.paste_import_invalid_refresh_token_format" = "%lld 行目に有効な refresh token がありません。";

@@ -71,6 +71,7 @@
 "accounts.action.import_account" = "Import account";
 "accounts.action.import_current_auth" = "Import current auth";
 "accounts.action.import_auth_file" = "Import JSON file";
+"accounts.action.paste_import" = "Paste import";
 "accounts.action.importing" = "Importing...";
 "accounts.action.add_account" = "Add account";
 "accounts.action.waiting_for_login" = "Waiting for login...";
@@ -426,3 +427,9 @@
 "proxy.remote.help.stop" = "Stop the running remote systemd service.";
 "proxy.remote.help.logs" = "Load recent journal logs from the remote service.";
 "proxy.remote.help.uninstall_remote" = "Stop and remove the remote service plus deployed binary and accounts file, while keeping the server record locally.";
+"accounts.paste_import.title" = "Paste account rows";
+"accounts.paste_import.placeholder" = "Paste one or more lines in the format: email----anything----rt_xxx";
+"accounts.paste_import.submit" = "Import";
+"error.accounts.paste_import_no_valid_lines" = "No valid pasted accounts found.";
+"error.accounts.paste_import_invalid_email_format" = "Line %lld has an invalid email.";
+"error.accounts.paste_import_invalid_refresh_token_format" = "Line %lld is missing a valid refresh token.";

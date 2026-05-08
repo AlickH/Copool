@@ -416,3 +416,10 @@
 "accounts.notice.workspace_authorized_format" = "워크스페이스 인증 완료: %@";
 "error.accounts.sign_in_expired" = "로그인이 만료되었습니다. 다시 로그인해 주세요.";
 "error.accounts.workspace_deactivated" = "이 워크스페이스는 현재 비활성화되었습니다.";
+"accounts.action.paste_import" = "Paste import";
+"accounts.paste_import.title" = "Paste account rows";
+"accounts.paste_import.placeholder" = "Paste one or more lines in the format: email----anything----rt_xxx";
+"accounts.paste_import.submit" = "Import";
+"error.accounts.paste_import_no_valid_lines" = "가져올 수 있는 붙여넣기 계정 데이터를 찾지 못했습니다.";
+"error.accounts.paste_import_invalid_email_format" = "%lld번째 줄의 이메일 형식이 올바르지 않습니다.";
+"error.accounts.paste_import_invalid_refresh_token_format" = "%lld번째 줄에 유효한 refresh token이 없습니다.";

@@ -150,6 +150,28 @@ extension AccountsPageModel {
         }
     }
 
+    func importPastedAccounts(_ text: String) async {
+        isAdding = true
+        defer { isAdding = false }
+
+        do {
+            let imported = try await coordinator.importPastedAccounts(from: text)
+            guard let lastImported = imported.last else {
+                throw AppError.invalidData(L10n.tr("error.accounts.paste_import_no_valid_lines"))
+            }
+            let accounts = try await coordinator.listAccounts()
+            applyAccounts(accounts)
+            await refreshPendingWorkspaceAuthorizations(from: accounts, preferredSourceAccountID: lastImported.id)
+            publishAndSyncLocalAccountsMutation(accounts)
+            notice = NoticeMessage(
+                style: .success,
+                text: L10n.tr("accounts.notice.imported_new_format", lastImported.label)
+            )
+        } catch {
+            notice = NoticeMessage(style: .error, text: error.localizedDescription)
+        }
+    }
+
     func deleteAccount(id: String) async {
         do {
             try await coordinator.deleteAccount(id: id)

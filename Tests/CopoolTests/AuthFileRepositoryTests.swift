@@ -169,6 +169,77 @@ final class AuthFileRepositoryTests: XCTestCase {
         XCTAssertNotNil(auth["last_refresh"]?.stringValue)
     }
 
+    func testExchangeAuthFromRefreshTokenBuildsCodexCompatibleShape() async throws {
+        let idToken = makeJWT(payload: [
+            "https://api.openai.com/auth": [
+                "chatgpt_account_id": "acct_refresh_123",
+                "chatgpt_plan_type": "plus"
+            ]
+        ])
+
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [AuthFileRepositoryMockURLProtocol.self]
+        let session = URLSession(configuration: configuration)
+        await AuthFileRepositoryMockURLProtocol.store.setHandler { request in
+            XCTAssertEqual(request.url?.absoluteString, "https://auth.openai.com/oauth/token")
+            XCTAssertEqual(request.httpMethod, "POST")
+            let body = Self.requestBodyString(from: request)
+            XCTAssertTrue(body?.contains("grant_type=refresh_token") == true)
+            XCTAssertTrue(body?.contains("refresh_token=rt_source_123") == true)
+
+            let response = HTTPURLResponse(
+                url: request.url!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+            let data = try JSONSerialization.data(withJSONObject: [
+                "access_token": "access-refresh-123",
+                "id_token": idToken,
+                "refresh_token": "rt_rotated_456"
+            ])
+            return (response, data)
+        }
+
+        let fixture = try makeRepositoryFixture(session: session)
+        defer { fixture.cleanup() }
+
+        let auth = try await fixture.repository.exchangeAuth(email: "refresh@example.com", refreshToken: "rt_source_123")
+
+        XCTAssertEqual(auth["auth_mode"]?.stringValue, "chatgpt")
+        XCTAssertEqual(auth["email"]?.stringValue, "refresh@example.com")
+        XCTAssertEqual(auth["tokens"]?["access_token"]?.stringValue, "access-refresh-123")
+        XCTAssertEqual(auth["tokens"]?["id_token"]?.stringValue, idToken)
+        XCTAssertEqual(auth["tokens"]?["refresh_token"]?.stringValue, "rt_rotated_456")
+        XCTAssertEqual(auth["tokens"]?["account_id"]?.stringValue, "acct_refresh_123")
+        XCTAssertNotNil(auth["last_refresh"]?.stringValue)
+    }
+
+    func testExtractAuthFallsBackToTopLevelEmail() throws {
+        let fixture = try makeRepositoryFixture()
+        defer { fixture.cleanup() }
+
+        let repository = fixture.repository
+        let token = makeJWT(payload: [
+            "https://api.openai.com/auth": [
+                "chatgpt_account_id": "acct_12345"
+            ]
+        ])
+
+        let auth = JSONValue.object([
+            "auth_mode": .string("chatgpt"),
+            "email": .string("fallback@example.com"),
+            "tokens": .object([
+                "access_token": .string("access-token"),
+                "id_token": .string(token)
+            ])
+        ])
+
+        let extracted = try repository.extractAuth(from: auth)
+
+        XCTAssertEqual(extracted.email, "fallback@example.com")
+    }
+
     func testWriteCurrentAuthNormalizesFlatTokenShapeAndTimestamp() throws {
         let fixture = try makeRepositoryFixture()
         defer { fixture.cleanup() }
@@ -265,7 +336,32 @@ final class AuthFileRepositoryTests: XCTestCase {
             .replacingOccurrences(of: "=", with: "")
     }
 
-    private func makeRepositoryFixture() throws -> RepositoryFixture {
+    private static func requestBodyString(from request: URLRequest) -> String? {
+        if let body = request.httpBody {
+            return String(data: body, encoding: .utf8)
+        }
+
+        guard let stream = request.httpBodyStream else {
+            return nil
+        }
+
+        stream.open()
+        defer { stream.close() }
+
+        let bufferSize = 1024
+        let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+        defer { buffer.deallocate() }
+
+        var data = Data()
+        while stream.hasBytesAvailable {
+            let bytesRead = stream.read(buffer, maxLength: bufferSize)
+            guard bytesRead > 0 else { break }
+            data.append(buffer, count: bytesRead)
+        }
+        return String(data: data, encoding: .utf8)
+    }
+
+    private func makeRepositoryFixture(session: URLSession = .shared) throws -> RepositoryFixture {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
 
@@ -283,7 +379,7 @@ final class AuthFileRepositoryTests: XCTestCase {
         )
 
         return RepositoryFixture(
-            repository: AuthFileRepository(paths: paths),
+            repository: AuthFileRepository(paths: paths, session: session),
             cleanup: { try? FileManager.default.removeItem(at: tempDir) }
         )
     }
@@ -311,4 +407,48 @@ final class AuthFileRepositoryTests: XCTestCase {
 private struct RepositoryFixture {
     let repository: AuthFileRepository
     let cleanup: () -> Void
+}
+
+private final class AuthFileRepositoryMockURLProtocol: URLProtocol, @unchecked Sendable {
+    static let store = AuthFileRepositoryMockURLProtocolStore()
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        Task {
+            do {
+                let (response, data) = try await Self.store.response(for: request)
+                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+                client?.urlProtocol(self, didLoad: data)
+                client?.urlProtocolDidFinishLoading(self)
+            } catch {
+                client?.urlProtocol(self, didFailWithError: error)
+            }
+        }
+    }
+
+    override func stopLoading() {}
+}
+
+private actor AuthFileRepositoryMockURLProtocolStore {
+    typealias Handler = @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
+
+    private var handler: Handler?
+
+    func setHandler(_ handler: @escaping Handler) {
+        self.handler = handler
+    }
+
+    func response(for request: URLRequest) throws -> (HTTPURLResponse, Data) {
+        guard let handler else {
+            throw URLError(.badServerResponse)
+        }
+        return try handler(request)
+    }
 }

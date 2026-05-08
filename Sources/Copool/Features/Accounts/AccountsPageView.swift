@@ -5,6 +5,8 @@ struct AccountsPageView: View {
     @State private var areCardsPresented = false
     @State private var didRunInitialCardEntrance = false
     @State private var isImportingAuthFile = false
+    @State private var isPresentingPasteImport = false
+    @State private var pastedImportText = ""
 
     @ObservedObject var model: AccountsPageModel
     let currentLocale: AppLocale
@@ -47,6 +49,17 @@ struct AccountsPageView: View {
         ) { result in
             handleImportAuthFile(result)
         }
+        .sheet(isPresented: $isPresentingPasteImport) {
+            AccountsPasteImportSheet(
+                text: $pastedImportText,
+                isSubmitting: model.isAdding,
+                onCancel: {
+                    pastedImportText = ""
+                    isPresentingPasteImport = false
+                },
+                onSubmit: submitPastedImport
+            )
+        }
         .onAppear {
             triggerInitialCardEntranceIfNeeded(for: contentAccountCount)
         }
@@ -67,6 +80,10 @@ struct AccountsPageView: View {
     }
 
     private func triggerAction(_ intent: AccountsPageActionIntent) {
+        if intent == .pasteImport {
+            isPresentingPasteImport = true
+            return
+        }
         #if os(iOS)
         if intent == .importAuthFile {
             isImportingAuthFile = true
@@ -84,6 +101,13 @@ struct AccountsPageView: View {
         case .failure(let error):
             model.notice = NoticeMessage(style: .error, text: error.localizedDescription)
         }
+    }
+
+    private func submitPastedImport() {
+        let text = pastedImportText
+        pastedImportText = ""
+        isPresentingPasteImport = false
+        Task { await model.importPastedAccounts(text) }
     }
 
     private func toggleCollapse() {

@@ -27,6 +27,7 @@ protocol AuthRepository: Sendable {
     func writeCurrentAuth(_ auth: JSONValue) throws
     func removeCurrentAuth() throws
     func makeChatGPTAuth(from tokens: ChatGPTOAuthTokens) throws -> JSONValue
+    func exchangeAuth(email: String, refreshToken: String) async throws -> JSONValue
     func extractAuth(from auth: JSONValue) throws -> ExtractedAuth
     func refreshChatGPTAuth(_ auth: JSONValue) async throws -> JSONValue
 }
@@ -51,6 +52,12 @@ extension DateProviding {
 }
 
 extension AuthRepository {
+    func exchangeAuth(email: String, refreshToken: String) async throws -> JSONValue {
+        _ = email
+        _ = refreshToken
+        throw AppError.invalidData(L10n.tr("error.opencode.missing_refresh_token"))
+    }
+
     func readCurrentExtractedAuth() -> ExtractedAuth? {
         guard let auth = try? readCurrentAuthOptional(),
               let extracted = try? extractAuth(from: auth) else {

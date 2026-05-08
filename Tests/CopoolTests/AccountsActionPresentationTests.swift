@@ -17,7 +17,7 @@ final class AccountsActionPresentationTests: XCTestCase {
         )
         XCTAssertEqual(buttons.first?.title, L10n.tr("accounts.action.importing"))
         XCTAssertFalse(buttons.first?.isEnabled ?? true)
-        XCTAssertEqual(buttons.first?.menuItems.map(\.intent), [.importCurrentAuth, .importAuthFile])
+        XCTAssertEqual(buttons.first?.menuItems.map(\.intent), [.importCurrentAuth, .importAuthFile, .pasteImport])
         XCTAssertFalse(buttons[1].isEnabled)
         XCTAssertFalse(buttons[2].isEnabled)
     }
@@ -38,7 +38,8 @@ final class AccountsActionPresentationTests: XCTestCase {
         XCTAssertEqual(buttons[0].title, L10n.tr("accounts.action.import_account"))
         XCTAssertEqual(buttons[0].menuItems.map(\.title), [
             L10n.tr("accounts.action.import_current_auth"),
-            L10n.tr("accounts.action.import_auth_file")
+            L10n.tr("accounts.action.import_auth_file"),
+            L10n.tr("accounts.action.paste_import")
         ])
         XCTAssertEqual(buttons[1].title, L10n.tr("common.cancel"))
         XCTAssertTrue(buttons[1].isEnabled)
@@ -71,6 +72,6 @@ final class AccountsActionPresentationTests: XCTestCase {
         XCTAssertEqual(buttons[0].systemImage, "switch.2")
         XCTAssertEqual(buttons[0].accessibilityLabel, L10n.tr("accounts.action.toggle_usage_progress_display"))
         XCTAssertEqual(buttons[1].accessibilityLabel, L10n.tr("accounts.action.import_account"))
-        XCTAssertEqual(buttons[1].menuItems.map(\.intent), [.importCurrentAuth, .importAuthFile])
+        XCTAssertEqual(buttons[1].menuItems.map(\.intent), [.importCurrentAuth, .importAuthFile, .pasteImport])
     }
 }

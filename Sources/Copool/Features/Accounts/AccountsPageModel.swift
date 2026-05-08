@@ -176,6 +176,8 @@ final class AccountsPageModel: ObservableObject {
         case .importAuthFile:
             guard let url = chooseAuthDocumentURL?() else { return }
             await importAuthDocument(from: url, setAsCurrent: false)
+        case .pasteImport:
+            return
         case .addAccount:
             await addAccountViaLogin()
         case .cancelAddAccount:

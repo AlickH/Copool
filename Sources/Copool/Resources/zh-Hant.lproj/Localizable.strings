@@ -398,3 +398,10 @@
 "proxy.remote.help.stop" = "Stop the running remote systemd service.";
 "proxy.remote.help.logs" = "Load recent journal logs from the remote service.";
 "proxy.remote.help.uninstall_remote" = "Stop and remove the remote service plus deployed binary and accounts file, while keeping the server record locally.";
+"accounts.action.paste_import" = "貼上匯入";
+"accounts.paste_import.title" = "貼上帳號資料";
+"accounts.paste_import.placeholder" = "依「郵箱----任意內容----rt_xxx」格式貼上一行或多行";
+"accounts.paste_import.submit" = "匯入";
+"error.accounts.paste_import_no_valid_lines" = "未找到可匯入的貼上帳號資料。";
+"error.accounts.paste_import_invalid_email_format" = "第 %lld 行郵箱格式無效。";
+"error.accounts.paste_import_invalid_refresh_token_format" = "第 %lld 行缺少有效的 refresh token。";

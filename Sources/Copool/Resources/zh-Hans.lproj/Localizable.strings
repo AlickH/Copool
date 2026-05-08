@@ -71,6 +71,7 @@
 "accounts.action.import_account" = "导入账号";
 "accounts.action.import_current_auth" = "导入当前授权";
 "accounts.action.import_auth_file" = "导入 JSON 文件";
+"accounts.action.paste_import" = "粘贴导入";
 "accounts.action.importing" = "导入中...";
 "accounts.action.add_account" = "添加账号";
 "accounts.action.waiting_for_login" = "等待登录完成...";
@@ -426,3 +427,9 @@
 "proxy.remote.help.stop" = "停止正在运行的远程 systemd 服务。";
 "proxy.remote.help.logs" = "加载远程服务最近的 journal 日志。";
 "proxy.remote.help.uninstall_remote" = "停止并删除远程服务、已部署二进制和 accounts 文件，同时保留本地服务器记录。";
+"accounts.paste_import.title" = "粘贴账号数据";
+"accounts.paste_import.placeholder" = "按“邮箱----任意内容----rt_xxx”格式粘贴一行或多行";
+"accounts.paste_import.submit" = "导入";
+"error.accounts.paste_import_no_valid_lines" = "未找到可导入的粘贴账号数据。";
+"error.accounts.paste_import_invalid_email_format" = "第 %lld 行邮箱格式无效。";
+"error.accounts.paste_import_invalid_refresh_token_format" = "第 %lld 行缺少有效的 refresh token。";

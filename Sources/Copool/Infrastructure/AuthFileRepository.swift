@@ -106,6 +106,27 @@ final class AuthFileRepository: AuthRepository, @unchecked Sendable {
         return .object(root)
     }
 
+    func exchangeAuth(email: String, refreshToken: String) async throws -> JSONValue {
+        let refreshed = try await requestRefreshedTokens(
+            refreshToken: refreshToken,
+            issuer: "https://auth.openai.com",
+            clientID: "app_EMoamEEZ73f0CkXaXp7hrann"
+        )
+        var auth = try makeChatGPTAuth(from: ChatGPTOAuthTokens(
+            accessToken: refreshed.accessToken,
+            refreshToken: refreshed.refreshToken ?? refreshToken,
+            idToken: refreshed.idToken,
+            apiKey: nil
+        ))
+
+        guard var object = auth.objectValue else {
+            throw AppError.invalidData(L10n.tr("error.auth.auth_json_invalid_structure"))
+        }
+        object["email"] = .string(email)
+        auth = .object(object)
+        return auth
+    }
+
     func refreshChatGPTAuth(_ auth: JSONValue) async throws -> JSONValue {
         guard let tokens = authTokenObject(from: auth) else {
             throw AppError.unauthorized(L10n.tr("error.auth.no_chatgpt_token"))
@@ -120,35 +141,11 @@ final class AuthFileRepository: AuthRepository, @unchecked Sendable {
         let claims = try AuthJWTDecoder.decodePayload(idToken)
         let issuer = Self.resolveIssuer(from: claims)
         let clientID = Self.resolveClientID(from: claims)
-        guard let tokenURL = URL(string: "\(issuer)/oauth/token") else {
-            throw AppError.network(L10n.tr("error.oauth.authorize_url_invalid"))
-        }
-
-        var request = URLRequest(url: tokenURL)
-        request.httpMethod = "POST"
-        request.timeoutInterval = 30
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        request.httpBody = OpenAIChatGPTOAuthSupport.formEncodedBody([
-            ("grant_type", "refresh_token"),
-            ("refresh_token", refreshToken),
-            ("client_id", clientID)
-        ])
-
-        let (data, response) = try await session.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw AppError.network(L10n.tr("error.usage.invalid_response"))
-        }
-
-        guard (200..<300).contains(httpResponse.statusCode) else {
-            throw AppError.unauthorized(
-                OpenAIChatGPTOAuthSupport.bestHTTPErrorMessage(
-                    from: data,
-                    statusCode: httpResponse.statusCode
-                )
-            )
-        }
-
-        let refreshed = try JSONDecoder().decode(RefreshedChatGPTOAuthTokenResponse.self, from: data)
+        let refreshed = try await requestRefreshedTokens(
+            refreshToken: refreshToken,
+            issuer: issuer,
+            clientID: clientID
+        )
         return try updatedAuthJSON(auth, refreshed: refreshed)
     }
 
@@ -170,13 +167,13 @@ final class AuthFileRepository: AuthRepository, @unchecked Sendable {
 
         var accountID = tokens["account_id"]?.stringValue
         var principalID = tokens["principal_id"]?.stringValue
-        var email: String?
+        var email = auth["email"]?.stringValue
         var planType: String?
         var teamName: String?
         let claims = try? AuthJWTDecoder.decodePayload(idToken)
 
         if let claims {
-            email = claims["email"]?.stringValue
+            email = claims["email"]?.stringValue ?? email
             if accountID == nil {
                 accountID = claims["https://api.openai.com/auth"]?["chatgpt_account_id"]?.stringValue
             }
@@ -243,6 +240,42 @@ final class AuthFileRepository: AuthRepository, @unchecked Sendable {
 
     private func authTokenObject(from auth: JSONValue) -> [String: JSONValue]? {
         AuthJWTDecoder.tokenObject(from: auth)
+    }
+
+    private func requestRefreshedTokens(
+        refreshToken: String,
+        issuer: String,
+        clientID: String
+    ) async throws -> RefreshedChatGPTOAuthTokenResponse {
+        guard let tokenURL = URL(string: "\(issuer)/oauth/token") else {
+            throw AppError.network(L10n.tr("error.oauth.authorize_url_invalid"))
+        }
+
+        var request = URLRequest(url: tokenURL)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+        request.httpBody = OpenAIChatGPTOAuthSupport.formEncodedBody([
+            ("grant_type", "refresh_token"),
+            ("refresh_token", refreshToken),
+            ("client_id", clientID)
+        ])
+
+        let (data, response) = try await session.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw AppError.network(L10n.tr("error.usage.invalid_response"))
+        }
+
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw AppError.unauthorized(
+                OpenAIChatGPTOAuthSupport.bestHTTPErrorMessage(
+                    from: data,
+                    statusCode: httpResponse.statusCode
+                )
+            )
+        }
+
+        return try JSONDecoder().decode(RefreshedChatGPTOAuthTokenResponse.self, from: data)
     }
 
     private func updatedAuthJSON(

@@ -2641,6 +2641,90 @@ final class AccountsCoordinatorTests: XCTestCase {
     }
 
     @MainActor
+    func testAccountsPageModelImportPastedTextImportsAccountWithEmailLabel() async throws {
+        let now: Int64 = 1_763_216_000
+        let currentAuth = JSONValue.object([
+            "tokens": .object([
+                "access_token": .string("token-account-current"),
+                "account_id": .string("account-current")
+            ])
+        ])
+        let importedAuth = JSONValue.object([
+            "auth_mode": .string("chatgpt"),
+            "email": .string("account-imported@example.com"),
+            "tokens": .object([
+                "access_token": .string("token-account-imported"),
+                "refresh_token": .string("rt_imported"),
+                "id_token": .string("id-token-imported"),
+                "account_id": .string("account-imported")
+            ])
+        ])
+        let storeRepository = InMemoryAccountsStoreRepository(
+            store: AccountsStore(
+                accounts: [
+                    StoredAccount(
+                        id: "acct-current",
+                        label: "Current",
+                        email: "current@example.com",
+                        accountID: "account-current",
+                        planType: "pro",
+                        teamName: nil,
+                        teamAlias: nil,
+                        authJSON: currentAuth,
+                        addedAt: now,
+                        updatedAt: now,
+                        usage: makeUsageSnapshot(fetchedAt: now, fiveHourResetAt: now + 300),
+                        usageError: nil
+                    )
+                ]
+            )
+        )
+        let authRepository = PastedTextAuthRepository(
+            currentAuth: currentAuth,
+            exchangedAuthByRefreshToken: ["rt_imported": importedAuth],
+            extractedByAccessToken: [
+                "token-account-current": makeExtractedAuth(accountID: "account-current"),
+                "token-account-imported": ExtractedAuth(
+                    accountID: "account-imported",
+                    accessToken: "token-account-imported",
+                    email: "account-imported@example.com",
+                    planType: "pro",
+                    teamName: "workspace-account-imported"
+                )
+            ]
+        )
+        let usageService = RecordingAccountUsageService(
+            results: [
+                "account-imported": makeUsageSnapshot(fetchedAt: now, fiveHourResetAt: now + 600)
+            ]
+        )
+        let coordinator = AccountsCoordinator(
+            storeRepository: storeRepository,
+            settingsRepository: TestSettingsRepository(),
+            authRepository: authRepository,
+            usageService: usageService,
+            workspaceMetadataService: StubWorkspaceMetadataService(metadata: []),
+            chatGPTOAuthLoginService: StubChatGPTOAuthLoginService(),
+            codexCLIService: StubCodexCLIService(),
+            editorAppService: StubEditorAppService(),
+            opencodeAuthSyncService: StubOpencodeAuthSyncService(),
+            dateProvider: FixedDateProvider(now: now)
+        )
+        let model = AccountsPageModel(coordinator: coordinator)
+
+        await model.importPastedAccounts("account-imported@example.com----secret----rt_imported")
+
+        guard case .content(let accounts) = model.state else {
+            return XCTFail("Expected imported accounts content state")
+        }
+        XCTAssertEqual(accounts.map { $0.accountID }, ["account-current", "account-imported"])
+        XCTAssertEqual(accounts.last?.label, "account-imported@example.com")
+        XCTAssertEqual(model.notice?.text, L10n.tr("accounts.notice.imported_new_format", "account-imported@example.com"))
+        let exchangeCallCount = await authRepository.readExchangeCallCount()
+        XCTAssertEqual(exchangeCallCount, 1)
+    }
+
+    @MainActor
     func testAccountsPageModelAuthorizePendingWorkspaceImportsAndClearsCandidate() async {
         let now: Int64 = 1_763_216_000
         let loginService = RecordingWorkspaceAwareChatGPTOAuthLoginService(
@@ -6953,6 +7037,69 @@ private final class URLMappedAuthRepository: AuthRepository, @unchecked Sendable
             throw AppError.invalidData("Missing extracted auth for test access token")
         }
         return extracted
+    }
+}
+
+private actor PastedTextAuthRepositoryState {
+    private var exchangeCallCount = 0
+
+    func incrementExchangeCallCount() {
+        exchangeCallCount += 1
+    }
+
+    func readExchangeCallCount() -> Int {
+        exchangeCallCount
+    }
+}
+
+private final class PastedTextAuthRepository: AuthRepository, @unchecked Sendable {
+    private let currentAuth: JSONValue
+    private let exchangedAuthByRefreshToken: [String: JSONValue]
+    private let extractedByAccessToken: [String: ExtractedAuth]
+    private let state = PastedTextAuthRepositoryState()
+
+    init(
+        currentAuth: JSONValue,
+        exchangedAuthByRefreshToken: [String: JSONValue],
+        extractedByAccessToken: [String: ExtractedAuth]
+    ) {
+        self.currentAuth = currentAuth
+        self.exchangedAuthByRefreshToken = exchangedAuthByRefreshToken
+        self.extractedByAccessToken = extractedByAccessToken
+    }
+
+    func readCurrentAuth() throws -> JSONValue { currentAuth }
+    func readCurrentAuthOptional() throws -> JSONValue? { currentAuth }
+    func readAuth(from url: URL) throws -> JSONValue {
+        _ = url
+        throw AppError.io("File import not configured for PastedTextAuthRepository")
+    }
+    func writeCurrentAuth(_ auth: JSONValue) throws {
+        _ = auth
+    }
+    func removeCurrentAuth() throws {}
+    func makeChatGPTAuth(from tokens: ChatGPTOAuthTokens) throws -> JSONValue {
+        _ = tokens
+        return .null
+    }
+    func exchangeAuth(email: String, refreshToken: String) async throws -> JSONValue {
+        _ = email
+        await state.incrementExchangeCallCount()
+        guard let auth = exchangedAuthByRefreshToken[refreshToken] else {
+            throw AppError.invalidData("Missing exchanged auth for refresh token")
+        }
+        return auth
+    }
+    func extractAuth(from auth: JSONValue) throws -> ExtractedAuth {
+        guard let accessToken = auth["tokens"]?["access_token"]?.stringValue,
+              let extracted = extractedByAccessToken[accessToken] else {
+            throw AppError.invalidData("Missing extracted auth for test access token")
+        }
+        return extracted
+    }
+
+    func readExchangeCallCount() async -> Int {
+        await state.readExchangeCallCount()
     }
 }
 
