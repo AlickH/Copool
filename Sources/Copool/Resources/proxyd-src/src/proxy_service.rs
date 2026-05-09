@@ -124,7 +124,8 @@ const REQUEST_MODEL_MAPPINGS: &[(&str, &str)] = &[
     ("gpt-5.4", "gpt-5.4"),
     ("gpt5.4", "gpt-5.4"),
 ];
-const USAGE_REFRESH_INTERVAL_SECONDS: u64 = 60;
+const ACTIVE_USAGE_REFRESH_INTERVAL_SECONDS: u64 = 10;
+const FULL_USAGE_REFRESH_TICKS: u64 = 6;
 
 #[derive(Clone)]
 pub(crate) struct ProxyStorageContext {
@@ -1687,7 +1688,7 @@ fn compare_runtime_proxy_candidates(
 
 async fn sleep_usage_refresh_interval() {
     tokio::time::sleep(std::time::Duration::from_secs(
-        USAGE_REFRESH_INTERVAL_SECONDS,
+        ACTIVE_USAGE_REFRESH_INTERVAL_SECONDS,
     ))
     .await;
 }
@@ -1695,9 +1696,11 @@ async fn sleep_usage_refresh_interval() {
 async fn run_usage_refresh_loop(context: Arc<ProxyContext>) {
     refresh_all_proxy_account_usage(&context.storage).await;
 
+    let mut tick = 0u64;
     loop {
         sleep_usage_refresh_interval().await;
-        refresh_all_proxy_account_usage(&context.storage).await;
+        tick = tick.saturating_add(1);
+        refresh_proxy_account_usage_for_tick(&context, tick).await;
     }
 }
 
@@ -1710,6 +1713,49 @@ async fn refresh_all_proxy_account_usage(storage: &ProxyStorageContext) {
         }
     };
 
+    refresh_proxy_candidate_usage(storage, candidates).await;
+}
+
+async fn refresh_proxy_account_usage_for_tick(context: &ProxyContext, tick: u64) {
+    let candidates = match load_proxy_candidates(&context.storage).await {
+        Ok(candidates) => candidates,
+        Err(error) => {
+            log::warn!("刷新远端账号额度前读取账号失败: {error}");
+            return;
+        }
+    };
+    let active_account_id = {
+        let snapshot = context.shared.lock().await;
+        snapshot.active_account_id.clone()
+    };
+    let refresh_candidates =
+        usage_refresh_candidates_for_tick(tick, active_account_id.as_deref(), candidates);
+    refresh_proxy_candidate_usage(&context.storage, refresh_candidates).await;
+}
+
+fn usage_refresh_candidates_for_tick(
+    tick: u64,
+    active_account_id: Option<&str>,
+    candidates: Vec<ProxyCandidate>,
+) -> Vec<ProxyCandidate> {
+    if tick % FULL_USAGE_REFRESH_TICKS == 0 {
+        return candidates;
+    }
+
+    let Some(active_account_id) = active_account_id else {
+        return Vec::new();
+    };
+
+    candidates
+        .into_iter()
+        .filter(|candidate| candidate.account_id == active_account_id)
+        .collect()
+}
+
+async fn refresh_proxy_candidate_usage(
+    storage: &ProxyStorageContext,
+    candidates: Vec<ProxyCandidate>,
+) {
     for candidate in candidates {
         let result = fetch_usage_snapshot(&candidate.access_token, &candidate.account_id).await;
         persist_candidate_usage_result(storage, &candidate.account_id, result).await;
@@ -3055,6 +3101,7 @@ mod tests {
     use super::rewrite_response_models_for_client;
     use super::rewrite_sse_event_data_models_for_client;
     use super::translate_sse_event_to_chat_chunk;
+    use super::usage_refresh_candidates_for_tick;
     use super::ChatStreamState;
     use crate::models::UsageSnapshot;
     use crate::models::UsageWindow;
@@ -3727,6 +3774,25 @@ data: {"type":"response.completed","response":{"id":"resp_123","created_at":1,"m
         assert_eq!(
             compare_proxy_candidates(&richer, &selected_low_remaining),
             std::cmp::Ordering::Less
+        );
+    }
+
+    #[test]
+    fn usage_refresh_tick_targets_active_account_between_full_refreshes() {
+        let active = make_proxy_candidate("active", "acc-active", Some(1.0), Some(1.0), 1);
+        let idle = make_proxy_candidate("idle", "acc-idle", Some(1.0), Some(1.0), 2);
+        let candidates = vec![active, idle];
+
+        let tick_one = usage_refresh_candidates_for_tick(1, Some("acc-active"), candidates.clone());
+        assert_eq!(
+            tick_one.iter().map(|candidate| candidate.account_id.as_str()).collect::<Vec<_>>(),
+            vec!["acc-active"]
+        );
+
+        let tick_six = usage_refresh_candidates_for_tick(6, Some("acc-active"), candidates);
+        assert_eq!(
+            tick_six.iter().map(|candidate| candidate.account_id.as_str()).collect::<Vec<_>>(),
+            vec!["acc-active", "acc-idle"]
         );
     }
 
