@@ -444,6 +444,8 @@ final class SwiftNativeProxyRuntimeServiceTests: XCTestCase {
     }
 
     func testClientVisibleModelsIncludeReasoningAliasNames() {
+        XCTAssertTrue(SwiftNativeProxyRuntimeService.clientVisibleModels.contains("GPT-5.5"))
+        XCTAssertTrue(SwiftNativeProxyRuntimeService.clientVisibleModels.contains("GPT-5.5-High"))
         XCTAssertTrue(SwiftNativeProxyRuntimeService.clientVisibleModels.contains("GPT-5.4-Low"))
         XCTAssertTrue(SwiftNativeProxyRuntimeService.clientVisibleModels.contains("GPT-5.4-High"))
         XCTAssertTrue(SwiftNativeProxyRuntimeService.clientVisibleModels.contains("GPT-5.4-Mini-High"))

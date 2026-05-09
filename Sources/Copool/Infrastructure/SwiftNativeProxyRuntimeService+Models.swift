@@ -9,6 +9,7 @@ extension SwiftNativeProxyRuntimeService {
     static var clientVisibleModels: [String] {
         let baseModels = [
             "GPT-5",
+            "GPT-5.5",
             "GPT-5.4",
             "GPT-5.4-Mini",
             "GPT-5.2",

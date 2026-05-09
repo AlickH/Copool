@@ -78,6 +78,11 @@ const MODELS: &[&str] = &[
     "GPT-5-Medium",
     "GPT-5-High",
     "GPT-5-xHigh",
+    "GPT-5.5",
+    "GPT-5.5-Low",
+    "GPT-5.5-Medium",
+    "GPT-5.5-High",
+    "GPT-5.5-xHigh",
     "GPT-5.4",
     "GPT-5.4-Low",
     "GPT-5.4-Medium",
@@ -3273,6 +3278,8 @@ mod tests {
 
     #[test]
     fn client_visible_models_include_reasoning_alias_names() {
+        assert!(MODELS.contains(&"GPT-5.5"));
+        assert!(MODELS.contains(&"GPT-5.5-High"));
         assert!(MODELS.contains(&"GPT-5.4-Low"));
         assert!(MODELS.contains(&"GPT-5.4-High"));
         assert!(MODELS.contains(&"GPT-5.4-Mini-High"));
