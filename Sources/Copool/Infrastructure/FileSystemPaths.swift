@@ -19,14 +19,9 @@ struct FileSystemPaths {
         )
 
         let appSupportDirectory = appSupportBase.appendingPathComponent("CodexToolsSwift", isDirectory: true)
-        #if os(iOS)
-        let codexDirectory = appSupportDirectory.appendingPathComponent("codex", isDirectory: true)
-        let proxyDaemonDataDirectory = appSupportDirectory.appendingPathComponent("proxyd", isDirectory: true)
-        #else
         let homeDirectory = fileManager.homeDirectoryForCurrentUser
         let codexDirectory = homeDirectory.appendingPathComponent(".codex", isDirectory: true)
         let proxyDaemonDataDirectory = homeDirectory.appendingPathComponent(".codex-tools-proxyd", isDirectory: true)
-        #endif
         let cloudflaredLogDirectory = appSupportDirectory.appendingPathComponent("cloudflared-logs", isDirectory: true)
 
         return FileSystemPaths(

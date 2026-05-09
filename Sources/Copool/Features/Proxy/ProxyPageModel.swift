@@ -20,7 +20,7 @@ struct RemoteDeployFeedback: Equatable {
 final class ProxyPageModel: ObservableObject {
     let coordinator: ProxyCoordinator
     let settingsCoordinator: SettingsCoordinator
-    let proxyControlCloudSyncService: ProxyControlCloudSyncServiceProtocol?
+    let proxyControlRemoteCommandService: ProxyControlRemoteCommandServiceProtocol?
     let localProxyCommandService: ProxyLocalCommandServiceProtocol?
     let dateProvider: DateProviding
     let runtimePlatform: RuntimePlatform
@@ -37,7 +37,6 @@ final class ProxyPageModel: ObservableObject {
     var lastAppliedRemoteSnapshot: ProxyControlSnapshot?
     var lastAppliedRemoteSnapshotSyncedAt: Int64?
     var lastAppliedRemoteStatusesSyncedAt: Int64?
-    var proxyPushCancellable: AnyCancellable?
     var localSnapshotCancellable: AnyCancellable?
     var pendingConfigurationSyncTask: Task<Void, Never>?
     var remoteDeployFeedbackDismissTasks: [String: Task<Void, Never>] = [:]
@@ -80,7 +79,7 @@ final class ProxyPageModel: ObservableObject {
     init(
         coordinator: ProxyCoordinator,
         settingsCoordinator: SettingsCoordinator,
-        proxyControlCloudSyncService: ProxyControlCloudSyncServiceProtocol? = nil,
+        proxyControlRemoteCommandService: ProxyControlRemoteCommandServiceProtocol? = nil,
         localProxyCommandService: ProxyLocalCommandServiceProtocol? = nil,
         dateProvider: DateProviding = SystemDateProvider(),
         runtimePlatform: RuntimePlatform = PlatformCapabilities.currentPlatform,
@@ -88,7 +87,7 @@ final class ProxyPageModel: ObservableObject {
     ) {
         self.coordinator = coordinator
         self.settingsCoordinator = settingsCoordinator
-        self.proxyControlCloudSyncService = proxyControlCloudSyncService
+        self.proxyControlRemoteCommandService = proxyControlRemoteCommandService
         self.localProxyCommandService = localProxyCommandService
         self.dateProvider = dateProvider
         self.runtimePlatform = runtimePlatform
@@ -133,7 +132,7 @@ final class ProxyPageModel: ObservableObject {
     }
 
     var usesRemoteMacControl: Bool {
-        runtimePlatform == .iOS && proxyControlCloudSyncService != nil
+        false
     }
 
     var apiProxyActionButtons: [ProxyActionButtonDescriptor<ApiProxyActionIntent>] {

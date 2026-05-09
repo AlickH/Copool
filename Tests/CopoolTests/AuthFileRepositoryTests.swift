@@ -180,7 +180,7 @@ final class AuthFileRepositoryTests: XCTestCase {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [AuthFileRepositoryMockURLProtocol.self]
         let session = URLSession(configuration: configuration)
-        await AuthFileRepositoryMockURLProtocol.store.setHandler { request in
+        AuthFileRepositoryMockURLProtocol.store.setHandler { request in
             XCTAssertEqual(request.url?.absoluteString, "https://auth.openai.com/oauth/token")
             XCTAssertEqual(request.httpMethod, "POST")
             let body = Self.requestBodyString(from: request)
@@ -421,31 +421,34 @@ private final class AuthFileRepositoryMockURLProtocol: URLProtocol, @unchecked S
     }
 
     override func startLoading() {
-        Task {
-            do {
-                let (response, data) = try await Self.store.response(for: request)
-                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-                client?.urlProtocol(self, didLoad: data)
-                client?.urlProtocolDidFinishLoading(self)
-            } catch {
-                client?.urlProtocol(self, didFailWithError: error)
-            }
+        do {
+            let (response, data) = try Self.store.response(for: request)
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch {
+            client?.urlProtocol(self, didFailWithError: error)
         }
     }
 
     override func stopLoading() {}
 }
 
-private actor AuthFileRepositoryMockURLProtocolStore {
+private final class AuthFileRepositoryMockURLProtocolStore: @unchecked Sendable {
     typealias Handler = @Sendable (URLRequest) throws -> (HTTPURLResponse, Data)
 
+    private let lock = NSLock()
     private var handler: Handler?
 
     func setHandler(_ handler: @escaping Handler) {
+        lock.lock()
+        defer { lock.unlock() }
         self.handler = handler
     }
 
     func response(for request: URLRequest) throws -> (HTTPURLResponse, Data) {
+        lock.lock()
+        defer { lock.unlock() }
         guard let handler else {
             throw URLError(.badServerResponse)
         }

@@ -7,8 +7,6 @@ extension ProxyPageModel {
 
         applySettings(settings)
         if usesRemoteMacControl {
-            configureProxyPushHandlingIfNeeded()
-            await ensureProxyPushSubscriptionIfNeeded()
             await refreshRemoteSnapshot(showErrors: false)
             if shouldRequestRemoteSnapshotRefresh() {
                 await requestRemoteSnapshotRefresh(showErrors: false)
@@ -64,8 +62,6 @@ extension ProxyPageModel {
             let settings = try await settingsCoordinator.currentSettings()
             applySettings(settings)
             if usesRemoteMacControl {
-                configureProxyPushHandlingIfNeeded()
-                await ensureProxyPushSubscriptionIfNeeded()
                 await refreshRemoteSnapshot(showErrors: true)
                 if shouldRequestRemoteSnapshotRefresh() {
                     await requestRemoteSnapshotRefresh(showErrors: false)

@@ -2,13 +2,7 @@ import Foundation
 import CryptoKit
 import OSLog
 
-#if os(macOS)
 import AppKit
-#endif
-#if os(iOS)
-import AuthenticationServices
-import UIKit
-#endif
 
 final class OpenAIChatGPTOAuthLoginService: ChatGPTOAuthLoginServiceProtocol, @unchecked Sendable {
     private enum Configuration {
@@ -24,9 +18,6 @@ final class OpenAIChatGPTOAuthLoginService: ChatGPTOAuthLoginServiceProtocol, @u
     private let configPath: URL
     private let session: URLSession
     private let logger = Logger(subsystem: "Copool", category: "AuthLogin")
-    #if os(iOS)
-    @MainActor private static let authenticationSessionDriver = IOSWebAuthenticationSessionDriver()
-    #endif
 
     init(
         configPath: URL,
@@ -106,23 +97,14 @@ final class OpenAIChatGPTOAuthLoginService: ChatGPTOAuthLoginServiceProtocol, @u
         callback: OAuthCallbackBox<ChatGPTOAuthTokens>,
         consentWorkspaces: ConsentWorkspaceCapture
     ) async throws {
-        #if os(macOS)
         _ = callback
         _ = consentWorkspaces
         guard NSWorkspace.shared.open(url) else {
             throw AppError.io(L10n.tr("error.oauth.browser_open_failed"))
         }
-        #else
-        try await Self.authenticationSessionDriver.start(url: url) { error in
-            callback.fail(error)
-        }
-        #endif
     }
 
     private func endAuthorizationSession() async {
-        #if os(iOS)
-        await Self.authenticationSessionDriver.finishIfNeeded()
-        #endif
     }
 
     private func makeCallbackServer(
@@ -362,74 +344,3 @@ private final class ConsentWorkspaceCapture: @unchecked Sendable {
         return workspaces
     }
 }
-
-#if os(iOS)
-@MainActor
-private final class IOSWebAuthenticationSessionDriver: NSObject, ASWebAuthenticationPresentationContextProviding {
-    private var session: ASWebAuthenticationSession?
-    private var completionHandler: ((Error) -> Void)?
-
-    func start(url: URL, completionHandler: @escaping (Error) -> Void) throws {
-        finishIfNeeded()
-
-        self.completionHandler = completionHandler
-        let session = ASWebAuthenticationSession(
-            url: url,
-            callbackURLScheme: nil
-        ) { [weak self] _, error in
-            guard let self else { return }
-            Task { @MainActor in
-                let completionHandler = self.completionHandler
-                self.completionHandler = nil
-                self.session = nil
-
-                guard let error else { return }
-                completionHandler?(Self.normalize(error))
-            }
-        }
-        session.presentationContextProvider = self
-        session.prefersEphemeralWebBrowserSession = false
-
-        guard session.start() else {
-            self.completionHandler = nil
-            throw AppError.io(L10n.tr("error.oauth.browser_open_failed"))
-        }
-
-        self.session = session
-    }
-
-    func finishIfNeeded() {
-        completionHandler = nil
-        session?.cancel()
-        session = nil
-    }
-
-    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        let windowScenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
-        let foregroundScenes = windowScenes.filter {
-            $0.activationState == .foregroundActive || $0.activationState == .foregroundInactive
-        }
-        let windows = foregroundScenes.flatMap(\.windows)
-
-        if let keyWindow = windows.first(where: \.isKeyWindow) {
-            return keyWindow
-        }
-        if let fallbackWindow = windows.first {
-            return fallbackWindow
-        }
-        guard let fallbackScene = foregroundScenes.first ?? windowScenes.first else {
-            preconditionFailure("ASWebAuthenticationSession requires a foreground window scene.")
-        }
-        return ASPresentationAnchor(windowScene: fallbackScene)
-    }
-
-    private static func normalize(_ error: Error) -> Error {
-        let nsError = error as NSError
-        if nsError.domain == ASWebAuthenticationSessionErrorDomain,
-           nsError.code == ASWebAuthenticationSessionError.canceledLogin.rawValue {
-            return AppError.io(L10n.tr("error.oauth.request_cancelled"))
-        }
-        return error
-    }
-}
-#endif

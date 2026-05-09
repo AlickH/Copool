@@ -134,9 +134,6 @@ extension AccountsPageModel {
                 customLabel: nil,
                 setAsCurrent: setAsCurrent
             )
-            if setAsCurrent {
-                syncCurrentAccountSelectionInBackground(cardID: imported.id)
-            }
             let accounts = try await coordinator.listAccounts()
             applyAccounts(accounts)
             await refreshPendingWorkspaceAuthorizations(from: accounts, preferredSourceAccountID: imported.id)
@@ -145,28 +142,6 @@ extension AccountsPageModel {
                 ? "accounts.notice.imported_format"
                 : "accounts.notice.imported_new_format"
             notice = NoticeMessage(style: .success, text: L10n.tr(key, imported.label))
-        } catch {
-            notice = NoticeMessage(style: .error, text: error.localizedDescription)
-        }
-    }
-
-    func importPastedAccounts(_ text: String) async {
-        isAdding = true
-        defer { isAdding = false }
-
-        do {
-            let imported = try await coordinator.importPastedAccounts(from: text)
-            guard let lastImported = imported.last else {
-                throw AppError.invalidData(L10n.tr("error.accounts.paste_import_no_valid_lines"))
-            }
-            let accounts = try await coordinator.listAccounts()
-            applyAccounts(accounts)
-            await refreshPendingWorkspaceAuthorizations(from: accounts, preferredSourceAccountID: lastImported.id)
-            publishAndSyncLocalAccountsMutation(accounts)
-            notice = NoticeMessage(
-                style: .success,
-                text: L10n.tr("accounts.notice.imported_new_format", lastImported.label)
-            )
         } catch {
             notice = NoticeMessage(style: .error, text: error.localizedDescription)
         }

@@ -78,10 +78,6 @@ struct RootScene: View {
             deferredProxyModel.loadIfNeeded(using: container)
         }
         .task {
-            #if os(iOS)
-            await trayModel.reconcileCloudStateNow()
-            await accountsModel.reloadFromLocalStoreAfterExternalMutation()
-            #endif
             await accountsModel.loadIfNeeded()
         }
         .task {

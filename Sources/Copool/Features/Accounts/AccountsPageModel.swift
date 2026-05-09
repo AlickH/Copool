@@ -6,10 +6,7 @@ final class AccountsPageModel: ObservableObject {
     let coordinator: AccountsCoordinator
     let settingsCoordinator: SettingsCoordinator?
     let manualRefreshService: AccountsManualRefreshServiceProtocol?
-    let proxyControlCloudSyncService: ProxyControlCloudSyncServiceProtocol?
     let localAccountsMutationSyncService: AccountsLocalMutationSyncServiceProtocol?
-    let currentAccountSelectionSyncService: CurrentAccountSelectionSyncServiceProtocol?
-    let cloudSyncAvailabilityService: CloudSyncAvailabilityService?
     let chooseAuthDocumentURL: (() -> URL?)?
     let onLocalAccountsChanged: (([AccountSummary]) -> Void)?
     let onSettingsUpdated: ((AppSettings) -> Void)?
@@ -21,7 +18,6 @@ final class AccountsPageModel: ObservableObject {
     var pendingWorkspaceAuthorizationTask: Task<AccountSummary, Error>?
 
     var hasLoaded = false
-    var isCloudSyncAvailable = true
     @Published var usageProgressDisplayMode: UsageProgressDisplayMode
 
     @Published var state: ViewState<[AccountSummary]>
@@ -49,10 +45,7 @@ final class AccountsPageModel: ObservableObject {
         coordinator: AccountsCoordinator,
         settingsCoordinator: SettingsCoordinator? = nil,
         manualRefreshService: AccountsManualRefreshServiceProtocol? = nil,
-        proxyControlCloudSyncService: ProxyControlCloudSyncServiceProtocol? = nil,
         localAccountsMutationSyncService: AccountsLocalMutationSyncServiceProtocol? = nil,
-        currentAccountSelectionSyncService: CurrentAccountSelectionSyncServiceProtocol? = nil,
-        cloudSyncAvailabilityService: CloudSyncAvailabilityService? = nil,
         chooseAuthDocumentURL: (() -> URL?)? = nil,
         runtimePlatform: RuntimePlatform = PlatformCapabilities.currentPlatform,
         usageProgressDisplayMode: UsageProgressDisplayMode = .used,
@@ -63,30 +56,19 @@ final class AccountsPageModel: ObservableObject {
         self.coordinator = coordinator
         self.settingsCoordinator = settingsCoordinator
         self.manualRefreshService = manualRefreshService
-        self.proxyControlCloudSyncService = proxyControlCloudSyncService
         self.localAccountsMutationSyncService = localAccountsMutationSyncService
-        self.currentAccountSelectionSyncService = currentAccountSelectionSyncService
-        self.cloudSyncAvailabilityService = cloudSyncAvailabilityService
         self.chooseAuthDocumentURL = chooseAuthDocumentURL
         self.runtimePlatform = runtimePlatform
         self.usageProgressDisplayMode = usageProgressDisplayMode
         self.onLocalAccountsChanged = onLocalAccountsChanged
         self.onSettingsUpdated = onSettingsUpdated
         self.state = initialAccounts.map { initialAccounts in
-            Self.makeViewState(
-                accounts: AccountRanking.sortForDisplay(initialAccounts),
-                cloudSyncAvailable: true
-            )
+            Self.makeViewState(accounts: AccountRanking.sortForDisplay(initialAccounts))
         } ?? .loading
     }
 
     var canRefreshUsageAction: Bool {
-        switch runtimePlatform {
-        case .macOS:
-            return !isAdding
-        case .iOS:
-            return proxyControlCloudSyncService != nil && !isAdding
-        }
+        !isAdding
     }
 
     var areAllAccountsCollapsed: Bool {
@@ -132,8 +114,7 @@ final class AccountsPageModel: ObservableObject {
             isImporting: isImporting,
             isAdding: isAdding
         )
-        guard runtimePlatform == .iOS else { return buttons }
-        return buttons.filter { $0.intent != .importCurrentAuth }
+        return buttons
     }
 
     var trailingToolbarButtons: [AccountsActionButtonDescriptor<AccountsPageActionIntent>] {
@@ -176,8 +157,6 @@ final class AccountsPageModel: ObservableObject {
         case .importAuthFile:
             guard let url = chooseAuthDocumentURL?() else { return }
             await importAuthDocument(from: url, setAsCurrent: false)
-        case .pasteImport:
-            return
         case .addAccount:
             await addAccountViaLogin()
         case .cancelAddAccount:

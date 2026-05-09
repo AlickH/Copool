@@ -65,9 +65,7 @@ final class AppSmokeTests: XCTestCase {
             launchAtStartupService: SmokeLaunchAtStartupService()
         )
         let accountsModel = AccountsPageModel(
-            coordinator: accountsCoordinator,
-            currentAccountSelectionSyncService: SmokeCurrentAccountSelectionSyncService(),
-            cloudSyncAvailabilityService: CloudSyncAvailabilityService()
+            coordinator: accountsCoordinator
         )
         let settingsModel = SettingsPageModel(
             settingsCoordinator: settingsCoordinator,
@@ -304,15 +302,10 @@ final class AppSmokeTests: XCTestCase {
         let trayModel = TrayMenuModel(
             accountsCoordinator: accountsCoordinator,
             settingsCoordinator: settingsCoordinator,
-            cloudSyncService: nil,
-            currentAccountSelectionSyncService: nil,
             backgroundRefreshPolicy: .init(
                 initialRefreshDelay: .zero,
-                cloudReconciliationInterval: .seconds(30),
                 usageRefreshInterval: .seconds(30),
-                refreshUsageOnRecurringTick: false,
-                cloudSyncMode: .pushLocalAccounts,
-                applyRemoteSelectionSwitchEffects: false
+                refreshUsageOnRecurringTick: false
             ),
             dateProvider: SmokeDateProvider(now: now),
             initialAccounts: try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
@@ -322,8 +315,6 @@ final class AppSmokeTests: XCTestCase {
             coordinator: accountsCoordinator,
             manualRefreshService: trayModel,
             localAccountsMutationSyncService: trayModel,
-            currentAccountSelectionSyncService: SmokeCurrentAccountSelectionSyncService(),
-            cloudSyncAvailabilityService: CloudSyncAvailabilityService(),
             onLocalAccountsChanged: { accounts in
                 trayModel.acceptLocalAccountsSnapshot(accounts)
             },
@@ -522,20 +513,6 @@ private final class SmokeLaunchAtStartupService: LaunchAtStartupServiceProtocol,
     func syncWithStoreValue(_ enabled: Bool) throws {
         self.enabled = enabled
     }
-}
-
-private actor SmokeCurrentAccountSelectionSyncService: CurrentAccountSelectionSyncServiceProtocol {
-    func recordLocalSelection(cardID: String) async throws {
-        _ = cardID
-    }
-
-    func pushLocalSelectionIfNeeded() async throws {}
-
-    func pullRemoteSelectionIfNeeded() async throws -> CurrentAccountSelectionPullResult {
-        .noChange
-    }
-
-    func ensurePushSubscriptionIfNeeded() async throws {}
 }
 
 private actor SmokeProxyLocalCommandService: ProxyLocalCommandServiceProtocol {

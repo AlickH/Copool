@@ -27,7 +27,6 @@ extension AccountsPageModel {
             applyAccountsForAccountSwitch(accounts)
             await refreshPendingWorkspaceAuthorizations(from: accounts, preferredSourceAccountID: selectedAccount.id)
             publishAndSyncLocalAccountsMutation(accounts)
-            syncCurrentAccountSelectionInBackground(cardID: selectedAccount.id)
             notice = buildSwitchNotice(execution: switchResult.execution)
         } catch {
             AccountSwitchDebugLog.write(
@@ -65,7 +64,6 @@ extension AccountsPageModel {
             applyAccountsForAccountSwitch(accounts)
             await refreshPendingWorkspaceAuthorizations(from: accounts, preferredSourceAccountID: selectedAccount.id)
             publishAndSyncLocalAccountsMutation(accounts)
-            syncCurrentAccountSelectionInBackground(cardID: selectedAccount.id)
             var switchNotice = buildSwitchNotice(execution: switchResult.execution)
             switchNotice.text = L10n.tr("accounts.notice.smart_switched_prefix_format", selectedAccount.label, switchNotice.text)
             notice = switchNotice

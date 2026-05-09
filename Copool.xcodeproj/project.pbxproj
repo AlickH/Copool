@@ -7,28 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		00C9F26441B76FB6332A9266 /* AccountsWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A541962BDDFDAF6E6C1F8F0 /* AccountsWidgetViews.swift */; };
-		019AD726EBC45FE0E21B4AAF /* FileSystemPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D518BC8C9103B4FD9C16B27 /* FileSystemPaths.swift */; };
-		02089089DAC781CC160D2E45 /* ProxyPageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42AE96D25E97F39B6AAB9A8 /* ProxyPageModel.swift */; };
-		02089089DAC781CC160D2E46 /* ProxySectionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A104A104A104A104A104A104 /* ProxySectionViews.swift */; };
-		0282389FA63950E67A52EB08 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5000155760C69A6117DF5E08 /* JSONValue.swift */; };
-		02824E5ABDF8A2C228BC1B03 /* ShellCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00E0EE08E1645AD783C2DED1 /* ShellCommandRunner.swift */; };
-		0291143814388B4D29DCB163 /* SettingsPageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBF9C8262357FD7DC9AA4855 /* SettingsPageModel.swift */; };
 		037DB8B9A2A1E5FA00C16E1E /* proxy_daemon.rs in Resources */ = {isa = PBXBuildFile; fileRef = 3E013D6F6786AE2EA7E9AF59 /* proxy_daemon.rs */; };
 		0395ED42439DA0C9E5F090EC /* SwiftNativeProxyRuntimeService+Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E21A03EBE2D53313FA558D1 /* SwiftNativeProxyRuntimeService+Models.swift */; };
-		041C4AC058537C51D53113D1 /* CloudKitCurrentAccountSelectionSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71A09814A1367166B896F523 /* CloudKitCurrentAccountSelectionSyncService.swift */; };
 		062663E216F4946D6600D1CE /* AccountRankingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96C85B608B5A700CC8557EC2 /* AccountRankingTests.swift */; };
 		0797784F1F471715624CA9CD /* AppLocaleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A146C7576AB39EFCD658BFED /* AppLocaleTests.swift */; };
 		08342AB5B372E5D6B5F1B73F /* RootScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF3990C942090A68CBEDDDE1 /* RootScene.swift */; };
 		08E6BB21C1E6371C4D7C56A9 /* AccountsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 975800F0AD21824941F02AD3 /* AccountsCoordinator.swift */; };
 		09F3CA0CAAD59390AD8D69EB /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7AF3D2A6E0F0352C20B25EBF /* Cocoa.framework */; };
 		0A211B816427E58E3878715A /* Cargo.toml in Resources */ = {isa = PBXBuildFile; fileRef = 06F1E6F2CD1F32BE938A10E2 /* Cargo.toml */; };
-		0C477E2FD07014261C2331E8 /* SwiftNativeProxyRuntimeService+Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E21A03EBE2D53313FA558D1 /* SwiftNativeProxyRuntimeService+Models.swift */; };
 		0C9AE3027C3A66531EA9F038 /* AccountsWidgetSnapshotBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48DAEB06DC9DE19B80FE052D /* AccountsWidgetSnapshotBuilderTests.swift */; };
 		0CC97446577263889F1C8A0C /* SystemDateProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 962E931E377964D0704D3809 /* SystemDateProvider.swift */; };
 		114E1A0EA3234A953A5550C3 /* CloudflareAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18F1A141B031F5F42ACE838F /* CloudflareAPIClient.swift */; };
-		12CD2EDCB1A6098F88C273E8 /* CloudSyncAvailabilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C752A57468AA033ACB2ED9 /* CloudSyncAvailabilityService.swift */; };
-		1303FD162740AF0E44CECFC8 /* CloudKitAccountsSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3EDE31E67420C42E3AC9BEA /* CloudKitAccountsSyncService.swift */; };
 		137463A0132E4160501DD2AC /* StoreFileRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF11B93A2C05CC3B851D671A /* StoreFileRepositoryTests.swift */; };
 		137463A0132E4160501DD2AD /* AccountCardPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A107A107A107A107A107A107 /* AccountCardPresentationTests.swift */; };
 		137463A0132E4160501DD2AE /* RemoteServerConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A108A108A108A108A108A108 /* RemoteServerConfigurationTests.swift */; };
@@ -37,148 +26,76 @@
 		137936A0518C78C5549E91A0 /* AccountCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A102A102A102A102A102A102 /* AccountCardView.swift */; };
 		137936A0518C78C5549E91A1 /* AccountsPageControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A103A103A103A103A103A103 /* AccountsPageControls.swift */; };
 		1458D53663C6DDA922124FFD /* AccountSummaryPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 674BD908B276FA16BCABEAEC /* AccountSummaryPresentationTests.swift */; };
-		15C1AB961C5BB3B728A848E1 /* AccountsWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E655B80A368B9D3F2B6371 /* AccountsWidgetSnapshot.swift */; };
-		16C9AA1111C9AA1111C9AA11 /* CurrentAccountProjectionWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16C9AA1111C9AA1111C9AA13 /* CurrentAccountProjectionWriter.swift */; };
 		15DB5CC3DD62EDCC284D506A /* SwiftNativeProxyRuntimeService+RequestTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72F83775D81C98F1457C952A /* SwiftNativeProxyRuntimeService+RequestTranslation.swift */; };
 		16AF52DED4DD5AE588B64368 /* usage.rs in Resources */ = {isa = PBXBuildFile; fileRef = 2A597D670A72CDE27C08D586 /* usage.rs */; };
 		16AF52DED4DD5AE588B64369 /* proxyd-prebuilt-archives in Resources */ = {isa = PBXBuildFile; fileRef = FFEEDDCCBBAA998877665546 /* proxyd-prebuilt-archives */; };
+		16C9AA1111C9AA1111C9AA11 /* CurrentAccountProjectionWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16C9AA1111C9AA1111C9AA13 /* CurrentAccountProjectionWriter.swift */; };
 		17BFE68D5BA05B5054C01207 /* AccountsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F538DA3A540B8548A65F877E /* AccountsModels.swift */; };
 		17D19163BCCA0B5770E5BDE0 /* LayoutRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE624821FB137E8DB3711AD /* LayoutRules.swift */; };
 		17EFD9B9B9CF5294FD765876 /* RemoteProxyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36D2D735CB5E1753FB0DE639 /* RemoteProxyService.swift */; };
 		17F4E9A12A114B1AA9D0E110 /* AccountsSnapshotFreshnessPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F4E9A12A114B1AA9D0E111 /* AccountsSnapshotFreshnessPolicy.swift */; };
-		17F4E9A12A114B1AA9D0E112 /* AccountsSnapshotFreshnessPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17F4E9A12A114B1AA9D0E111 /* AccountsSnapshotFreshnessPolicy.swift */; };
-		17C9AA1111C9AA1111C9AA12 /* CurrentAccountProjectionWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16C9AA1111C9AA1111C9AA13 /* CurrentAccountProjectionWriter.swift */; };
-		183F30DA3314F21DE014B4DA /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42479015F84989E486D80B6E /* Protocols.swift */; };
-		1856A9A4C1A74A8AA16A8B01 /* ChatGPTBaseOriginResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1856A9A4C1A74A8AA16A8B11 /* ChatGPTBaseOriginResolver.swift */; };
-		18828CB243BB1936642EF79E /* ProxyCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2843DB9CB43284AFB2E5A459 /* ProxyCoordinator.swift */; };
 		1A99195E54D818195650D811 /* RemoteProxyDeploymentPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09DB0132F4E5B5E3BBCEA78C /* RemoteProxyDeploymentPlan.swift */; };
-		1AF3179AFA8034F9BAD5EFDA /* AccountsCoordinator+Maintenance.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BC9E2AF748367AF480A656 /* AccountsCoordinator+Maintenance.swift */; };
-		1D406C6965A9E3176CD2D700 /* AccountDisplayNameFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89683D85BB5CB50F0881193F /* AccountDisplayNameFormatter.swift */; };
 		1E477AD9B6D4F606E2C2FB1D /* SectionSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABA39B28E7582FD5C4D3973 /* SectionSurface.swift */; };
-		1EA66622752607642EEE6786 /* TrayMenuModel+Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5153BD40E57E956397EEAC2 /* TrayMenuModel+Refresh.swift */; };
-		1F1C9208D0A5D10C5CDAD667 /* AuthFileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7296C82EB9955D9DB121C940 /* AuthFileRepository.swift */; };
-		1F1C9208D0A5D10C5CDAD668 /* AuthFlowDebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7296C82EB9955D9DB121C941 /* AuthFlowDebugLog.swift */; };
 		1FF5A858AFC00A862295F943 /* ProxyCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2843DB9CB43284AFB2E5A459 /* ProxyCoordinator.swift */; };
-		205B79773EA148F8437439CD /* OpencodeAuthSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB56BDF9685A258D5CD4C18A /* OpencodeAuthSyncService.swift */; };
-		2261720D489C2F04D3AF5EFE /* ProxyControlBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3393D58FCF12CF53134D80E6 /* ProxyControlBridge.swift */; };
 		23C4B5638C49CBCC06793B5D /* AccountsWidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B254AFEE55040C2E15986AC /* AccountsWidgetSnapshotStore.swift */; };
-		24AFC15BDC3390134F86990A /* ProxyControlBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3393D58FCF12CF53134D80E6 /* ProxyControlBridge.swift */; };
 		24AFC15BDC3390134F86990B /* RemoteServerConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A106A106A106A106A106A106 /* RemoteServerConfiguration.swift */; };
-		267F23472E977B357C72D227 /* EditorAppService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5358263820EB410620C79AB /* EditorAppService.swift */; };
-		26C8D1A13F4D46AAB7E2A111 /* EndpointRequestCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26C8D1A13F4D46AAB7E2A110 /* EndpointRequestCoordinator.swift */; };
-		28464FC2C552B7CB68639A06 /* DefaultUsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DD2673A9712C55D302564FA /* DefaultUsageService.swift */; };
 		28ACD4DFB22AC8C6947180A0 /* SwiftNativeProxyRuntimeService+RuntimeSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0DC4DC19A65B4CD0658DE8 /* SwiftNativeProxyRuntimeService+RuntimeSupport.swift */; };
-		29D762BCA050E35F76CECC4C /* CloudflareAPIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18F1A141B031F5F42ACE838F /* CloudflareAPIClient.swift */; };
-		2AB42F48693D396C1919D549 /* OpenAIChatGPTOAuthSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E5D59CB180CA82AFDB0F45 /* OpenAIChatGPTOAuthSupport.swift */; };
-		2B7FC92AFD5CCFD0CF99BAE8 /* SwiftNativeProxyRuntimeService+Reasoning.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A2C7AA3A58AA9039226B0C6 /* SwiftNativeProxyRuntimeService+Reasoning.swift */; };
 		2CA3BD709672017E7414EF48 /* SettingsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBC562226CDA114F63F5E91A /* SettingsCoordinator.swift */; };
-		2D85ED75B2CD2039B323A76E /* SwiftNativeProxyRuntimeService+RetryFailures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 289314A55623ACB1B9B054E4 /* SwiftNativeProxyRuntimeService+RetryFailures.swift */; };
 		3139A8AE6108DD3827EA8706 /* LiquidProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A8A937EF06D12B06395D29 /* LiquidProgress.swift */; };
 		337D93A018B21F1F1833443D /* AccountsWidgetSnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFEECEA686528A0A209CD86 /* AccountsWidgetSnapshotBuilder.swift */; };
 		341FC56FB803E4544D4928E3 /* CodexCLIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB01EB2A0408FB4CA84CDEE /* CodexCLIService.swift */; };
-		349250D54D8E86B7FFDB5D07 /* RemoteProxyDeploymentPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09DB0132F4E5B5E3BBCEA78C /* RemoteProxyDeploymentPlan.swift */; };
 		366BB64F586C3259C64EFC29 /* models.rs in Resources */ = {isa = PBXBuildFile; fileRef = FAECC20A0EA2A2E024BEFA9E /* models.rs */; };
 		391A9A6468E3B3427CCBAADC /* AccountsCoordinator+Maintenance.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4BC9E2AF748367AF480A656 /* AccountsCoordinator+Maintenance.swift */; };
-		392BF5360C9E08527901E8D4 /* RemoteProxyOutputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F56B95BC653A8D7B00CC50 /* RemoteProxyOutputParser.swift */; };
 		39796A30063610AC0A5579C5 /* CopoolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 673441EA643693821EED4FE6 /* CopoolApp.swift */; };
-		3A70E6A39F02CFF95209E993 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F1D95B8D644ECF9BF1D1A871 /* LaunchScreen.storyboard */; };
 		3B158EABF5EBF41036B65C5C /* RemoteAccountsMutationSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47F39D10FDF3E12CF67FB578 /* RemoteAccountsMutationSyncService.swift */; };
-		42D9F1682BFE451CB45D6183 /* AuthWorkspaceMetadataExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D425E0B1E12B128CACEE1A62 /* AuthWorkspaceMetadataExtractor.swift */; };
 		4340388029808F096EA1D252 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5000155760C69A6117DF5E08 /* JSONValue.swift */; };
 		4353553A171096B9C9653258 /* LocalizationConsistencyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 251BC10FF4D8538941CDC174 /* LocalizationConsistencyTests.swift */; };
 		4389F9981E6B19B863CA31F9 /* Notice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D593B8E21B1B66A64179E605 /* Notice.swift */; };
 		441A3F777207D342E186832D /* AccountsWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A541962BDDFDAF6E6C1F8F0 /* AccountsWidgetViews.swift */; };
 		449122D70F70FCE8CE874FA7 /* AuthParsingSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98FE5F3EB477796F999A2F80 /* AuthParsingSupport.swift */; };
-		45830625E7AE6173AB0F99E3 /* ViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36FDB8D2542926806D5B265 /* ViewState.swift */; };
 		46F70E216B2D9F94247190D5 /* ShellCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00E0EE08E1645AD783C2DED1 /* ShellCommandRunner.swift */; };
-		4A5ABB9C59FC0E1570AECC00 /* UsageWindowSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5229A7F5573D51E6740E23 /* UsageWindowSelector.swift */; };
 		4AB995EBC36AD2AFD115497C /* LayoutRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE624821FB137E8DB3711AD /* LayoutRules.swift */; };
 		4B444A88CAFD9D0E713B7D96 /* StoreFileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D0007E157CB217C0A6DD1E7 /* StoreFileRepository.swift */; };
-		4BE22F04EDA26CE4DF10D061 /* AccountsWidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B254AFEE55040C2E15986AC /* AccountsWidgetSnapshotStore.swift */; };
 		4C1FBCF5ADFC0A5FB2EF814E /* SwiftNativeProxyRuntimeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E072B2DEE9973F725135D145 /* SwiftNativeProxyRuntimeService.swift */; };
 		4C2E52A903F7EAFC222BAA3B /* ProxyRuntimeLimits.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4B63498B5FFF2C0A83946BF /* ProxyRuntimeLimits.swift */; };
-		4EBB0709C8130CF8EDFC0FE3 /* AccountsWidgetSnapshotWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 776F4BC14F29F8D53E147B4C /* AccountsWidgetSnapshotWriter.swift */; };
-		508F0E7473D81F72E34AE173 /* ProxyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24B1B848F41AC50078FAF4C2 /* ProxyModels.swift */; };
 		50922F8C48CF01B728AD262F /* LiquidProgressMetricsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6318743D5B32C4FA1244FAD /* LiquidProgressMetricsTests.swift */; };
 		50A1E15C1EDB4A5C9E8D1120 /* AccountsSnapshotFreshnessPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50A1E15C1EDB4A5C9E8D1121 /* AccountsSnapshotFreshnessPolicyTests.swift */; };
-		51AAA028CEB92F9F4AB4C34C /* AccountsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = F538DA3A540B8548A65F877E /* AccountsModels.swift */; };
 		51BDCC486562ECB9B92E0C74 /* SectionActionStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E425BFED43ED174C90BD3044 /* SectionActionStyle.swift */; };
 		5227C48169EE13F088BBE923 /* AccountsWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E655B80A368B9D3F2B6371 /* AccountsWidgetSnapshot.swift */; };
 		53243CFFBC40F306DCE9ED45 /* AuthFileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7296C82EB9955D9DB121C940 /* AuthFileRepository.swift */; };
 		53243CFFBC40F306DCE9ED46 /* AuthFlowDebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7296C82EB9955D9DB121C941 /* AuthFlowDebugLog.swift */; };
 		54F5A32512F8226641F0655E /* AccountsPageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6649CF1B9E1CA80D5522A9A6 /* AccountsPageModel.swift */; };
-		54F5A32512F8226641F0655F /* PlatformClipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A105A105A105A105A105A105 /* PlatformClipboard.swift */; };
-		59BE11DA5744F8947CC7B99C /* SwiftNativeProxyRuntimeService+RuntimeSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0DC4DC19A65B4CD0658DE8 /* SwiftNativeProxyRuntimeService+RuntimeSupport.swift */; };
 		5CDCC3B960880C55C84D981E /* SwiftNativeProxyRuntimeService+ResponseTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D2DC1238AF2711835C4B2DB /* SwiftNativeProxyRuntimeService+ResponseTranslation.swift */; };
 		606656B7D1C58B299581B178 /* ProxyModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24B1B848F41AC50078FAF4C2 /* ProxyModels.swift */; };
-		6272A24532F9E90032CC99C0 /* TrayMenuModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EA6ECB13116EC2FBC3C384 /* TrayMenuModel.swift */; };
-		628F70868AC420CFB023FAF0 /* TrayMenuModel+Push.swift in Sources */ = {isa = PBXBuildFile; fileRef = 290CB117F40DD7E893F6B159 /* TrayMenuModel+Push.swift */; };
 		634D954799F1968A5D418EA2 /* SwiftNativeProxyRuntimeServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1302CF1943B5AEB08D667C6E /* SwiftNativeProxyRuntimeServiceTests.swift */; };
 		63EF6C5310182A8B5DB70D66 /* OpenAIChatGPTOAuthLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4F7246044D6E322F548D954 /* OpenAIChatGPTOAuthLoginService.swift */; };
 		648D89F4F3F8BEF2C0DF0BAB /* AccountTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E147F11A1ED57CA55639875B /* AccountTagView.swift */; };
-		652C1B9197EC47D9C0EEC5BA /* LayoutRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE624821FB137E8DB3711AD /* LayoutRules.swift */; };
 		67E3022C12EC6E361B5E2C64 /* RemoteProxyAccountsPayloadBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07AE0D1B3E52A22205FABF86 /* RemoteProxyAccountsPayloadBuilder.swift */; };
 		67FEEA1796F9BC33A0D57CF6 /* SettingsPageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBF9C8262357FD7DC9AA4855 /* SettingsPageModel.swift */; };
 		683DA0BB33E165DCFEFE8633 /* OpencodeAuthSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB56BDF9685A258D5CD4C18A /* OpencodeAuthSyncService.swift */; };
 		686934530489EC97EBE6280E /* AccountsWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E655B80A368B9D3F2B6371 /* AccountsWidgetSnapshot.swift */; };
 		686A80B3D7911437D45C7C4F /* CopoolWidgetsMac.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = D80CD7B4C481368659FC6B4D /* CopoolWidgetsMac.appex */; };
 		68A1228957522AF14BEF1006 /* utils.rs in Resources */ = {isa = PBXBuildFile; fileRef = 6190BE90C3A6928AE092B876 /* utils.rs */; };
-		6A3D57247F2D38163A35CBC0 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315E6E562A9376AB6D34B744 /* L10n.swift */; };
-		6B143A339BF400641B27F8F9 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8644DF48AF768B1D855A3404 /* AppError.swift */; };
-		6DE06F560F57A657AFAC7211 /* AccountTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E147F11A1ED57CA55639875B /* AccountTagView.swift */; };
 		6DE41EF6F476912C967CF60D /* ViewState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C36FDB8D2542926806D5B265 /* ViewState.swift */; };
-		6E024D4C2BDDD96D8AF84110 /* TrayMenuModel+Push.swift in Sources */ = {isa = PBXBuildFile; fileRef = 290CB117F40DD7E893F6B159 /* TrayMenuModel+Push.swift */; };
-		6EC473F55674812478A7C919 /* RemoteProxyAccountsPayloadBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07AE0D1B3E52A22205FABF86 /* RemoteProxyAccountsPayloadBuilder.swift */; };
-		6F1953EB0798BC44F80AABFA /* LiquidProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A8A937EF06D12B06395D29 /* LiquidProgress.swift */; };
-		70D4D043779E579444C91021 /* SimpleHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9DBE99B4528C42CED746B8 /* SimpleHTTPServer.swift */; };
 		71F3048E7F09DF4543FB4688 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8644DF48AF768B1D855A3404 /* AppError.swift */; };
-		75ABCC5C043B01092E2A459B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5310A9CC9E0805F19E6F8E55 /* Foundation.framework */; };
 		7614A610947D7CB86C7CDF9C /* SimpleHTTPServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E9DBE99B4528C42CED746B8 /* SimpleHTTPServer.swift */; };
 		77F129ACAC53652FC1D928BB /* Copool.icon in Resources */ = {isa = PBXBuildFile; fileRef = 97D79696C6A34BCD8B3C05C1 /* Copool.icon */; };
 		78E8D4EA4736FDD03C4A1F52 /* SettingsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFCFDB4F5D787C28D8651A35 /* SettingsModels.swift */; };
-		7B0FC470F6EAB901719423EA /* CloudKitCurrentAccountSelectionSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71A09814A1367166B896F523 /* CloudKitCurrentAccountSelectionSyncService.swift */; };
-		7CE1C8E16058C777BD2728A4 /* ProxyRuntimeLimits.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4B63498B5FFF2C0A83946BF /* ProxyRuntimeLimits.swift */; };
-		7D8AF7392FCDF21C618BE9A3 /* NoticeBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4EB189FA13DC18FA698AFB /* NoticeBanner.swift */; };
-		7E44D47F24B62A4A64EC484A /* CopoolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 673441EA643693821EED4FE6 /* CopoolApp.swift */; };
 		7F539ED7076B2EA02CB6788C /* Protocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42479015F84989E486D80B6E /* Protocols.swift */; };
-		7F7F4D7C5731DDD5BE8A678A /* CodexCLIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB01EB2A0408FB4CA84CDEE /* CodexCLIService.swift */; };
-		80DB15DD6470974E8A69163D /* AccountTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E147F11A1ED57CA55639875B /* AccountTagView.swift */; };
 		82928E59A44DB5D0A6436A47 /* RepositoryLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E5EFBA0AA212B32AAB6710 /* RepositoryLocator.swift */; };
 		8569AB77E801277DA501BD46 /* UsageWindowSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F5229A7F5573D51E6740E23 /* UsageWindowSelector.swift */; };
-		85C3AD5A91637E8A844AF88A /* RepositoryLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17E5EFBA0AA212B32AAB6710 /* RepositoryLocator.swift */; };
-		8691854C6A3FE3F6FAA91F43 /* SectionSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABA39B28E7582FD5C4D3973 /* SectionSurface.swift */; };
 		875194AEEDE8DE7C2BDB9AD9 /* AuthWorkspaceMetadataExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D425E0B1E12B128CACEE1A62 /* AuthWorkspaceMetadataExtractor.swift */; };
-		881BE1D789DA6FB779A0BDD7 /* PlatformCapabilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1928844F787DAA8E86F1AE1A /* PlatformCapabilities.swift */; };
 		892F210DBC6C53459E6EBE20 /* Cargo.lock in Resources */ = {isa = PBXBuildFile; fileRef = 1D7A8A652AC27A5594E0C9A7 /* Cargo.lock */; };
-		89C8DC0B5C2AD684FACE9817 /* AuthParsingSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98FE5F3EB477796F999A2F80 /* AuthParsingSupport.swift */; };
 		89EA2E909B8D7D6CD36E18E0 /* TrayMenuModel+Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5153BD40E57E956397EEAC2 /* TrayMenuModel+Refresh.swift */; };
 		8A97DF56318AACE5DA7A07A7 /* CloudflaredService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C139AC44A9986277E75FA765 /* CloudflaredService.swift */; };
-		8E18C167F43FC9E6CC80A82A /* AccountRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FBDA86A5354BD9FDCE671A2 /* AccountRanking.swift */; };
 		8E1F5360E158E01D0A36046D /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B200F10CE9F433B769723734 /* Localizable.strings */; };
-		8F6C849AA38DCD9F50BB2DCA /* LiquidProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A8A937EF06D12B06395D29 /* LiquidProgress.swift */; };
-		8F79AFC858629BAFE2D20CD5 /* AppModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 752E8541A7159097F4D1AF83 /* AppModels.swift */; };
-		8FC2E52A597979C5CA1D3DAE /* figure.pool.swim.png in Resources */ = {isa = PBXBuildFile; fileRef = D97DE818E2B47EBF28DFEA3D /* figure.pool.swim.png */; };
-		92D4545930140988AE210FB7 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DEC342D5FDC9541EA737668 /* AppContainer.swift */; };
 		92F681D52C5A373D81950C05 /* AuthFileRepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1659877DCD8B9150D665ED12 /* AuthFileRepositoryTests.swift */; };
 		93F291DBC9FD57E847EB6519 /* AppLocale.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E2CF5AE0B544874B721FCC /* AppLocale.swift */; };
 		94131561064F45FBB2F9C9A9 /* AccountDisplayNameFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89683D85BB5CB50F0881193F /* AccountDisplayNameFormatter.swift */; };
-		95E85D9244A64A8BB6AB5F21 /* DefaultWorkspaceMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95E85D9244A64A8BB6AB5F11 /* DefaultWorkspaceMetadataService.swift */; };
-		96DF40B205091AAD55A62B93 /* SwiftNativeProxyRuntimeService+ResponseTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D2DC1238AF2711835C4B2DB /* SwiftNativeProxyRuntimeService+ResponseTranslation.swift */; };
 		98E465C8F8BAA05142221C0D /* ProxyPageModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5B56AEDF3689EA6421720B2 /* ProxyPageModelTests.swift */; };
 		99B5DBD41E98660912EA55EA /* LiquidProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46A8A937EF06D12B06395D29 /* LiquidProgress.swift */; };
 		9BE1D9951912C722CF37BC67 /* SettingsPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B61BD243C65F84D47C5E07 /* SettingsPageView.swift */; };
-		9D0B3515E30738EDF7632D4C /* CloudflaredService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C139AC44A9986277E75FA765 /* CloudflaredService.swift */; };
 		9ED52999272DAB575FAD8157 /* auth.rs in Resources */ = {isa = PBXBuildFile; fileRef = D16220C69646464B343B782F /* auth.rs */; };
-		A1FE264413C85E95315D1348 /* CloudSyncAvailabilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84C752A57468AA033ACB2ED9 /* CloudSyncAvailabilityService.swift */; };
-		A238A15D23DD7B2C487395E8 /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3692DEACD953D34AF240F6ED /* EmptyStateView.swift */; };
-		A301A301A301A301A301A301 /* ProxyActionPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = A201A201A201A201A201A201 /* ProxyActionPrimitives.swift */; };
-		A302A302A302A302A302A302 /* ProxyInfoPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = A202A202A202A202A202A202 /* ProxyInfoPrimitives.swift */; };
-		A303A303A303A303A303A303 /* RemoteServerCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A203A203A203A203A203A203 /* RemoteServerCardView.swift */; };
-		A304A304A304A304A304A304 /* PublicAccessPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = A204A204A204A204A204A204 /* PublicAccessPrimitives.swift */; };
-		A305A305A305A305A305A305 /* AccountsPageShells.swift in Sources */ = {isa = PBXBuildFile; fileRef = A205A205A205A205A205A205 /* AccountsPageShells.swift */; };
-		A306A306A306A306A306A306 /* SettingsPageSections.swift in Sources */ = {isa = PBXBuildFile; fileRef = A206A206A206A206A206A206 /* SettingsPageSections.swift */; };
-		A307A307A307A307A307A307 /* ProxyPageViewAdapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = A207A207A207A207A207A207 /* ProxyPageViewAdapters.swift */; };
-		A30AC85C8B5A37CAD0D19A00 /* AccountsWidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B254AFEE55040C2E15986AC /* AccountsWidgetSnapshotStore.swift */; };
 		A311A311A311A311A311A311 /* ProxyActionPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = A201A201A201A201A201A201 /* ProxyActionPrimitives.swift */; };
 		A312A312A312A312A312A312 /* ProxyInfoPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = A202A202A202A202A202A202 /* ProxyInfoPrimitives.swift */; };
 		A313A313A313A313A313A313 /* RemoteServerCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A203A203A203A203A203A203 /* RemoteServerCardView.swift */; };
@@ -187,17 +104,6 @@
 		A316A316A316A316A316A316 /* SettingsPageSections.swift in Sources */ = {isa = PBXBuildFile; fileRef = A206A206A206A206A206A206 /* SettingsPageSections.swift */; };
 		A317A317A317A317A317A317 /* ProxyPageViewAdapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = A207A207A207A207A207A207 /* ProxyPageViewAdapters.swift */; };
 		A39DE0252B7DE1B089DB14D1 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DEC342D5FDC9541EA737668 /* AppContainer.swift */; };
-		A424BDF59166CC90A66E1440 /* CloudKitProxyControlSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE79C51EC921338AEDF0087 /* CloudKitProxyControlSyncService.swift */; };
-		A501A501A501A501A501A501 /* RemoteServerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A401A401A401A401A401A401 /* RemoteServerAction.swift */; };
-		A502A502A502A502A502A502 /* ProxySyncPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A402A402A402A402A402A402 /* ProxySyncPolicy.swift */; };
-		A503A503A503A503A503A503 /* ProxyRemoteSnapshotPresentationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A403A403A403A403A403A403 /* ProxyRemoteSnapshotPresentationState.swift */; };
-		A504A504A504A504A504A504 /* ProxyPageModel+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A404A404A404A404A404A404 /* ProxyPageModel+Lifecycle.swift */; };
-		A505A505A505A505A505A505 /* ProxyPageModel+APIProxyActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A405A405A405A405A405A405 /* ProxyPageModel+APIProxyActions.swift */; };
-		A506A506A506A506A506A506 /* ProxyPageModel+PublicAccessActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A406A406A406A406A406A406 /* ProxyPageModel+PublicAccessActions.swift */; };
-		A507A507A507A507A507A507 /* ProxyPageModel+ProxyConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A407A407A407A407A407A407 /* ProxyPageModel+ProxyConfiguration.swift */; };
-		A508A508A508A508A508A508 /* ProxyPageModel+RemoteServerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A408A408A408A408A408A408 /* ProxyPageModel+RemoteServerActions.swift */; };
-		A509A509A509A509A509A509 /* ProxyPageModel+RemoteSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A409A409A409A409A409A409 /* ProxyPageModel+RemoteSync.swift */; };
-		A510A510A510A510A510A510 /* ProxyPageModel+CommandExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = A410A410A410A410A410A410 /* ProxyPageModel+CommandExecution.swift */; };
 		A511A511A511A511A511A511 /* RemoteServerAction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A401A401A401A401A401A401 /* RemoteServerAction.swift */; };
 		A512A512A512A512A512A512 /* ProxySyncPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A402A402A402A402A402A402 /* ProxySyncPolicy.swift */; };
 		A513A513A513A513A513A513 /* ProxyRemoteSnapshotPresentationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A403A403A403A403A403A403 /* ProxyRemoteSnapshotPresentationState.swift */; };
@@ -207,21 +113,8 @@
 		A517A517A517A517A517A517 /* ProxyPageModel+ProxyConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A407A407A407A407A407A407 /* ProxyPageModel+ProxyConfiguration.swift */; };
 		A518A518A518A518A518A518 /* ProxyPageModel+RemoteServerActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A408A408A408A408A408A408 /* ProxyPageModel+RemoteServerActions.swift */; };
 		A519A519A519A519A519A519 /* ProxyPageModel+RemoteSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = A409A409A409A409A409A409 /* ProxyPageModel+RemoteSync.swift */; };
-		A51D86224EB1B396D456139F /* Copool.icon in Resources */ = {isa = PBXBuildFile; fileRef = 97D79696C6A34BCD8B3C05C1 /* Copool.icon */; };
 		A520A520A520A520A520A520 /* ProxyPageModel+CommandExecution.swift in Sources */ = {isa = PBXBuildFile; fileRef = A410A410A410A410A410A410 /* ProxyPageModel+CommandExecution.swift */; };
 		A7144A42D2FC21D789B3FB49 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8644DF48AF768B1D855A3404 /* AppError.swift */; };
-		A801A801A801A801A801A801 /* AccountsActionPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A701A701A701A701A701A701 /* AccountsActionPresentation.swift */; };
-		A802A802A802A802A802A802 /* AccountsActionPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = A702A702A702A702A702A702 /* AccountsActionPrimitives.swift */; };
-		A803A803A803A803A803A803 /* AccountsPageSections.swift in Sources */ = {isa = PBXBuildFile; fileRef = A703A703A703A703A703A703 /* AccountsPageSections.swift */; };
-		A804A804A804A804A804A804 /* AccountCardInteractionPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A704A704A704A704A704A704 /* AccountCardInteractionPresentation.swift */; };
-		A805A805A805A805A805A805 /* AccountCardPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = A705A705A705A705A705A705 /* AccountCardPrimitives.swift */; };
-		A806A806A806A806A806A806 /* AccountsPageModel+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A706A706A706A706A706A706 /* AccountsPageModel+Lifecycle.swift */; };
-		A807A807A807A807A807A807 /* AccountsPageModel+AccountMutations.swift in Sources */ = {isa = PBXBuildFile; fileRef = A707A707A707A707A707A707 /* AccountsPageModel+AccountMutations.swift */; };
-		A808A808A808A808A808A808 /* AccountsPageModel+Refresh.swift in Sources */ = {isa = PBXBuildFile; fileRef = A708A708A708A708A708A708 /* AccountsPageModel+Refresh.swift */; };
-		A809A809A809A809A809A809 /* AccountsPageModel+Selection.swift in Sources */ = {isa = PBXBuildFile; fileRef = A709A709A709A709A709A709 /* AccountsPageModel+Selection.swift */; };
-		A810A810A810A810A810A810 /* AccountsPageModel+State.swift in Sources */ = {isa = PBXBuildFile; fileRef = A710A710A710A710A710A710 /* AccountsPageModel+State.swift */; };
-		A811A811A811A811A811A811 /* AccountsPagePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A713A713A713A713A713A713 /* AccountsPagePresentation.swift */; };
-		A813A813A813A813A813A813 /* AccountsAnimationRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = A715A715A715A715A715A715 /* AccountsAnimationRules.swift */; };
 		A821A821A821A821A821A821 /* AccountsActionPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A701A701A701A701A701A701 /* AccountsActionPresentation.swift */; };
 		A822A822A822A822A822A822 /* AccountsActionPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = A702A702A702A702A702A702 /* AccountsActionPrimitives.swift */; };
 		A823A823A823A823A823A823 /* AccountsPageSections.swift in Sources */ = {isa = PBXBuildFile; fileRef = A703A703A703A703A703A703 /* AccountsPageSections.swift */; };
@@ -237,41 +130,24 @@
 		A841A841A841A841A841A841 /* AccountsActionPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A711A711A711A711A711A711 /* AccountsActionPresentationTests.swift */; };
 		A842A842A842A842A842A842 /* AccountCardInteractionPresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A712A712A712A712A712A712 /* AccountCardInteractionPresentationTests.swift */; };
 		A9BC31EC4BA9427A9F554D41 /* ChatGPTBaseOriginResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1856A9A4C1A74A8AA16A8B11 /* ChatGPTBaseOriginResolver.swift */; };
-		ACC1397FF859F745A017E4F2 /* AppLocale.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28E2CF5AE0B544874B721FCC /* AppLocale.swift */; };
-		AD6E01AC45FD637392FAFE6B /* SwiftNativeProxyRuntimeService+RequestTranslation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72F83775D81C98F1457C952A /* SwiftNativeProxyRuntimeService+RequestTranslation.swift */; };
 		AEEEE6E52FAC04AFF97354C1 /* ProxyPageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D42AE96D25E97F39B6AAB9A8 /* ProxyPageModel.swift */; };
 		AEEEE6E52FAC04AFF97354C2 /* ProxySectionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A104A104A104A104A104A104 /* ProxySectionViews.swift */; };
-		AFA2DE08013BB33C65F3D969 /* CopoolWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D177FE0E597E58E234104A /* CopoolWidgets.swift */; };
 		B02FB96AC2AA18DA0EE1FE21 /* AppSettingsCodableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 615AE055972ED222439110F8 /* AppSettingsCodableTests.swift */; };
-		B07CC789B799C4AD2F44747A /* AccountIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9E2FC74B7578F8D88E35558 /* AccountIdentity.swift */; };
 		B1D5612DF2DA63BE81C96320 /* figure.pool.swim.png in Resources */ = {isa = PBXBuildFile; fileRef = D97DE818E2B47EBF28DFEA3D /* figure.pool.swim.png */; };
-		B375C045386BB145C4A50B01 /* RootScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF3990C942090A68CBEDDDE1 /* RootScene.swift */; };
 		B3E47BF90443604C1C7BAB3D /* AccountsWidgetSnapshotStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C06689F088C56B8BE363B4 /* AccountsWidgetSnapshotStoreTests.swift */; };
-		B6A471F0F3B14827A0F2D001 /* AccountsPageModel+PendingWorkspaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A471F0F3B14827A0F2D000 /* AccountsPageModel+PendingWorkspaces.swift */; };
 		B6A471F0F3B14827A0F2D002 /* AccountsPageModel+PendingWorkspaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A471F0F3B14827A0F2D000 /* AccountsPageModel+PendingWorkspaces.swift */; };
 		B7836159B055391485A8A18E /* AccountsIdentityRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C425FA5F43659B1BB406C47 /* AccountsIdentityRegressionTests.swift */; };
 		B83EF2508B9D4DCEB00F5906 /* AccountsWidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B254AFEE55040C2E15986AC /* AccountsWidgetSnapshotStore.swift */; };
 		B852743434A4C9BA3918BC24 /* AccountIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9E2FC74B7578F8D88E35558 /* AccountIdentity.swift */; };
-		B88C538B91735481F385D582 /* SwiftNativeProxyRuntimeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = E072B2DEE9973F725135D145 /* SwiftNativeProxyRuntimeService.swift */; };
-		B9349BF88844F0F96A3B0C30 /* SettingsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFCFDB4F5D787C28D8651A35 /* SettingsModels.swift */; };
 		BA5B276B09B95CA7284CDFA2 /* PlatformCapabilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1928844F787DAA8E86F1AE1A /* PlatformCapabilities.swift */; };
 		BAA8370E04EE38AD6F28F62E /* NoticeBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C4EB189FA13DC18FA698AFB /* NoticeBanner.swift */; };
 		BAC63D41038D37A503641728 /* CommandRunnerTimeoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1996F591AEC73ED65ED1F9 /* CommandRunnerTimeoutTests.swift */; };
 		BB02DFA1719016AB591B43B5 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 315E6E562A9376AB6D34B744 /* L10n.swift */; };
 		BC09A96AF0D6EDDDCE638354 /* SwiftNativeProxyRuntimeService+Reasoning.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A2C7AA3A58AA9039226B0C6 /* SwiftNativeProxyRuntimeService+Reasoning.swift */; };
-		BC84314C111AFACFAD2BA89E /* SectionActionStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = E425BFED43ED174C90BD3044 /* SectionActionStyle.swift */; };
 		BCC005ABF70C814EF0159CAD /* proxy_service.rs in Resources */ = {isa = PBXBuildFile; fileRef = FEB8F849524A5B828F5C0F7F /* proxy_service.rs */; };
 		BDEFAC6E557915562EA5D5A2 /* main.rs in Resources */ = {isa = PBXBuildFile; fileRef = E2700A142EED2C109BC86E25 /* main.rs */; };
 		C0040E924E495A9B4DCF7EBE /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3692DEACD953D34AF240F6ED /* EmptyStateView.swift */; };
 		C1689CF8BC0D6EBC84B515ED /* AccountsCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85BEA62E5EB96361AD117627 /* AccountsCoordinatorTests.swift */; };
-		C201C201C201C201C201C201 /* SettingsControlPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B201B201B201B201B201B201 /* SettingsControlPresentation.swift */; };
-		C202C202C202C202C202C202 /* SettingsControlPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = B202B202B202B202B202B202 /* SettingsControlPrimitives.swift */; };
-		C203C203C203C203C203C203 /* SettingsPageModel+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B203B203B203B203B203B203 /* SettingsPageModel+Lifecycle.swift */; };
-		C204C204C204C204C204C204 /* SettingsPageModel+Mutations.swift in Sources */ = {isa = PBXBuildFile; fileRef = B204B204B204B204B204B204 /* SettingsPageModel+Mutations.swift */; };
-		C205C205C205C205C205C205 /* SettingsPageModel+Presentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B205B205B205B205B205B205 /* SettingsPageModel+Presentation.swift */; };
-		C206C206C206C206C206C206 /* PublicAccessSectionPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B206B206B206B206B206B206 /* PublicAccessSectionPresentation.swift */; };
-		C207C207C207C207C207C207 /* RemoteServerCardPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B207B207B207B207B207B207 /* RemoteServerCardPresentation.swift */; };
-		C208C208C208C208C208C208 /* RemoteServerCardPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = B208B208B208B208B208B208 /* RemoteServerCardPrimitives.swift */; };
 		C221C221C221C221C221C221 /* SettingsControlPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B201B201B201B201B201B201 /* SettingsControlPresentation.swift */; };
 		C222C222C222C222C222C222 /* SettingsControlPrimitives.swift in Sources */ = {isa = PBXBuildFile; fileRef = B202B202B202B202B202B202 /* SettingsControlPrimitives.swift */; };
 		C223C223C223C223C223C223 /* SettingsPageModel+Lifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B203B203B203B203B203B203 /* SettingsPageModel+Lifecycle.swift */; };
@@ -287,70 +163,35 @@
 		C245C245C245C245C245C245 /* RemoteShellCommandRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C246C246C246C246C246C246 /* RemoteShellCommandRunnerTests.swift */; };
 		C247C247C247C247C247C247 /* RemoteProxydBinaryBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C248C248C248C248C248C248 /* RemoteProxydBinaryBuilderTests.swift */; };
 		C26AD9CDD389F06EBA8F3301 /* LayoutRulesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBD3F01FE0E3270445E3F92C /* LayoutRulesTests.swift */; };
-		C3E767529B0F672C5F000B54 /* StoreFileRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D0007E157CB217C0A6DD1E7 /* StoreFileRepository.swift */; };
-		C4AEB739AA9D4A84ABBB9E21 /* ProxyControlBridgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10B6B54D0E14B9CB2CB0A71 /* ProxyControlBridgeTests.swift */; };
 		C63E3638C58D5A7C3B4EAC4B /* CopoolWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84D177FE0E597E58E234104A /* CopoolWidgets.swift */; };
 		C6A9B4D7901D0F462A7ED0B1 /* OpenAIChatGPTOAuthSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E5D59CB180CA82AFDB0F45 /* OpenAIChatGPTOAuthSupport.swift */; };
-		C879F3AE92E5053F7684E876 /* AccountsWidgetSnapshotBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFEECEA686528A0A209CD86 /* AccountsWidgetSnapshotBuilder.swift */; };
 		C97B2BAEB879F4D2E4E22B54 /* RemoteProxyOutputParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F56B95BC653A8D7B00CC50 /* RemoteProxyOutputParser.swift */; };
 		CA37BD95DACA443113BF6EC6 /* EditorAppService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5358263820EB410620C79AB /* EditorAppService.swift */; };
 		CB0CCB971A94A76BEF441706 /* AccountsWidgetSnapshotWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 776F4BC14F29F8D53E147B4C /* AccountsWidgetSnapshotWriter.swift */; };
-		CB7EB00A1B25949322B736FA /* CloudKitAccountsSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3EDE31E67420C42E3AC9BEA /* CloudKitAccountsSyncService.swift */; };
-		CCE7DCFC99330C85E587D094 /* CopoolWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4908DE94D353088580738F02 /* CopoolWidgets.appex */; };
-		CE0A8CC7A15D77C5F6D29629 /* Notice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D593B8E21B1B66A64179E605 /* Notice.swift */; };
-		D022FDC1F72C2FEE9B5078C8 /* ProxyPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3AE6ECBCE990356DEB5BBE0 /* ProxyPageView.swift */; };
-		D02B7B4BFDBDD89A002B4ED5 /* RemoteProxyService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36D2D735CB5E1753FB0DE639 /* RemoteProxyService.swift */; };
-		D047CEC66C8024EB35E197E5 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8644DF48AF768B1D855A3404 /* AppError.swift */; };
-		E601E601E601E601E601E601 /* PastedRefreshTokenAccountParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = E601E601E601E601E601E611 /* PastedRefreshTokenAccountParser.swift */; };
-		E601E601E601E601E601E602 /* PastedRefreshTokenAccountParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = E601E601E601E601E601E611 /* PastedRefreshTokenAccountParser.swift */; };
-		E601E601E601E601E601E603 /* AccountsPasteImportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E601E601E601E601E601E612 /* AccountsPasteImportSheet.swift */; };
-		E601E601E601E601E601E604 /* AccountsPasteImportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E601E601E601E601E601E612 /* AccountsPasteImportSheet.swift */; };
-		E601E601E601E601E601E605 /* PastedRefreshTokenAccountParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E601E601E601E601E601E613 /* PastedRefreshTokenAccountParserTests.swift */; };
 		D0611DC1C82F7B37B8D91040 /* ProxyPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3AE6ECBCE990356DEB5BBE0 /* ProxyPageView.swift */; };
 		D0611DC1C82F7B37B8D91041 /* PlatformClipboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A105A105A105A105A105A105 /* PlatformClipboard.swift */; };
 		D0D721335F066D21AAAD652D /* FileSystemPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D518BC8C9103B4FD9C16B27 /* FileSystemPaths.swift */; };
-		D39533CAD4CEB5C27EFDC236 /* AccountsPageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6649CF1B9E1CA80D5522A9A6 /* AccountsPageModel.swift */; };
 		D54AF4961D9E393B51DACD16 /* LaunchAtStartupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCFDDF034C6446339DDFAF9B /* LaunchAtStartupService.swift */; };
-		D6B28C895504B86652D80D9B /* SettingsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBC562226CDA114F63F5E91A /* SettingsCoordinator.swift */; };
 		D7C93806F608A3F1A6061CDA /* RemoteProxydBinaryBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744F45048EC219469A97E4AD /* RemoteProxydBinaryBuilder.swift */; };
 		D8E9A97C6D5050567CA56736 /* TrayMenuModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EA6ECB13116EC2FBC3C384 /* TrayMenuModel.swift */; };
 		DCD28B83E4C2D0294C831627 /* AccountRanking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FBDA86A5354BD9FDCE671A2 /* AccountRanking.swift */; };
 		DF8368291C8E0CEAA590256E /* RepositoryLocatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48CF6078EFCC779D84F7D6A3 /* RepositoryLocatorTests.swift */; };
 		E11DCC850FA489BD46094EE0 /* UsageWindowSelectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10E7339F7656FE20240B3B8 /* UsageWindowSelectorTests.swift */; };
-		E17348F472F786A813DD1AA4 /* RemoteShellCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F7E6B167DBA6042D8D7D491 /* RemoteShellCommandRunner.swift */; };
 		E21DCC850FA489BD46094EE0 /* UsageServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E31DCC850FA489BD46094EE0 /* UsageServiceTests.swift */; };
-		E27D31CC8BE01282100CFC92 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B200F10CE9F433B769723734 /* Localizable.strings */; };
 		E602C264D4C5549D20D359D2 /* state.rs in Resources */ = {isa = PBXBuildFile; fileRef = 906F433E9E25A6366AF39AD7 /* state.rs */; };
 		E71F4EA7B086779FFF3D5AAD /* AccountTagView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E147F11A1ED57CA55639875B /* AccountTagView.swift */; };
 		E819DD760F7DDD030107C454 /* store.rs in Resources */ = {isa = PBXBuildFile; fileRef = 653983E38A29ACAB094FCB48 /* store.rs */; };
-		EC207C19839E278B3188700C /* PublicAccessSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0830DA51B1BE82286FA407AB /* PublicAccessSection.swift */; };
 		EC7799053CCC9470E8A77999 /* AppModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 752E8541A7159097F4D1AF83 /* AppModels.swift */; };
-		ECD442372AA7AA5E16E83FC0 /* LaunchAtStartupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCFDDF034C6446339DDFAF9B /* LaunchAtStartupService.swift */; };
-		F0B4BA3CE7B4F62FD92B6B34 /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38BD5BE0A332BCE32A46A463 /* AppVersion.swift */; };
-		F0DC036F3F4710EFF791B712 /* LayoutRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECE624821FB137E8DB3711AD /* LayoutRules.swift */; };
-		F0DC036F3F4710EFF791B713 /* RemoteServerConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = A106A106A106A106A106A106 /* RemoteServerConfiguration.swift */; };
-		F11F38F1229FED80C7AA18BD /* RemoteAccountsMutationSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47F39D10FDF3E12CF67FB578 /* RemoteAccountsMutationSyncService.swift */; };
 		F21DBC6615F37C8AD11088E5 /* SwiftNativeProxyRuntimeService+RetryFailures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 289314A55623ACB1B9B054E4 /* SwiftNativeProxyRuntimeService+RetryFailures.swift */; };
-		F4408D62936292FCDD2D817F /* RemoteProxydBinaryBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 744F45048EC219469A97E4AD /* RemoteProxydBinaryBuilder.swift */; };
 		F45812C741A5512702C8DA62 /* RemoteShellCommandRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F7E6B167DBA6042D8D7D491 /* RemoteShellCommandRunner.swift */; };
 		F4A2F9DC97CF53F2649C2F64 /* PublicAccessSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0830DA51B1BE82286FA407AB /* PublicAccessSection.swift */; };
 		F567996745001A735BA62B03 /* ProxyCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D1B2CF91A4BFFC55FB8AA5 /* ProxyCoordinatorTests.swift */; };
-		F5BD595D78268D1FF9460210 /* SettingsPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7B61BD243C65F84D47C5E07 /* SettingsPageView.swift */; };
-		F601B3FC2AA0F91B92B239CF /* CloudKitProxyControlSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE79C51EC921338AEDF0087 /* CloudKitProxyControlSyncService.swift */; };
 		F7183D0C1F0BB2AF8E956378 /* EndpointRequestCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EAF06F7C7AF8EC727D71D52 /* EndpointRequestCoordinatorTests.swift */; };
 		FA0F2E55B42E1B1768C9E1FF /* AppSmokeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8CB27B4B72C66025D076C89 /* AppSmokeTests.swift */; };
 		FA624CCECA28D7F68B1C0FF8 /* DefaultUsageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DD2673A9712C55D302564FA /* DefaultUsageService.swift */; };
 		FA836AB28B6E7F72C253A49F /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38BD5BE0A332BCE32A46A463 /* AppVersion.swift */; };
 		FA8F4B3E19ED4AA8B7740F31 /* DefaultWorkspaceMetadataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95E85D9244A64A8BB6AB5F11 /* DefaultWorkspaceMetadataService.swift */; };
 		FA8F4B3E19ED4AA8B7740F32 /* EndpointRequestCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26C8D1A13F4D46AAB7E2A110 /* EndpointRequestCoordinator.swift */; };
-		FAF80D77474CF43421294E86 /* OpenAIChatGPTOAuthLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4F7246044D6E322F548D954 /* OpenAIChatGPTOAuthLoginService.swift */; };
-		FBB66ADD684E1C948FB611E4 /* AccountsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 975800F0AD21824941F02AD3 /* AccountsCoordinator.swift */; };
-		FCB8E6490AA6D2891320E69F /* AccountsPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B90210EB2AAD603950A607C /* AccountsPageView.swift */; };
-		FCB8E6490AA6D2891320E6A0 /* AccountCardPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = A101A101A101A101A101A101 /* AccountCardPresentation.swift */; };
-		FCB8E6490AA6D2891320E6A1 /* AccountCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A102A102A102A102A102A102 /* AccountCardView.swift */; };
-		FCB8E6490AA6D2891320E6A2 /* AccountsPageControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = A103A103A103A103A103A103 /* AccountsPageControls.swift */; };
-		FE0F1E225FB072F2EFABD975 /* AccountsWidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1E655B80A368B9D3F2B6371 /* AccountsWidgetSnapshot.swift */; };
-		FF792E37E347B5FD7011FE7D /* SystemDateProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 962E931E377964D0704D3809 /* SystemDateProvider.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -360,13 +201,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = FE992FA021F035BA671AB297;
 			remoteInfo = Copool;
-		};
-		C64FC8249A1FEA26F18F013D /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 1C9F670E75F4E6A54634D42A /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = F134D7DFF69D1813795AB942;
-			remoteInfo = CopoolWidgets;
 		};
 		DD816558B6D6966EB6C76332 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -378,17 +212,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		0AF10CF3ADAA919498051B1B /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				CCE7DCFC99330C85E587D094 /* CopoolWidgets.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		C5AB32357C913EDBE3D61083 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -401,35 +224,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
-
-/* Begin PBXShellScriptBuildPhase section */
-		A9C0DE9A1B2C3D4E5F607182 /* Build proxyd prebuilt */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 0;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/scripts/build_proxyd_prebuilt.sh",
-				"$(SRCROOT)/Sources/Copool/Resources/proxyd-src/src",
-				"$(SRCROOT)/Sources/Copool/Resources/proxyd-src/proxyd/src",
-				"$(SRCROOT)/Sources/Copool/Resources/proxyd-src/proxyd/Cargo.toml",
-				"$(SRCROOT)/Sources/Copool/Resources/proxyd-src/proxyd/Cargo.lock",
-			);
-			name = "Build proxyd prebuilt";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(SRCROOT)/Sources/Copool/Resources/proxyd-prebuilt/x86_64-unknown-linux-musl/.build-stamp",
-				"$(SRCROOT)/Sources/Copool/Resources/proxyd-prebuilt/aarch64-unknown-linux-musl/.build-stamp",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"${SRCROOT}/scripts/build_proxyd_prebuilt.sh\"";
-		};
-/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXFileReference section */
 		00E0EE08E1645AD783C2DED1 /* ShellCommandRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellCommandRunner.swift; sourceTree = "<group>"; };
@@ -445,9 +239,9 @@
 		0FBDA86A5354BD9FDCE671A2 /* AccountRanking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountRanking.swift; sourceTree = "<group>"; };
 		1302CF1943B5AEB08D667C6E /* SwiftNativeProxyRuntimeServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftNativeProxyRuntimeServiceTests.swift; sourceTree = "<group>"; };
 		1659877DCD8B9150D665ED12 /* AuthFileRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFileRepositoryTests.swift; sourceTree = "<group>"; };
+		16C9AA1111C9AA1111C9AA13 /* CurrentAccountProjectionWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentAccountProjectionWriter.swift; sourceTree = "<group>"; };
 		17E5EFBA0AA212B32AAB6710 /* RepositoryLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepositoryLocator.swift; sourceTree = "<group>"; };
 		17F4E9A12A114B1AA9D0E111 /* AccountsSnapshotFreshnessPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsSnapshotFreshnessPolicy.swift; sourceTree = "<group>"; };
-		16C9AA1111C9AA1111C9AA13 /* CurrentAccountProjectionWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentAccountProjectionWriter.swift; sourceTree = "<group>"; };
 		1856A9A4C1A74A8AA16A8B11 /* ChatGPTBaseOriginResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTBaseOriginResolver.swift; sourceTree = "<group>"; };
 		18F1A141B031F5F42ACE838F /* CloudflareAPIClient.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CloudflareAPIClient.swift; sourceTree = "<group>"; };
 		1928844F787DAA8E86F1AE1A /* PlatformCapabilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformCapabilities.swift; sourceTree = "<group>"; };
@@ -462,17 +256,14 @@
 		2843DB9CB43284AFB2E5A459 /* ProxyCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyCoordinator.swift; sourceTree = "<group>"; };
 		289314A55623ACB1B9B054E4 /* SwiftNativeProxyRuntimeService+RetryFailures.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "SwiftNativeProxyRuntimeService+RetryFailures.swift"; sourceTree = "<group>"; };
 		28E2CF5AE0B544874B721FCC /* AppLocale.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocale.swift; sourceTree = "<group>"; };
-		290CB117F40DD7E893F6B159 /* TrayMenuModel+Push.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "TrayMenuModel+Push.swift"; sourceTree = "<group>"; };
 		2A597D670A72CDE27C08D586 /* usage.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = usage.rs; sourceTree = "<group>"; };
 		2CFEECEA686528A0A209CD86 /* AccountsWidgetSnapshotBuilder.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountsWidgetSnapshotBuilder.swift; sourceTree = "<group>"; };
 		2D0007E157CB217C0A6DD1E7 /* StoreFileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreFileRepository.swift; sourceTree = "<group>"; };
 		2DD2673A9712C55D302564FA /* DefaultUsageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultUsageService.swift; sourceTree = "<group>"; };
 		315E6E562A9376AB6D34B744 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
-		3393D58FCF12CF53134D80E6 /* ProxyControlBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyControlBridge.swift; sourceTree = "<group>"; };
 		3692DEACD953D34AF240F6ED /* EmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyStateView.swift; sourceTree = "<group>"; };
 		36D2D735CB5E1753FB0DE639 /* RemoteProxyService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteProxyService.swift; sourceTree = "<group>"; };
 		38BD5BE0A332BCE32A46A463 /* AppVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersion.swift; sourceTree = "<group>"; };
-		3DE79C51EC921338AEDF0087 /* CloudKitProxyControlSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitProxyControlSyncService.swift; sourceTree = "<group>"; };
 		3E013D6F6786AE2EA7E9AF59 /* proxy_daemon.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = proxy_daemon.rs; sourceTree = "<group>"; };
 		3EAF06F7C7AF8EC727D71D52 /* EndpointRequestCoordinatorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EndpointRequestCoordinatorTests.swift; sourceTree = "<group>"; };
 		3EB01EB2A0408FB4CA84CDEE /* CodexCLIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodexCLIService.swift; sourceTree = "<group>"; };
@@ -481,7 +272,6 @@
 		47F39D10FDF3E12CF67FB578 /* RemoteAccountsMutationSyncService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RemoteAccountsMutationSyncService.swift; sourceTree = "<group>"; };
 		48CF6078EFCC779D84F7D6A3 /* RepositoryLocatorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RepositoryLocatorTests.swift; sourceTree = "<group>"; };
 		48DAEB06DC9DE19B80FE052D /* AccountsWidgetSnapshotBuilderTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountsWidgetSnapshotBuilderTests.swift; sourceTree = "<group>"; };
-		4908DE94D353088580738F02 /* CopoolWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CopoolWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DEC342D5FDC9541EA737668 /* AppContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
 		4FA2F993C0E37A53483FA175 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		5000155760C69A6117DF5E08 /* JSONValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONValue.swift; sourceTree = "<group>"; };
@@ -501,7 +291,6 @@
 		6A541962BDDFDAF6E6C1F8F0 /* AccountsWidgetViews.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountsWidgetViews.swift; sourceTree = "<group>"; };
 		6ABA39B28E7582FD5C4D3973 /* SectionSurface.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SectionSurface.swift; sourceTree = "<group>"; };
 		6F7773BF15842584806B0A84 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
-		71A09814A1367166B896F523 /* CloudKitCurrentAccountSelectionSyncService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CloudKitCurrentAccountSelectionSyncService.swift; sourceTree = "<group>"; };
 		7296C82EB9955D9DB121C940 /* AuthFileRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFileRepository.swift; sourceTree = "<group>"; };
 		7296C82EB9955D9DB121C941 /* AuthFlowDebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthFlowDebugLog.swift; sourceTree = "<group>"; };
 		72F83775D81C98F1457C952A /* SwiftNativeProxyRuntimeService+RequestTranslation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "SwiftNativeProxyRuntimeService+RequestTranslation.swift"; sourceTree = "<group>"; };
@@ -511,7 +300,6 @@
 		7AA20CF2CE8BAE80E1447086 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7AF3D2A6E0F0352C20B25EBF /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		7E21A03EBE2D53313FA558D1 /* SwiftNativeProxyRuntimeService+Models.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "SwiftNativeProxyRuntimeService+Models.swift"; sourceTree = "<group>"; };
-		84C752A57468AA033ACB2ED9 /* CloudSyncAvailabilityService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CloudSyncAvailabilityService.swift; sourceTree = "<group>"; };
 		84D177FE0E597E58E234104A /* CopoolWidgets.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CopoolWidgets.swift; sourceTree = "<group>"; };
 		85BEA62E5EB96361AD117627 /* AccountsCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsCoordinatorTests.swift; sourceTree = "<group>"; };
 		8644DF48AF768B1D855A3404 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
@@ -537,7 +325,6 @@
 		A106A106A106A106A106A106 /* RemoteServerConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteServerConfiguration.swift; sourceTree = "<group>"; };
 		A107A107A107A107A107A107 /* AccountCardPresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountCardPresentationTests.swift; sourceTree = "<group>"; };
 		A108A108A108A108A108A108 /* RemoteServerConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteServerConfigurationTests.swift; sourceTree = "<group>"; };
-		A10B6B54D0E14B9CB2CB0A71 /* ProxyControlBridgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyControlBridgeTests.swift; sourceTree = "<group>"; };
 		A146C7576AB39EFCD658BFED /* AppLocaleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocaleTests.swift; sourceTree = "<group>"; };
 		A1DA670CD43B2B655D3DEE57 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		A201A201A201A201A201A201 /* ProxyActionPrimitives.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyActionPrimitives.swift; sourceTree = "<group>"; };
@@ -600,7 +387,6 @@
 		C246C246C246C246C246C246 /* RemoteShellCommandRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteShellCommandRunnerTests.swift; sourceTree = "<group>"; };
 		C248C248C248C248C248C248 /* RemoteProxydBinaryBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteProxydBinaryBuilderTests.swift; sourceTree = "<group>"; };
 		C36FDB8D2542926806D5B265 /* ViewState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewState.swift; sourceTree = "<group>"; };
-		C3EDE31E67420C42E3AC9BEA /* CloudKitAccountsSyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitAccountsSyncService.swift; sourceTree = "<group>"; };
 		C4F7246044D6E322F548D954 /* OpenAIChatGPTOAuthLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIChatGPTOAuthLoginService.swift; sourceTree = "<group>"; };
 		C5358263820EB410620C79AB /* EditorAppService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorAppService.swift; sourceTree = "<group>"; };
 		CBD3F01FE0E3270445E3F92C /* LayoutRulesTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LayoutRulesTests.swift; sourceTree = "<group>"; };
@@ -616,9 +402,6 @@
 		DF11B93A2C05CC3B851D671A /* StoreFileRepositoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreFileRepositoryTests.swift; sourceTree = "<group>"; };
 		E072B2DEE9973F725135D145 /* SwiftNativeProxyRuntimeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftNativeProxyRuntimeService.swift; sourceTree = "<group>"; };
 		E147F11A1ED57CA55639875B /* AccountTagView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountTagView.swift; sourceTree = "<group>"; };
-		E601E601E601E601E601E611 /* PastedRefreshTokenAccountParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PastedRefreshTokenAccountParser.swift; sourceTree = "<group>"; };
-		E601E601E601E601E601E612 /* AccountsPasteImportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsPasteImportSheet.swift; sourceTree = "<group>"; };
-		E601E601E601E601E601E613 /* PastedRefreshTokenAccountParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PastedRefreshTokenAccountParserTests.swift; sourceTree = "<group>"; };
 		E2700A142EED2C109BC86E25 /* main.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = main.rs; sourceTree = "<group>"; };
 		E28E156763C3146AB652184A /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		E31DCC850FA489BD46094EE0 /* UsageServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageServiceTests.swift; sourceTree = "<group>"; };
@@ -629,7 +412,6 @@
 		EBC562226CDA114F63F5E91A /* SettingsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsCoordinator.swift; sourceTree = "<group>"; };
 		ECE624821FB137E8DB3711AD /* LayoutRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutRules.swift; sourceTree = "<group>"; };
 		F00B169A84CCB2331F8DB75E /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
-		F1D95B8D644ECF9BF1D1A871 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F4BC9E2AF748367AF480A656 /* AccountsCoordinator+Maintenance.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = "AccountsCoordinator+Maintenance.swift"; sourceTree = "<group>"; };
 		F538DA3A540B8548A65F877E /* AccountsModels.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccountsModels.swift; sourceTree = "<group>"; };
 		F5B56AEDF3689EA6421720B2 /* ProxyPageModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProxyPageModelTests.swift; sourceTree = "<group>"; };
@@ -649,14 +431,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		E2937D91FCB855B92DD845E5 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				75ABCC5C043B01092E2A459B /* Foundation.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -667,7 +441,6 @@
 				38BD5BE0A332BCE32A46A463 /* AppVersion.swift */,
 				AF3990C942090A68CBEDDDE1 /* RootScene.swift */,
 				88EA6ECB13116EC2FBC3C384 /* TrayMenuModel.swift */,
-				290CB117F40DD7E893F6B159 /* TrayMenuModel+Push.swift */,
 				B5153BD40E57E956397EEAC2 /* TrayMenuModel+Refresh.swift */,
 			);
 			path = App;
@@ -680,8 +453,6 @@
 				7296C82EB9955D9DB121C941 /* AuthFlowDebugLog.swift */,
 				1856A9A4C1A74A8AA16A8B11 /* ChatGPTBaseOriginResolver.swift */,
 				C139AC44A9986277E75FA765 /* CloudflaredService.swift */,
-				C3EDE31E67420C42E3AC9BEA /* CloudKitAccountsSyncService.swift */,
-				3DE79C51EC921338AEDF0087 /* CloudKitProxyControlSyncService.swift */,
 				3EB01EB2A0408FB4CA84CDEE /* CodexCLIService.swift */,
 				2DD2673A9712C55D302564FA /* DefaultUsageService.swift */,
 				95E85D9244A64A8BB6AB5F11 /* DefaultWorkspaceMetadataService.swift */,
@@ -700,11 +471,8 @@
 				962E931E377964D0704D3809 /* SystemDateProvider.swift */,
 				98FE5F3EB477796F999A2F80 /* AuthParsingSupport.swift */,
 				D425E0B1E12B128CACEE1A62 /* AuthWorkspaceMetadataExtractor.swift */,
-				71A09814A1367166B896F523 /* CloudKitCurrentAccountSelectionSyncService.swift */,
-				84C752A57468AA033ACB2ED9 /* CloudSyncAvailabilityService.swift */,
 				18F1A141B031F5F42ACE838F /* CloudflareAPIClient.swift */,
 				03E5D59CB180CA82AFDB0F45 /* OpenAIChatGPTOAuthSupport.swift */,
-				E601E601E601E601E601E611 /* PastedRefreshTokenAccountParser.swift */,
 				07AE0D1B3E52A22205FABF86 /* RemoteProxyAccountsPayloadBuilder.swift */,
 				09DB0132F4E5B5E3BBCEA78C /* RemoteProxyDeploymentPlan.swift */,
 				B3F56B95BC653A8D7B00CC50 /* RemoteProxyOutputParser.swift */,
@@ -727,7 +495,6 @@
 				975800F0AD21824941F02AD3 /* AccountsCoordinator.swift */,
 				17F4E9A12A114B1AA9D0E111 /* AccountsSnapshotFreshnessPolicy.swift */,
 				16C9AA1111C9AA1111C9AA13 /* CurrentAccountProjectionWriter.swift */,
-				3393D58FCF12CF53134D80E6 /* ProxyControlBridge.swift */,
 				2843DB9CB43284AFB2E5A459 /* ProxyCoordinator.swift */,
 				A106A106A106A106A106A106 /* RemoteServerConfiguration.swift */,
 				EBC562226CDA114F63F5E91A /* SettingsCoordinator.swift */,
@@ -793,7 +560,6 @@
 			isa = PBXGroup;
 			children = (
 				D97DE818E2B47EBF28DFEA3D /* figure.pool.swim.png */,
-				F1D95B8D644ECF9BF1D1A871 /* LaunchScreen.storyboard */,
 				B200F10CE9F433B769723734 /* Localizable.strings */,
 				FFEEDDCCBBAA998877665545 /* proxyd-prebuilt */,
 				FFEEDDCCBBAA998877665546 /* proxyd-prebuilt-archives */,
@@ -838,7 +604,6 @@
 				A103A103A103A103A103A103 /* AccountsPageControls.swift */,
 				A703A703A703A703A703A703 /* AccountsPageSections.swift */,
 				A205A205A205A205A205A205 /* AccountsPageShells.swift */,
-				E601E601E601E601E601E612 /* AccountsPasteImportSheet.swift */,
 				8B90210EB2AAD603950A607C /* AccountsPageView.swift */,
 			);
 			path = Accounts;
@@ -959,7 +724,6 @@
 				A4646C4F038F28A5B638A6FB /* Copool.app */,
 				C119BECC2B20B53E52701FFC /* Copool.app */,
 				90255D0425196173B702CB66 /* CopoolTests.xctest */,
-				4908DE94D353088580738F02 /* CopoolWidgets.appex */,
 				D80CD7B4C481368659FC6B4D /* CopoolWidgetsMac.appex */,
 			);
 			name = Products;
@@ -998,10 +762,8 @@
 				0D1996F591AEC73ED65ED1F9 /* CommandRunnerTimeoutTests.swift */,
 				E6318743D5B32C4FA1244FAD /* LiquidProgressMetricsTests.swift */,
 				251BC10FF4D8538941CDC174 /* LocalizationConsistencyTests.swift */,
-				E601E601E601E601E601E613 /* PastedRefreshTokenAccountParserTests.swift */,
 				B210B210B210B210B210B210 /* PublicAccessSectionPresentationTests.swift */,
 				F5B56AEDF3689EA6421720B2 /* ProxyPageModelTests.swift */,
-				A10B6B54D0E14B9CB2CB0A71 /* ProxyControlBridgeTests.swift */,
 				B211B211B211B211B211B211 /* RemoteServerCardPresentationTests.swift */,
 				C248C248C248C248C248C248 /* RemoteProxydBinaryBuilderTests.swift */,
 				C246C246C246C246C246C246 /* RemoteShellCommandRunnerTests.swift */,
@@ -1098,23 +860,6 @@
 			productReference = D80CD7B4C481368659FC6B4D /* CopoolWidgetsMac.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		F134D7DFF69D1813795AB942 /* CopoolWidgets */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = F87E0D59A3C640204899DF08 /* Build configuration list for PBXNativeTarget "CopoolWidgets" */;
-			buildPhases = (
-				11FF5791130B6D2F50F0BDFC /* Sources */,
-				E2937D91FCB855B92DD845E5 /* Frameworks */,
-				28552215EB4676B8830E9650 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = CopoolWidgets;
-			productName = CopoolWidgets;
-			productReference = 4908DE94D353088580738F02 /* CopoolWidgets.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 		FE992FA021F035BA671AB297 /* Copool */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 4866ECE00666C9CD90B9649C /* Build configuration list for PBXNativeTarget "Copool" */;
@@ -1134,24 +879,6 @@
 			productReference = A4646C4F038F28A5B638A6FB /* Copool.app */;
 			productType = "com.apple.product-type.application";
 		};
-		FED0D978DEF83A73E2D0A3AB /* CopooliOS */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 9E202FE6B98BB77C5893CEE1 /* Build configuration list for PBXNativeTarget "CopooliOS" */;
-			buildPhases = (
-				18709FD61958CFFDF40E3078 /* Sources */,
-				58923C3D1827FC848DA3F298 /* Resources */,
-				0AF10CF3ADAA919498051B1B /* Embed Foundation Extensions */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				694D009BAA4ECA7B273B19B1 /* PBXTargetDependency */,
-			);
-			name = CopooliOS;
-			productName = CopooliOS;
-			productReference = C119BECC2B20B53E52701FFC /* Copool.app */;
-			productType = "com.apple.product-type.application";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -1161,31 +888,8 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
-					F134D7DFF69D1813795AB942 = {
-						DevelopmentTeam = KLU8GF65GP;
-						ProvisioningStyle = Automatic;
-					};
 					FE992FA021F035BA671AB297 = {
 						ProvisioningStyle = Automatic;
-						SystemCapabilities = {
-							com.apple.Push = {
-								enabled = 1;
-							};
-							com.apple.iCloud = {
-								enabled = 1;
-							};
-						};
-					};
-					FED0D978DEF83A73E2D0A3AB = {
-						ProvisioningStyle = Automatic;
-						SystemCapabilities = {
-							com.apple.Push = {
-								enabled = 1;
-							};
-							com.apple.iCloud = {
-								enabled = 1;
-							};
-						};
 					};
 				};
 			};
@@ -1215,32 +919,12 @@
 			targets = (
 				FE992FA021F035BA671AB297 /* Copool */,
 				3EBBD4883F32E94097730AC9 /* CopoolTests */,
-				FED0D978DEF83A73E2D0A3AB /* CopooliOS */,
-				F134D7DFF69D1813795AB942 /* CopoolWidgets */,
 				C5D57F058A5B1F7A1C741161 /* CopoolWidgetsMac */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		28552215EB4676B8830E9650 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		58923C3D1827FC848DA3F298 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A51D86224EB1B396D456139F /* Copool.icon in Resources */,
-				3A70E6A39F02CFF95209E993 /* LaunchScreen.storyboard in Resources */,
-				E27D31CC8BE01282100CFC92 /* Localizable.strings in Resources */,
-				8FC2E52A597979C5CA1D3DAE /* figure.pool.swim.png in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		A9AF78374CAB0F85BFEF3552 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1272,164 +956,36 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		A9C0DE9A1B2C3D4E5F607182 /* Build proxyd prebuilt */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 0;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/scripts/build_proxyd_prebuilt.sh",
+				"$(SRCROOT)/Sources/Copool/Resources/proxyd-src/src",
+				"$(SRCROOT)/Sources/Copool/Resources/proxyd-src/proxyd/src",
+				"$(SRCROOT)/Sources/Copool/Resources/proxyd-src/proxyd/Cargo.toml",
+				"$(SRCROOT)/Sources/Copool/Resources/proxyd-src/proxyd/Cargo.lock",
+			);
+			name = "Build proxyd prebuilt";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/Sources/Copool/Resources/proxyd-prebuilt/x86_64-unknown-linux-musl/.build-stamp",
+				"$(SRCROOT)/Sources/Copool/Resources/proxyd-prebuilt/aarch64-unknown-linux-musl/.build-stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh \"${SRCROOT}/scripts/build_proxyd_prebuilt.sh\"";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
-		11FF5791130B6D2F50F0BDFC /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				15C1AB961C5BB3B728A848E1 /* AccountsWidgetSnapshot.swift in Sources */,
-				4BE22F04EDA26CE4DF10D061 /* AccountsWidgetSnapshotStore.swift in Sources */,
-				AFA2DE08013BB33C65F3D969 /* CopoolWidgets.swift in Sources */,
-				00C9F26441B76FB6332A9266 /* AccountsWidgetViews.swift in Sources */,
-				6B143A339BF400641B27F8F9 /* AppError.swift in Sources */,
-				8F6C849AA38DCD9F50BB2DCA /* LiquidProgress.swift in Sources */,
-				6DE06F560F57A657AFAC7211 /* AccountTagView.swift in Sources */,
-				652C1B9197EC47D9C0EEC5BA /* LayoutRules.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		18709FD61958CFFDF40E3078 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				8E18C167F43FC9E6CC80A82A /* AccountRanking.swift in Sources */,
-				FBB66ADD684E1C948FB611E4 /* AccountsCoordinator.swift in Sources */,
-				17F4E9A12A114B1AA9D0E112 /* AccountsSnapshotFreshnessPolicy.swift in Sources */,
-				17C9AA1111C9AA1111C9AA12 /* CurrentAccountProjectionWriter.swift in Sources */,
-				FCB8E6490AA6D2891320E6A0 /* AccountCardPresentation.swift in Sources */,
-				A804A804A804A804A804A804 /* AccountCardInteractionPresentation.swift in Sources */,
-				A805A805A805A805A805A805 /* AccountCardPrimitives.swift in Sources */,
-				FCB8E6490AA6D2891320E6A1 /* AccountCardView.swift in Sources */,
-				A801A801A801A801A801A801 /* AccountsActionPresentation.swift in Sources */,
-				A802A802A802A802A802A802 /* AccountsActionPrimitives.swift in Sources */,
-				D39533CAD4CEB5C27EFDC236 /* AccountsPageModel.swift in Sources */,
-				A807A807A807A807A807A807 /* AccountsPageModel+AccountMutations.swift in Sources */,
-				A806A806A806A806A806A806 /* AccountsPageModel+Lifecycle.swift in Sources */,
-				B6A471F0F3B14827A0F2D001 /* AccountsPageModel+PendingWorkspaces.swift in Sources */,
-				A808A808A808A808A808A808 /* AccountsPageModel+Refresh.swift in Sources */,
-				A809A809A809A809A809A809 /* AccountsPageModel+Selection.swift in Sources */,
-				A810A810A810A810A810A810 /* AccountsPageModel+State.swift in Sources */,
-				A811A811A811A811A811A811 /* AccountsPagePresentation.swift in Sources */,
-				A813A813A813A813A813A813 /* AccountsAnimationRules.swift in Sources */,
-				FCB8E6490AA6D2891320E6A2 /* AccountsPageControls.swift in Sources */,
-				A803A803A803A803A803A803 /* AccountsPageSections.swift in Sources */,
-				A305A305A305A305A305A305 /* AccountsPageShells.swift in Sources */,
-				E601E601E601E601E601E603 /* AccountsPasteImportSheet.swift in Sources */,
-				FCB8E6490AA6D2891320E69F /* AccountsPageView.swift in Sources */,
-				92D4545930140988AE210FB7 /* AppContainer.swift in Sources */,
-				D047CEC66C8024EB35E197E5 /* AppError.swift in Sources */,
-				ACC1397FF859F745A017E4F2 /* AppLocale.swift in Sources */,
-				F0B4BA3CE7B4F62FD92B6B34 /* AppVersion.swift in Sources */,
-				1F1C9208D0A5D10C5CDAD667 /* AuthFileRepository.swift in Sources */,
-				1F1C9208D0A5D10C5CDAD668 /* AuthFlowDebugLog.swift in Sources */,
-				1303FD162740AF0E44CECFC8 /* CloudKitAccountsSyncService.swift in Sources */,
-				1856A9A4C1A74A8AA16A8B01 /* ChatGPTBaseOriginResolver.swift in Sources */,
-				A424BDF59166CC90A66E1440 /* CloudKitProxyControlSyncService.swift in Sources */,
-				9D0B3515E30738EDF7632D4C /* CloudflaredService.swift in Sources */,
-				7F7F4D7C5731DDD5BE8A678A /* CodexCLIService.swift in Sources */,
-				7E44D47F24B62A4A64EC484A /* CopoolApp.swift in Sources */,
-				28464FC2C552B7CB68639A06 /* DefaultUsageService.swift in Sources */,
-				95E85D9244A64A8BB6AB5F21 /* DefaultWorkspaceMetadataService.swift in Sources */,
-				26C8D1A13F4D46AAB7E2A111 /* EndpointRequestCoordinator.swift in Sources */,
-				267F23472E977B357C72D227 /* EditorAppService.swift in Sources */,
-				A238A15D23DD7B2C487395E8 /* EmptyStateView.swift in Sources */,
-				019AD726EBC45FE0E21B4AAF /* FileSystemPaths.swift in Sources */,
-				0282389FA63950E67A52EB08 /* JSONValue.swift in Sources */,
-				6A3D57247F2D38163A35CBC0 /* L10n.swift in Sources */,
-				ECD442372AA7AA5E16E83FC0 /* LaunchAtStartupService.swift in Sources */,
-				F0DC036F3F4710EFF791B712 /* LayoutRules.swift in Sources */,
-				CE0A8CC7A15D77C5F6D29629 /* Notice.swift in Sources */,
-				7D8AF7392FCDF21C618BE9A3 /* NoticeBanner.swift in Sources */,
-				FAF80D77474CF43421294E86 /* OpenAIChatGPTOAuthLoginService.swift in Sources */,
-				205B79773EA148F8437439CD /* OpencodeAuthSyncService.swift in Sources */,
-				E601E601E601E601E601E601 /* PastedRefreshTokenAccountParser.swift in Sources */,
-				54F5A32512F8226641F0655F /* PlatformClipboard.swift in Sources */,
-				881BE1D789DA6FB779A0BDD7 /* PlatformCapabilities.swift in Sources */,
-				183F30DA3314F21DE014B4DA /* Protocols.swift in Sources */,
-				2261720D489C2F04D3AF5EFE /* ProxyControlBridge.swift in Sources */,
-				18828CB243BB1936642EF79E /* ProxyCoordinator.swift in Sources */,
-				02089089DAC781CC160D2E45 /* ProxyPageModel.swift in Sources */,
-				A504A504A504A504A504A504 /* ProxyPageModel+Lifecycle.swift in Sources */,
-				A505A505A505A505A505A505 /* ProxyPageModel+APIProxyActions.swift in Sources */,
-				A506A506A506A506A506A506 /* ProxyPageModel+PublicAccessActions.swift in Sources */,
-				A507A507A507A507A507A507 /* ProxyPageModel+ProxyConfiguration.swift in Sources */,
-				A508A508A508A508A508A508 /* ProxyPageModel+RemoteServerActions.swift in Sources */,
-				A509A509A509A509A509A509 /* ProxyPageModel+RemoteSync.swift in Sources */,
-				A510A510A510A510A510A510 /* ProxyPageModel+CommandExecution.swift in Sources */,
-				D022FDC1F72C2FEE9B5078C8 /* ProxyPageView.swift in Sources */,
-				A307A307A307A307A307A307 /* ProxyPageViewAdapters.swift in Sources */,
-				A301A301A301A301A301A301 /* ProxyActionPrimitives.swift in Sources */,
-				A302A302A302A302A302A302 /* ProxyInfoPrimitives.swift in Sources */,
-				02089089DAC781CC160D2E46 /* ProxySectionViews.swift in Sources */,
-				7CE1C8E16058C777BD2728A4 /* ProxyRuntimeLimits.swift in Sources */,
-				C206C206C206C206C206C206 /* PublicAccessSectionPresentation.swift in Sources */,
-				EC207C19839E278B3188700C /* PublicAccessSection.swift in Sources */,
-				A304A304A304A304A304A304 /* PublicAccessPrimitives.swift in Sources */,
-				D02B7B4BFDBDD89A002B4ED5 /* RemoteProxyService.swift in Sources */,
-				A501A501A501A501A501A501 /* RemoteServerAction.swift in Sources */,
-				C207C207C207C207C207C207 /* RemoteServerCardPresentation.swift in Sources */,
-				C208C208C208C208C208C208 /* RemoteServerCardPrimitives.swift in Sources */,
-				A502A502A502A502A502A502 /* ProxySyncPolicy.swift in Sources */,
-				A503A503A503A503A503A503 /* ProxyRemoteSnapshotPresentationState.swift in Sources */,
-				A303A303A303A303A303A303 /* RemoteServerCardView.swift in Sources */,
-				F0DC036F3F4710EFF791B713 /* RemoteServerConfiguration.swift in Sources */,
-				85C3AD5A91637E8A844AF88A /* RepositoryLocator.swift in Sources */,
-				B375C045386BB145C4A50B01 /* RootScene.swift in Sources */,
-				D6B28C895504B86652D80D9B /* SettingsCoordinator.swift in Sources */,
-				C201C201C201C201C201C201 /* SettingsControlPresentation.swift in Sources */,
-				C202C202C202C202C202C202 /* SettingsControlPrimitives.swift in Sources */,
-				0291143814388B4D29DCB163 /* SettingsPageModel.swift in Sources */,
-				C203C203C203C203C203C203 /* SettingsPageModel+Lifecycle.swift in Sources */,
-				C204C204C204C204C204C204 /* SettingsPageModel+Mutations.swift in Sources */,
-				C205C205C205C205C205C205 /* SettingsPageModel+Presentation.swift in Sources */,
-				A306A306A306A306A306A306 /* SettingsPageSections.swift in Sources */,
-				F5BD595D78268D1FF9460210 /* SettingsPageView.swift in Sources */,
-				02824E5ABDF8A2C228BC1B03 /* ShellCommandRunner.swift in Sources */,
-				70D4D043779E579444C91021 /* SimpleHTTPServer.swift in Sources */,
-				C3E767529B0F672C5F000B54 /* StoreFileRepository.swift in Sources */,
-				B88C538B91735481F385D582 /* SwiftNativeProxyRuntimeService.swift in Sources */,
-				FF792E37E347B5FD7011FE7D /* SystemDateProvider.swift in Sources */,
-				6272A24532F9E90032CC99C0 /* TrayMenuModel.swift in Sources */,
-				4A5ABB9C59FC0E1570AECC00 /* UsageWindowSelector.swift in Sources */,
-				45830625E7AE6173AB0F99E3 /* ViewState.swift in Sources */,
-				1D406C6965A9E3176CD2D700 /* AccountDisplayNameFormatter.swift in Sources */,
-				FE0F1E225FB072F2EFABD975 /* AccountsWidgetSnapshot.swift in Sources */,
-				C879F3AE92E5053F7684E876 /* AccountsWidgetSnapshotBuilder.swift in Sources */,
-				A30AC85C8B5A37CAD0D19A00 /* AccountsWidgetSnapshotStore.swift in Sources */,
-				4EBB0709C8130CF8EDFC0FE3 /* AccountsWidgetSnapshotWriter.swift in Sources */,
-				6E024D4C2BDDD96D8AF84110 /* TrayMenuModel+Push.swift in Sources */,
-				1EA66622752607642EEE6786 /* TrayMenuModel+Refresh.swift in Sources */,
-				B07CC789B799C4AD2F44747A /* AccountIdentity.swift in Sources */,
-				1AF3179AFA8034F9BAD5EFDA /* AccountsCoordinator+Maintenance.swift in Sources */,
-				F11F38F1229FED80C7AA18BD /* RemoteAccountsMutationSyncService.swift in Sources */,
-				51AAA028CEB92F9F4AB4C34C /* AccountsModels.swift in Sources */,
-				8F79AFC858629BAFE2D20CD5 /* AppModels.swift in Sources */,
-				508F0E7473D81F72E34AE173 /* ProxyModels.swift in Sources */,
-				B9349BF88844F0F96A3B0C30 /* SettingsModels.swift in Sources */,
-				89C8DC0B5C2AD684FACE9817 /* AuthParsingSupport.swift in Sources */,
-				42D9F1682BFE451CB45D6183 /* AuthWorkspaceMetadataExtractor.swift in Sources */,
-				041C4AC058537C51D53113D1 /* CloudKitCurrentAccountSelectionSyncService.swift in Sources */,
-				12CD2EDCB1A6098F88C273E8 /* CloudSyncAvailabilityService.swift in Sources */,
-				29D762BCA050E35F76CECC4C /* CloudflareAPIClient.swift in Sources */,
-				2AB42F48693D396C1919D549 /* OpenAIChatGPTOAuthSupport.swift in Sources */,
-				6EC473F55674812478A7C919 /* RemoteProxyAccountsPayloadBuilder.swift in Sources */,
-				349250D54D8E86B7FFDB5D07 /* RemoteProxyDeploymentPlan.swift in Sources */,
-				392BF5360C9E08527901E8D4 /* RemoteProxyOutputParser.swift in Sources */,
-				F4408D62936292FCDD2D817F /* RemoteProxydBinaryBuilder.swift in Sources */,
-				E17348F472F786A813DD1AA4 /* RemoteShellCommandRunner.swift in Sources */,
-				0C477E2FD07014261C2331E8 /* SwiftNativeProxyRuntimeService+Models.swift in Sources */,
-				2B7FC92AFD5CCFD0CF99BAE8 /* SwiftNativeProxyRuntimeService+Reasoning.swift in Sources */,
-				AD6E01AC45FD637392FAFE6B /* SwiftNativeProxyRuntimeService+RequestTranslation.swift in Sources */,
-				96DF40B205091AAD55A62B93 /* SwiftNativeProxyRuntimeService+ResponseTranslation.swift in Sources */,
-				2D85ED75B2CD2039B323A76E /* SwiftNativeProxyRuntimeService+RetryFailures.swift in Sources */,
-				59BE11DA5744F8947CC7B99C /* SwiftNativeProxyRuntimeService+RuntimeSupport.swift in Sources */,
-				80DB15DD6470974E8A69163D /* AccountTagView.swift in Sources */,
-				6F1953EB0798BC44F80AABFA /* LiquidProgress.swift in Sources */,
-				BC84314C111AFACFAD2BA89E /* SectionActionStyle.swift in Sources */,
-				8691854C6A3FE3F6FAA91F43 /* SectionSurface.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		56D6C0F0A9D6D6D527A367AF /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -1446,10 +1002,8 @@
 				BAC63D41038D37A503641728 /* CommandRunnerTimeoutTests.swift in Sources */,
 				50922F8C48CF01B728AD262F /* LiquidProgressMetricsTests.swift in Sources */,
 				4353553A171096B9C9653258 /* LocalizationConsistencyTests.swift in Sources */,
-				E601E601E601E601E601E605 /* PastedRefreshTokenAccountParserTests.swift in Sources */,
 				C242C242C242C242C242C242 /* PublicAccessSectionPresentationTests.swift in Sources */,
 				98E465C8F8BAA05142221C0D /* ProxyPageModelTests.swift in Sources */,
-				C4AEB739AA9D4A84ABBB9E21 /* ProxyControlBridgeTests.swift in Sources */,
 				C243C243C243C243C243C243 /* RemoteServerCardPresentationTests.swift in Sources */,
 				C247C247C247C247C247C247 /* RemoteProxydBinaryBuilderTests.swift in Sources */,
 				C245C245C245C245C245C245 /* RemoteShellCommandRunnerTests.swift in Sources */,
@@ -1513,7 +1067,6 @@
 				137936A0518C78C5549E91A1 /* AccountsPageControls.swift in Sources */,
 				A823A823A823A823A823A823 /* AccountsPageSections.swift in Sources */,
 				A315A315A315A315A315A315 /* AccountsPageShells.swift in Sources */,
-				E601E601E601E601E601E604 /* AccountsPasteImportSheet.swift in Sources */,
 				137936A0518C78C5549E919E /* AccountsPageView.swift in Sources */,
 				A39DE0252B7DE1B089DB14D1 /* AppContainer.swift in Sources */,
 				A7144A42D2FC21D789B3FB49 /* AppError.swift in Sources */,
@@ -1521,9 +1074,7 @@
 				FA836AB28B6E7F72C253A49F /* AppVersion.swift in Sources */,
 				53243CFFBC40F306DCE9ED45 /* AuthFileRepository.swift in Sources */,
 				53243CFFBC40F306DCE9ED46 /* AuthFlowDebugLog.swift in Sources */,
-				CB7EB00A1B25949322B736FA /* CloudKitAccountsSyncService.swift in Sources */,
 				A9BC31EC4BA9427A9F554D41 /* ChatGPTBaseOriginResolver.swift in Sources */,
-				F601B3FC2AA0F91B92B239CF /* CloudKitProxyControlSyncService.swift in Sources */,
 				8A97DF56318AACE5DA7A07A7 /* CloudflaredService.swift in Sources */,
 				341FC56FB803E4544D4928E3 /* CodexCLIService.swift in Sources */,
 				39796A30063610AC0A5579C5 /* CopoolApp.swift in Sources */,
@@ -1541,10 +1092,8 @@
 				BAA8370E04EE38AD6F28F62E /* NoticeBanner.swift in Sources */,
 				63EF6C5310182A8B5DB70D66 /* OpenAIChatGPTOAuthLoginService.swift in Sources */,
 				683DA0BB33E165DCFEFE8633 /* OpencodeAuthSyncService.swift in Sources */,
-				E601E601E601E601E601E602 /* PastedRefreshTokenAccountParser.swift in Sources */,
 				BA5B276B09B95CA7284CDFA2 /* PlatformCapabilities.swift in Sources */,
 				7F539ED7076B2EA02CB6788C /* Protocols.swift in Sources */,
-				24AFC15BDC3390134F86990A /* ProxyControlBridge.swift in Sources */,
 				1FF5A858AFC00A862295F943 /* ProxyCoordinator.swift in Sources */,
 				AEEEE6E52FAC04AFF97354C1 /* ProxyPageModel.swift in Sources */,
 				A514A514A514A514A514A514 /* ProxyPageModel+Lifecycle.swift in Sources */,
@@ -1596,7 +1145,6 @@
 				337D93A018B21F1F1833443D /* AccountsWidgetSnapshotBuilder.swift in Sources */,
 				23C4B5638C49CBCC06793B5D /* AccountsWidgetSnapshotStore.swift in Sources */,
 				CB0CCB971A94A76BEF441706 /* AccountsWidgetSnapshotWriter.swift in Sources */,
-				628F70868AC420CFB023FAF0 /* TrayMenuModel+Push.swift in Sources */,
 				89EA2E909B8D7D6CD36E18E0 /* TrayMenuModel+Refresh.swift in Sources */,
 				B852743434A4C9BA3918BC24 /* AccountIdentity.swift in Sources */,
 				391A9A6468E3B3427CCBAADC /* AccountsCoordinator+Maintenance.swift in Sources */,
@@ -1607,8 +1155,6 @@
 				78E8D4EA4736FDD03C4A1F52 /* SettingsModels.swift in Sources */,
 				449122D70F70FCE8CE874FA7 /* AuthParsingSupport.swift in Sources */,
 				875194AEEDE8DE7C2BDB9AD9 /* AuthWorkspaceMetadataExtractor.swift in Sources */,
-				7B0FC470F6EAB901719423EA /* CloudKitCurrentAccountSelectionSyncService.swift in Sources */,
-				A1FE264413C85E95315D1348 /* CloudSyncAvailabilityService.swift in Sources */,
 				114E1A0EA3234A953A5550C3 /* CloudflareAPIClient.swift in Sources */,
 				C6A9B4D7901D0F462A7ED0B1 /* OpenAIChatGPTOAuthSupport.swift in Sources */,
 				67E3022C12EC6E361B5E2C64 /* RemoteProxyAccountsPayloadBuilder.swift in Sources */,
@@ -1636,12 +1182,6 @@
 			isa = PBXTargetDependency;
 			target = FE992FA021F035BA671AB297 /* Copool */;
 			targetProxy = 50768646937BD9B90C68256F /* PBXContainerItemProxy */;
-		};
-		694D009BAA4ECA7B273B19B1 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = CopoolWidgets;
-			target = F134D7DFF69D1813795AB942 /* CopoolWidgets */;
-			targetProxy = C64FC8249A1FEA26F18F013D /* PBXContainerItemProxy */;
 		};
 		6D5F7DDF22A153B5E7A53788 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1683,7 +1223,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
@@ -1691,6 +1230,7 @@
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Sources/Copool/Info-macOS.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Copool;
@@ -1700,7 +1240,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-					MARKETING_VERSION = 1.0.25;
+				MARKETING_VERSION = 1.0.25;
 				PRODUCT_BUNDLE_IDENTIFIER = com.alick.copool;
 				PRODUCT_NAME = Copool;
 				REGISTER_APP_GROUPS = YES;
@@ -1740,7 +1280,7 @@
 				INFOPLIST_FILE = Sources/CopoolWidgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-					MARKETING_VERSION = 1.0.25;
+				MARKETING_VERSION = 1.0.25;
 				PRODUCT_BUNDLE_IDENTIFIER = com.alick.copool.widgets;
 				PRODUCT_NAME = CopoolWidgetsMac;
 				REGISTER_APP_GROUPS = YES;
@@ -1766,7 +1306,6 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 25;
 				DEAD_CODE_STRIPPING = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
@@ -1774,6 +1313,7 @@
 				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
 				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = "Sources/Copool/Info-macOS.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Copool;
@@ -1783,7 +1323,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-					MARKETING_VERSION = 1.0.25;
+				MARKETING_VERSION = 1.0.25;
 				PRODUCT_BUNDLE_IDENTIFIER = com.alick.copool;
 				PRODUCT_NAME = Copool;
 				REGISTER_APP_GROUPS = YES;
@@ -1816,58 +1356,6 @@
 			};
 			name = Release;
 		};
-		5972FE1BD5B794E170C5A573 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = Copool;
-				CODE_SIGN_ENTITLEMENTS = CopooliOS.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 25;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "Sources/Copool/Info-iOS.plist";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-					MARKETING_VERSION = 1.0.25;
-				PRODUCT_BUNDLE_IDENTIFIER = com.copool.app.ios;
-				PRODUCT_NAME = Copool;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		6314F14CF432599BFA944966 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = CopoolWidgets.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 25;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Sources/CopoolWidgets/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-					MARKETING_VERSION = 1.0.25;
-				PRODUCT_BUNDLE_IDENTIFIER = com.copool.app.ios.widgets;
-				PRODUCT_NAME = CopoolWidgets;
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
 		8467474981EF236DC6C7A7FE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1894,7 +1382,7 @@
 				INFOPLIST_FILE = Sources/CopoolWidgets/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited)";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-					MARKETING_VERSION = 1.0.25;
+				MARKETING_VERSION = 1.0.25;
 				PRODUCT_BUNDLE_IDENTIFIER = com.alick.copool.widgets;
 				PRODUCT_NAME = CopoolWidgetsMac;
 				REGISTER_APP_GROUPS = YES;
@@ -2040,57 +1528,6 @@
 			};
 			name = Release;
 		};
-		CC34EAE4328EC0ECFC1B2DCD /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = Copool;
-				CODE_SIGN_ENTITLEMENTS = CopooliOS.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 25;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "Sources/Copool/Info-iOS.plist";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-					MARKETING_VERSION = 1.0.25;
-				PRODUCT_BUNDLE_IDENTIFIER = com.copool.app.ios;
-				PRODUCT_NAME = Copool;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		F0B8B13C60FD4BCA98C1C534 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = YES;
-				CLANG_ENABLE_OBJC_WEAK = NO;
-				CODE_SIGN_ENTITLEMENTS = CopoolWidgets.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 25;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Sources/CopoolWidgets/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-					MARKETING_VERSION = 1.0.25;
-				PRODUCT_BUNDLE_IDENTIFIER = com.copool.app.ios.widgets;
-				PRODUCT_NAME = CopoolWidgets;
-				SDKROOT = iphoneos;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 6.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
 		F431FA49D48E7CC2ADE70326 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2131,15 +1568,6 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		9E202FE6B98BB77C5893CEE1 /* Build configuration list for PBXNativeTarget "CopooliOS" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				CC34EAE4328EC0ECFC1B2DCD /* Debug */,
-				5972FE1BD5B794E170C5A573 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
 		A357E08B01880565180834E6 /* Build configuration list for PBXNativeTarget "CopoolWidgetsMac" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -2157,15 +1585,6 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
-		};
-		F87E0D59A3C640204899DF08 /* Build configuration list for PBXNativeTarget "CopoolWidgets" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				6314F14CF432599BFA944966 /* Release */,
-				F0B8B13C60FD4BCA98C1C534 /* Debug */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

@@ -12,32 +12,7 @@ extension TrayMenuModel {
         do {
             beginAccountsRefreshActivity()
             defer { endAccountsRefreshActivity() }
-            let latestAccounts = try await executeRefresh(
-                forceUsageRefresh: forceUsageRefresh,
-                failOnCloudSyncError: false
-            )
-            accounts = latestAccounts
-            notice = nil
-        } catch {
-            notice = error.localizedDescription
-        }
-    }
-
-    func reconcileCloudStateNow() async {
-        do {
-            let latestAccounts = try await executeCloudReconciliation(failOnCloudSyncError: false)
-            accounts = latestAccounts
-            notice = nil
-        } catch {
-            notice = error.localizedDescription
-        }
-    }
-
-    func refreshCurrentSelectionNow() async {
-        do {
-            let result = try await reconcileCurrentAccountSelection(failOnError: false)
-            guard result.didUpdateSelection else { return }
-            accounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
+            accounts = try await executeRefresh(forceUsageRefresh: forceUsageRefresh)
             notice = nil
         } catch {
             notice = error.localizedDescription
@@ -52,34 +27,18 @@ extension TrayMenuModel {
         let settings = try await settingsCoordinator.currentSettings()
         applySettings(settings)
 
-        _ = try await pullCloudAccountsIfNeeded(failOnError: false)
-        _ = try await reconcileCurrentAccountSelection(failOnError: false)
-        let prefersSerialUsageRefresh = backgroundRefreshPolicy.cloudSyncMode == .pullRemoteAccounts
-        let shouldPushSnapshot = backgroundRefreshPolicy.cloudSyncMode != .disabled
         let localRefreshResult = try await refreshLocalAccounts(
             forceUsageRefresh: true,
-            prefersSerialUsageRefresh: prefersSerialUsageRefresh,
+            prefersSerialUsageRefresh: false,
             bypassUsageThrottle: true,
             targetAccountIDs: nil,
             onPartialUpdate: onPartialUpdate
         )
-        var latestAccounts = localRefreshResult.accounts
+        let latestAccounts = localRefreshResult.accounts
         AccountSwitchDebugLog.write(
             "tray.performManualRefresh.afterLocalRefresh",
             "didAutoSwitch=\(localRefreshResult.didAutoSwitch) \(AccountSwitchDebugLog.describe(accounts: latestAccounts))"
         )
-
-        if shouldPushSnapshot, !latestAccounts.isEmpty {
-            try await pushCloudAccountsIfNeeded(failOnError: false)
-        }
-        if !localRefreshResult.didAutoSwitch {
-            let selectionPullResult = try await reconcileCurrentAccountSelection(failOnError: false)
-            AccountSwitchDebugLog.write(
-                "tray.performManualRefresh.afterSelectionReconcile",
-                "\(AccountSwitchDebugLog.describe(pullResult: selectionPullResult))"
-            )
-            latestAccounts = try await accountsCoordinator.listAccounts()
-        }
 
         accounts = latestAccounts
         scheduleWorkspaceMetadataRefresh(forceRemoteCheck: true)
@@ -88,135 +47,56 @@ extension TrayMenuModel {
     }
 
     func syncLocalAccountsMutationNow() async {
-        do {
-            try await pushCloudAccountsIfNeeded(failOnError: false)
-            if let remoteAccountsMutationSyncService {
-                let report = await remoteAccountsMutationSyncService.syncConfiguredRemoteAccounts()
-                notice = report.failures.isEmpty ? nil : report.failures.joined(separator: " | ")
-            } else {
-                notice = nil
-            }
-        } catch {
-            notice = error.localizedDescription
+        if let remoteAccountsMutationSyncService {
+            let report = await remoteAccountsMutationSyncService.syncConfiguredRemoteAccounts()
+            notice = report.failures.isEmpty ? nil : report.failures.joined(separator: " | ")
+        } else {
+            notice = nil
         }
     }
 
     func startBackgroundRefresh() {
-        guard cloudReconciliationTask == nil else { return }
-        configureAccountsSnapshotPushHandlingIfNeeded()
-        configureCurrentSelectionPushHandlingIfNeeded()
-        cloudReconciliationTask = Task { [weak self] in
-            guard let self else { return }
-            await self.reconcileCloudStateNow()
-            while !Task.isCancelled {
-                try? await Task.sleep(for: self.backgroundRefreshPolicy.cloudReconciliationInterval)
-                await self.reconcileCloudStateNow()
-            }
-        }
+        guard usageRefreshTask == nil else { return }
         usageRefreshTask = Task { [weak self] in
             guard let self else { return }
             guard self.backgroundRefreshPolicy.refreshUsageOnRecurringTick else { return }
             try? await Task.sleep(for: self.backgroundRefreshPolicy.initialRefreshDelay)
             while !Task.isCancelled {
-                try? await Task.sleep(for: self.backgroundRefreshPolicy.usageRefreshInterval)
                 await self.refreshNow(forceUsageRefresh: true)
+                try? await Task.sleep(for: self.backgroundRefreshPolicy.usageRefreshInterval)
             }
         }
     }
 
     func stopBackgroundRefresh() {
-        cloudReconciliationTask?.cancel()
-        cloudReconciliationTask = nil
         usageRefreshTask?.cancel()
         usageRefreshTask = nil
         workspaceMetadataRefreshTask?.cancel()
         workspaceMetadataRefreshTask = nil
-        accountsSnapshotPushCancellable = nil
-        currentSelectionPushCancellable = nil
     }
 
-    func executeRefresh(
-        forceUsageRefresh: Bool,
-        failOnCloudSyncError: Bool
-    ) async throws -> [AccountSummary] {
+    func executeRefresh(forceUsageRefresh: Bool) async throws -> [AccountSummary] {
         let settings = try await settingsCoordinator.currentSettings()
         applySettings(settings)
 
-        let cloudPullResult = try await pullCloudAccountsIfNeeded(failOnError: failOnCloudSyncError)
-        _ = try await reconcileCurrentAccountSelection(failOnError: failOnCloudSyncError)
-        let prefersSerialUsageRefresh = backgroundRefreshPolicy.cloudSyncMode == .pullRemoteAccounts
         let now = dateProvider.unixSecondsNow()
-        let shouldRefreshUsage: Bool
-        if backgroundRefreshPolicy.cloudSyncMode == .pushLocalAccounts {
-            shouldRefreshUsage = forceUsageRefresh
-        } else {
-            shouldRefreshUsage = snapshotFreshnessPolicy.shouldRefreshUsage(
-                forceRefresh: forceUsageRefresh,
-                remoteSyncedAt: cloudPullResult.remoteSyncedAt,
-                now: now
-            )
-        }
         let targetAccountIDs = usageRefreshPlanningPolicy.targetAccountIDs(
             from: try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false),
             now: now
         )
         let localRefreshResult = try await refreshLocalAccounts(
-            forceUsageRefresh: shouldRefreshUsage,
-            prefersSerialUsageRefresh: prefersSerialUsageRefresh,
+            forceUsageRefresh: forceUsageRefresh,
+            prefersSerialUsageRefresh: false,
             bypassUsageThrottle: false,
             targetAccountIDs: targetAccountIDs,
             onPartialUpdate: nil
         )
-        var latestAccounts = localRefreshResult.accounts
+        let latestAccounts = localRefreshResult.accounts
         AccountSwitchDebugLog.write(
             "tray.executeRefresh.afterLocalRefresh",
-            "forceUsageRefresh=\(forceUsageRefresh) shouldRefreshUsage=\(shouldRefreshUsage) didAutoSwitch=\(localRefreshResult.didAutoSwitch) \(AccountSwitchDebugLog.describe(accounts: latestAccounts))"
-        )
-
-        if cloudPullResult.didUpdateAccounts {
-            latestAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
-        }
-
-        if shouldRefreshUsage,
-           backgroundRefreshPolicy.cloudSyncMode != .disabled,
-           !targetAccountIDs.isEmpty {
-            try await pushCloudAccountsIfNeeded(failOnError: failOnCloudSyncError)
-        }
-
-        if !localRefreshResult.didAutoSwitch,
-           try await reconcileCurrentAccountSelection(
-            failOnError: failOnCloudSyncError
-        ).didUpdateSelection {
-            latestAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
-        }
-
-        AccountSwitchDebugLog.write(
-            "tray.executeRefresh.end",
-            "\(AccountSwitchDebugLog.describe(accounts: latestAccounts))"
+            "forceUsageRefresh=\(forceUsageRefresh) didAutoSwitch=\(localRefreshResult.didAutoSwitch) \(AccountSwitchDebugLog.describe(accounts: latestAccounts))"
         )
         return latestAccounts
-    }
-
-    func executeCloudReconciliation(
-        failOnCloudSyncError: Bool
-    ) async throws -> [AccountSummary] {
-        let cloudPullResult = try await pullCloudAccountsIfNeeded(failOnError: failOnCloudSyncError)
-        let selectionPullResult = try await reconcileCurrentAccountSelection(
-            failOnError: failOnCloudSyncError
-        )
-        let latestLocalAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
-
-        if backgroundRefreshPolicy.cloudSyncMode == .pushLocalAccounts,
-           !latestLocalAccounts.isEmpty,
-           !cloudPullResult.didUpdateAccounts {
-            try await pushCloudAccountsIfNeeded(failOnError: failOnCloudSyncError)
-        }
-
-        if cloudPullResult.didUpdateAccounts || selectionPullResult.didUpdateSelection {
-            return try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
-        }
-
-        return latestLocalAccounts
     }
 
     func refreshLocalAccounts(
@@ -256,7 +136,6 @@ extension TrayMenuModel {
                     "tray.refreshLocalAccounts.autoSwitched",
                     "selected=\(AccountSwitchDebugLog.describe(account: switchResult.selectedAccount)) \(AccountSwitchDebugLog.describe(accounts: switchResult.accounts))"
                 )
-                await syncCurrentAccountSelectionIfNeeded(cardID: switchResult.selectedAccount.id)
                 return LocalAccountsRefreshResult(accounts: switchResult.accounts, didAutoSwitch: true)
             }
         }
@@ -269,37 +148,6 @@ extension TrayMenuModel {
             accounts: refreshedAccounts,
             didAutoSwitch: false
         )
-    }
-
-    func pullCloudAccountsIfNeeded(
-        failOnError: Bool
-    ) async throws -> AccountsCloudSyncPullResult {
-        guard let cloudSyncService else { return .noChange }
-
-        do {
-            let now = dateProvider.unixSecondsNow()
-            return try await cloudSyncService.pullRemoteAccountsIfNeeded(
-                currentTime: now,
-                maximumSnapshotAgeSeconds: snapshotFreshnessPolicy.remoteSnapshotFreshnessWindowSeconds
-            )
-        } catch {
-            if failOnError {
-                throw error
-            }
-            return .noChange
-        }
-    }
-
-    func pushCloudAccountsIfNeeded(failOnError: Bool) async throws {
-        guard let cloudSyncService else { return }
-
-        do {
-            try await cloudSyncService.pushLocalAccountsIfNeeded()
-        } catch {
-            if failOnError {
-                throw error
-            }
-        }
     }
 
     func scheduleWorkspaceMetadataRefresh(forceRemoteCheck: Bool) {
@@ -318,10 +166,6 @@ extension TrayMenuModel {
                 let latestAccounts = try await self.accountsCoordinator.refreshWorkspaceMetadata(
                     forceRemoteCheck: forceRemoteCheck
                 )
-                guard !Task.isCancelled else { return }
-                if self.backgroundRefreshPolicy.cloudSyncMode == .pushLocalAccounts {
-                    try await self.pushCloudAccountsIfNeeded(failOnError: false)
-                }
                 guard !Task.isCancelled else { return }
                 self.accounts = latestAccounts
                 self.notice = nil
@@ -367,29 +211,6 @@ extension TrayMenuModel {
         remoteUsageRefreshingAccountIDs = Set(remoteUsageRefreshActivityCountsByID.keys)
         if remoteUsageRefreshActivityCount == 0, isFetchingRemoteUsage {
             isFetchingRemoteUsage = false
-        }
-    }
-
-    private func syncCurrentAccountSelectionIfNeeded(cardID: String) async {
-        guard let currentAccountSelectionSyncService else { return }
-
-        do {
-            AccountSwitchDebugLog.write(
-                "tray.syncCurrentSelection.begin",
-                "cardID=\(cardID)"
-            )
-            try await currentAccountSelectionSyncService.recordLocalSelection(cardID: cardID)
-            try await currentAccountSelectionSyncService.pushLocalSelectionIfNeeded()
-            AccountSwitchDebugLog.write(
-                "tray.syncCurrentSelection.end",
-                "cardID=\(cardID)"
-            )
-        } catch {
-            AccountSwitchDebugLog.write(
-                "tray.syncCurrentSelection.error",
-                "cardID=\(cardID) error=\(error.localizedDescription)"
-            )
-            notice = error.localizedDescription
         }
     }
 }

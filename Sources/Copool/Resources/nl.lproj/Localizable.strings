@@ -27,7 +27,6 @@
 "settings.deployment_mode" = "Modus";
 "settings.deployment_mode.local_device" = "Lokaal apparaat";
 "settings.deployment_mode.backend_service" = "Backend-beheerd";
-"settings.deployment_mode.hint" = "Op iOS kunnen externe uitrol en publieke tunnelbediening worden gedelegeerd aan je backendservice.";
 "settings.section.language" = "Taal";
 "settings.language" = "Taal";
 "settings.usage_progress_display" = "Weergave van voortgangsbalk";
@@ -81,7 +80,6 @@
 "accounts.action.expand_all" = "Alle kaarten uitklappen";
 "accounts.empty.title" = "Geen accounts";
 "accounts.empty.message.no_accounts" = "Nog geen accounts. Voeg een account toe of importeer er een om te beginnen.";
-"accounts.empty.message.enable_icloud" = "Schakel eerst iCloud in via de systeeminstellingen. Gesynchroniseerde accounts verschijnen hier automatisch.";
 "accounts.error.load_failed" = "Accounts laden mislukt";
 "accounts.card.current" = "HUIDIG";
 "accounts.card.team.set_name" = "Teamnaam instellen";
@@ -130,8 +128,6 @@
 "capability.status.unavailable" = "Niet beschikbaar";
 
 "proxy.section.api_proxy" = "API Proxy";
-"proxy.callout.remote_control.title" = "Mac-remotebediening";
-"proxy.callout.remote_control.message" = "Deze pagina bedient alleen de API Proxy die op macOS draait. Laat Copool actief op je Mac zodat het opdrachten kan ontvangen en de nieuwste status kan publiceren.";
 "proxy.status.running" = "Actief";
 "proxy.status.stopped" = "Gestopt";
 "proxy.status_line_format" = "Status: %@";
@@ -152,8 +148,6 @@
 "proxy.section.remote_servers" = "Remote servers";
 "proxy.section.remote_servers_backend" = "Remote servers (backend-beheerd)";
 "proxy.remote.description" = "Deploy en beheer API Proxy-nodes op externe Linux-servers via SSH.";
-"proxy.remote.backend_managed_message" = "Externe uitrol wordt gedelegeerd aan je backendservice. Houd deze modus aan voor consistente statusweergave op iOS-clients.";
-"proxy.remote.unavailable_message" = "SSH/SCP-beheer op afstand is niet beschikbaar in de lokale apparaatmodus op iOS. Schakel over naar backend-modus of gebruik Copool op macOS.";
 "proxy.action.add_server" = "Server toevoegen";
 "proxy.remote.field.name" = "Naam";
 "proxy.remote.field.host" = "Host";
@@ -174,7 +168,6 @@
 "proxy.section.public_access" = "Publieke toegang";
 "proxy.section.public_access_backend" = "Publieke toegang (backend-beheerd)";
 "proxy.public.backend_managed_message" = "Publieke tunnelacties worden gedelegeerd aan je backendservice. Configureer cloudflared aan serverzijde en gebruik deze app voor account- en proxybediening.";
-"proxy.public.unavailable_message" = "Beheer van cloudflared is niet beschikbaar in de lokale apparaatmodus op iOS. Schakel over naar backend-modus of gebruik Copool op macOS.";
 "proxy.toggle.enable_public_access" = "Publieke toegang inschakelen met cloudflared";
 "proxy.switch.on" = "Aan";
 "proxy.switch.off" = "Uit";
@@ -398,10 +391,3 @@
 "proxy.remote.help.stop" = "Stop the running remote systemd service.";
 "proxy.remote.help.logs" = "Load recent journal logs from the remote service.";
 "proxy.remote.help.uninstall_remote" = "Stop and remove the remote service plus deployed binary and accounts file, while keeping the server record locally.";
-"accounts.action.paste_import" = "Paste import";
-"accounts.paste_import.title" = "Paste account rows";
-"accounts.paste_import.placeholder" = "Paste one or more lines in the format: email----anything----rt_xxx";
-"accounts.paste_import.submit" = "Import";
-"error.accounts.paste_import_no_valid_lines" = "No valid pasted accounts found.";
-"error.accounts.paste_import_invalid_email_format" = "Line %lld has an invalid email.";
-"error.accounts.paste_import_invalid_refresh_token_format" = "Line %lld is missing a valid refresh token.";

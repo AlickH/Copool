@@ -27,7 +27,6 @@
 "settings.deployment_mode" = "Режим";
 "settings.deployment_mode.local_device" = "Локальное устройство";
 "settings.deployment_mode.backend_service" = "Управляется бэкендом";
-"settings.deployment_mode.hint" = "На iOS удаленное развертывание и управление публичным туннелем можно делегировать вашему бэкенд-сервису.";
 "settings.section.language" = "Язык";
 "settings.language" = "Язык";
 "settings.usage_progress_display" = "Отображение индикатора прогресса";
@@ -81,7 +80,6 @@
 "accounts.action.expand_all" = "Развернуть все карточки";
 "accounts.empty.title" = "Нет аккаунтов";
 "accounts.empty.message.no_accounts" = "Аккаунтов пока нет. Добавьте или импортируйте аккаунт, чтобы начать.";
-"accounts.empty.message.enable_icloud" = "Сначала включите iCloud в системных настройках. Синхронизированные аккаунты появятся здесь автоматически.";
 "accounts.error.load_failed" = "Не удалось загрузить аккаунты";
 "accounts.card.current" = "ТЕКУЩИЙ";
 "accounts.card.team.set_name" = "Указать имя команды";
@@ -130,8 +128,6 @@
 "capability.status.unavailable" = "Недоступно";
 
 "proxy.section.api_proxy" = "API Proxy";
-"proxy.callout.remote_control.title" = "Удаленное управление Mac";
-"proxy.callout.remote_control.message" = "Эта страница только управляет API Proxy, запущенным на macOS. Держите Copool запущенным на Mac, чтобы он мог получать команды и публиковать актуальный статус.";
 "proxy.status.running" = "Запущен";
 "proxy.status.stopped" = "Остановлен";
 "proxy.status_line_format" = "Статус: %@";
@@ -152,8 +148,6 @@
 "proxy.section.remote_servers" = "Удаленные серверы";
 "proxy.section.remote_servers_backend" = "Удаленные серверы (управляются бэкендом)";
 "proxy.remote.description" = "Развертывайте и управляйте узлами API Proxy на удаленных Linux-серверах по SSH.";
-"proxy.remote.backend_managed_message" = "Удаленное развертывание делегировано вашему бэкенд-сервису. Сохраняйте этот режим для согласованной видимости статуса на клиентах iOS.";
-"proxy.remote.unavailable_message" = "Удаленное управление по SSH/SCP недоступно в режиме локального устройства на iOS. Переключитесь в backend-режим или используйте Copool на macOS.";
 "proxy.action.add_server" = "Добавить сервер";
 "proxy.remote.field.name" = "Имя";
 "proxy.remote.field.host" = "Хост";
@@ -174,7 +168,6 @@
 "proxy.section.public_access" = "Публичный доступ";
 "proxy.section.public_access_backend" = "Публичный доступ (управляется бэкендом)";
 "proxy.public.backend_managed_message" = "Операции публичного туннеля делегированы вашему бэкенд-сервису. Настройте cloudflared на стороне сервера и используйте это приложение для аккаунтов и управления proxy.";
-"proxy.public.unavailable_message" = "Управление cloudflared недоступно в режиме локального устройства на iOS. Переключитесь в backend-режим или используйте Copool на macOS.";
 "proxy.toggle.enable_public_access" = "Включить публичный доступ через cloudflared";
 "proxy.switch.on" = "Вкл";
 "proxy.switch.off" = "Выкл";
@@ -398,10 +391,3 @@
 "proxy.remote.help.stop" = "Stop the running remote systemd service.";
 "proxy.remote.help.logs" = "Load recent journal logs from the remote service.";
 "proxy.remote.help.uninstall_remote" = "Stop and remove the remote service plus deployed binary and accounts file, while keeping the server record locally.";
-"accounts.action.paste_import" = "Paste import";
-"accounts.paste_import.title" = "Paste account rows";
-"accounts.paste_import.placeholder" = "Paste one or more lines in the format: email----anything----rt_xxx";
-"accounts.paste_import.submit" = "Import";
-"error.accounts.paste_import_no_valid_lines" = "No valid pasted accounts found.";
-"error.accounts.paste_import_invalid_email_format" = "Line %lld has an invalid email.";
-"error.accounts.paste_import_invalid_refresh_token_format" = "Line %lld is missing a valid refresh token.";

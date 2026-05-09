@@ -1,6 +1,5 @@
 enum AccountCardInteractionPlatform {
     case macOS
-    case iOS
 }
 
 struct AccountCardInteractionPresentation: Equatable {
@@ -24,11 +23,6 @@ struct AccountCardInteractionPresentation: Equatable {
             return
         }
 
-        switch platform {
-        case .iOS:
-            isCollapsedSwitchOverlayVisible = isCollapsedSwitchOverlayPresented || switching
-        case .macOS:
-            isCollapsedSwitchOverlayVisible = isHoveringCollapsedSwitch || switching
-        }
+        isCollapsedSwitchOverlayVisible = isHoveringCollapsedSwitch || switching
     }
 }

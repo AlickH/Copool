@@ -16,11 +16,9 @@ let package = Package(
             path: "Sources/Copool",
             exclude: [
                 "Copool.icon",
-                "Info-iOS.plist",
                 "Info-macOS.plist"
             ],
             resources: [
-                .process("Resources/LaunchScreen.storyboard"),
                 .process("Resources/figure.pool.swim.png"),
                 .process("Resources/de.lproj"),
                 .process("Resources/en.lproj"),

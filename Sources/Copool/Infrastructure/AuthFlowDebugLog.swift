@@ -80,10 +80,6 @@ enum AccountSwitchDebugLog {
         return "accounts[count=\(accounts.count) current=\(renderJoined(currentCardIDs)) items=[\(items)]]"
     }
 
-    static func describe(pullResult: CurrentAccountSelectionPullResult) -> String {
-        "pullResult[didUpdate=\(pullResult.didUpdateSelection) changedCurrent=\(pullResult.changedCurrentAccount) cardID=\(render(pullResult.cardID))]"
-    }
-
     static func describeAutoSwitch(accounts: [AccountSummary]) -> String {
         let current = accounts.first(where: \.isCurrent)
         let currentExhausted = current.map(AccountRanking.isQuotaExhausted) ?? false

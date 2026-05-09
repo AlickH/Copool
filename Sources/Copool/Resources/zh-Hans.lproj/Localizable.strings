@@ -27,7 +27,6 @@
 "settings.deployment_mode" = "模式";
 "settings.deployment_mode.local_device" = "本机执行";
 "settings.deployment_mode.backend_service" = "后端托管";
-"settings.deployment_mode.hint" = "在 iOS 上，可将远程部署和公网隧道控制委托给后端服务。";
 "settings.section.language" = "语言";
 "settings.language" = "语言";
 "settings.usage_progress_display" = "进度条显示";
@@ -71,7 +70,6 @@
 "accounts.action.import_account" = "导入账号";
 "accounts.action.import_current_auth" = "导入当前授权";
 "accounts.action.import_auth_file" = "导入 JSON 文件";
-"accounts.action.paste_import" = "粘贴导入";
 "accounts.action.importing" = "导入中...";
 "accounts.action.add_account" = "添加账号";
 "accounts.action.waiting_for_login" = "等待登录完成...";
@@ -82,7 +80,6 @@
 "accounts.action.expand_all" = "展开全部卡片";
 "accounts.empty.title" = "暂无账号";
 "accounts.empty.message.no_accounts" = "暂无账号，请添加或导入账号";
-"accounts.empty.message.enable_icloud" = "请先在系统设置中开启 iCloud，同步账号后这里会自动显示";
 "accounts.error.load_failed" = "账号加载失败";
 "accounts.card.current" = "当前";
 "accounts.card.team.set_name" = "设置团队名称";
@@ -143,8 +140,6 @@
 "capability.status.unavailable" = "不可用";
 
 "proxy.section.api_proxy" = "API 代理";
-"proxy.callout.remote_control.title" = "Mac 远程控制";
-"proxy.callout.remote_control.message" = "此页面仅用于远程控制 macOS 上运行的 API Proxy。请保持 Mac 端 Copool 处于运行状态，以便接收控制命令并同步最新状态。";
 "proxy.status.running" = "运行中";
 "proxy.status.stopped" = "已停止";
 "proxy.status_line_format" = "状态：%@";
@@ -165,8 +160,6 @@
 "proxy.section.remote_servers" = "远程服务器";
 "proxy.section.remote_servers_backend" = "远程服务器（后端托管）";
 "proxy.remote.description" = "通过 SSH 在远程 Linux 服务器上部署和管理 API 代理节点。";
-"proxy.remote.backend_managed_message" = "远程部署操作由后端服务托管执行。建议保持该模式，以便 iOS 客户端统一查看状态并保持操作一致。";
-"proxy.remote.unavailable_message" = "iOS 本机执行模式不支持 SSH/SCP 远程管理。请切换到后端托管模式，或在 macOS 版 Copool 中执行。";
 "proxy.action.add_server" = "添加服务器";
 "proxy.remote.field.name" = "名称";
 "proxy.remote.field.host" = "主机";
@@ -187,7 +180,6 @@
 "proxy.section.public_access" = "公网访问";
 "proxy.section.public_access_backend" = "公网访问（后端托管）";
 "proxy.public.backend_managed_message" = "公网隧道操作由后端服务托管执行。请在服务端配置 cloudflared，本应用继续用于账号与代理控制。";
-"proxy.public.unavailable_message" = "iOS 本机执行模式不支持 cloudflared 管理。请切换到后端托管模式，或在 macOS 版 Copool 中执行。";
 "proxy.toggle.enable_public_access" = "启用 cloudflared 公网访问";
 "proxy.switch.on" = "开启";
 "proxy.switch.off" = "关闭";
@@ -427,9 +419,3 @@
 "proxy.remote.help.stop" = "停止正在运行的远程 systemd 服务。";
 "proxy.remote.help.logs" = "加载远程服务最近的 journal 日志。";
 "proxy.remote.help.uninstall_remote" = "停止并删除远程服务、已部署二进制和 accounts 文件，同时保留本地服务器记录。";
-"accounts.paste_import.title" = "粘贴账号数据";
-"accounts.paste_import.placeholder" = "按“邮箱----任意内容----rt_xxx”格式粘贴一行或多行";
-"accounts.paste_import.submit" = "导入";
-"error.accounts.paste_import_no_valid_lines" = "未找到可导入的粘贴账号数据。";
-"error.accounts.paste_import_invalid_email_format" = "第 %lld 行邮箱格式无效。";
-"error.accounts.paste_import_invalid_refresh_token_format" = "第 %lld 行缺少有效的 refresh token。";

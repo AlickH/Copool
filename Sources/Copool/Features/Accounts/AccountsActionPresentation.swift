@@ -3,7 +3,6 @@ import Foundation
 enum AccountsPageActionIntent: String, Hashable {
     case importCurrentAuth
     case importAuthFile
-    case pasteImport
     case addAccount
     case cancelAddAccount
     case toggleUsageProgressDisplay
@@ -86,11 +85,6 @@ enum AccountsActionPresentation {
                         intent: .importAuthFile,
                         title: L10n.tr("accounts.action.import_auth_file"),
                         systemImage: "doc.badge.plus"
-                    ),
-                    AccountsActionMenuItem(
-                        intent: .pasteImport,
-                        title: L10n.tr("accounts.action.paste_import"),
-                        systemImage: "doc.on.clipboard"
                     )
                 ]
             ),
@@ -169,11 +163,6 @@ enum AccountsActionPresentation {
                         intent: .importAuthFile,
                         title: L10n.tr("accounts.action.import_auth_file"),
                         systemImage: "doc.badge.plus"
-                    ),
-                    AccountsActionMenuItem(
-                        intent: .pasteImport,
-                        title: L10n.tr("accounts.action.paste_import"),
-                        systemImage: "doc.on.clipboard"
                     )
                 ]
             ),

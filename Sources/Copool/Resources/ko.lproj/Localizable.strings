@@ -27,7 +27,6 @@
 "settings.deployment_mode" = "모드";
 "settings.deployment_mode.local_device" = "로컬 실행";
 "settings.deployment_mode.backend_service" = "백엔드 위임";
-"settings.deployment_mode.hint" = "iOS에서는 원격 배포와 공개 터널 제어를 백엔드 서비스로 위임할 수 있습니다.";
 "settings.section.language" = "언어";
 "settings.language" = "언어";
 "settings.usage_progress_display" = "진행률 막대 표시";
@@ -81,7 +80,6 @@
 "accounts.action.expand_all" = "모든 카드 펼치기";
 "accounts.empty.title" = "계정이 없습니다";
 "accounts.empty.message.no_accounts" = "계정이 없습니다. 계정을 추가하거나 가져오세요.";
-"accounts.empty.message.enable_icloud" = "먼저 시스템 설정에서 iCloud를 켜 주세요. 동기화된 계정이 여기에 자동으로 표시됩니다.";
 "accounts.error.load_failed" = "계정을 불러오지 못했습니다";
 "accounts.card.current" = "현재";
 "accounts.card.team.set_name" = "Team 이름 설정";
@@ -130,8 +128,6 @@
 "capability.status.unavailable" = "사용 불가";
 
 "proxy.section.api_proxy" = "API 프록시";
-"proxy.callout.remote_control.title" = "Mac 원격 제어";
-"proxy.callout.remote_control.message" = "이 페이지는 macOS에서 실행 중인 API Proxy를 원격 제어하기 위한 화면입니다. 명령 수신과 최신 상태 동기화를 위해 Mac의 Copool을 계속 실행해 두세요.";
 "proxy.status.running" = "실행 중";
 "proxy.status.stopped" = "중지됨";
 "proxy.status_line_format" = "상태: %@";
@@ -152,8 +148,6 @@
 "proxy.section.remote_servers" = "원격 서버";
 "proxy.section.remote_servers_backend" = "원격 서버(백엔드 위임)";
 "proxy.remote.description" = "SSH로 원격 Linux 서버의 API 프록시 노드를 배포하고 관리합니다.";
-"proxy.remote.backend_managed_message" = "원격 배포 작업은 백엔드 서비스에 위임됩니다. iOS 클라이언트 간 운영 일관성을 위해 이 모드를 유지하세요.";
-"proxy.remote.unavailable_message" = "iOS 로컬 실행 모드에서는 SSH/SCP 관리가 불가능합니다. 백엔드 위임 모드로 전환하거나 macOS용 Copool을 사용하세요.";
 "proxy.action.add_server" = "서버 추가";
 "proxy.remote.field.name" = "이름";
 "proxy.remote.field.host" = "호스트";
@@ -174,7 +168,6 @@
 "proxy.section.public_access" = "공개 접근";
 "proxy.section.public_access_backend" = "공개 접근(백엔드 위임)";
 "proxy.public.backend_managed_message" = "공개 터널 작업은 백엔드 서비스에 위임됩니다. cloudflared는 서버에서 구성하고, 이 앱은 계정/프록시 제어에 사용하세요.";
-"proxy.public.unavailable_message" = "iOS 로컬 실행 모드에서는 cloudflared 관리를 지원하지 않습니다. 백엔드 위임 모드로 전환하거나 macOS용 Copool을 사용하세요.";
 "proxy.toggle.enable_public_access" = "cloudflared로 공개 접근 활성화";
 "proxy.switch.on" = "켜짐";
 "proxy.switch.off" = "꺼짐";
@@ -416,10 +409,3 @@
 "accounts.notice.workspace_authorized_format" = "워크스페이스 인증 완료: %@";
 "error.accounts.sign_in_expired" = "로그인이 만료되었습니다. 다시 로그인해 주세요.";
 "error.accounts.workspace_deactivated" = "이 워크스페이스는 현재 비활성화되었습니다.";
-"accounts.action.paste_import" = "Paste import";
-"accounts.paste_import.title" = "Paste account rows";
-"accounts.paste_import.placeholder" = "Paste one or more lines in the format: email----anything----rt_xxx";
-"accounts.paste_import.submit" = "Import";
-"error.accounts.paste_import_no_valid_lines" = "가져올 수 있는 붙여넣기 계정 데이터를 찾지 못했습니다.";
-"error.accounts.paste_import_invalid_email_format" = "%lld번째 줄의 이메일 형식이 올바르지 않습니다.";
-"error.accounts.paste_import_invalid_refresh_token_format" = "%lld번째 줄에 유효한 refresh token이 없습니다.";

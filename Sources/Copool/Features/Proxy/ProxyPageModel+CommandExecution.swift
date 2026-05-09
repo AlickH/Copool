@@ -15,7 +15,7 @@ extension ProxyPageModel {
         successNotice: String? = nil,
         pendingNotice: String? = nil
     ) async {
-        guard let proxyControlCloudSyncService else { return }
+        guard let proxyControlRemoteCommandService else { return }
 
         loading = true
         defer { loading = false }
@@ -35,7 +35,7 @@ extension ProxyPageModel {
         )
 
         do {
-            try await proxyControlCloudSyncService.enqueueCommand(command)
+            try await proxyControlRemoteCommandService.enqueueCommand(command)
             lastRemoteCommandID = command.id
             if kind == .deployRemote {
                 AuthFlowDebugLog.write(
@@ -114,7 +114,7 @@ extension ProxyPageModel {
     }
 
     func performRemoteLogCommand(serverID: String, logLines: Int) async {
-        guard let proxyControlCloudSyncService else { return }
+        guard let proxyControlRemoteCommandService else { return }
 
         let previousLogs = remoteLogs[serverID]
         let command = makeProxyControlCommand(
@@ -125,7 +125,7 @@ extension ProxyPageModel {
         )
 
         do {
-            try await proxyControlCloudSyncService.enqueueCommand(command)
+            try await proxyControlRemoteCommandService.enqueueCommand(command)
             lastRemoteCommandID = command.id
 
             if let acknowledgedSnapshot = try await waitForRemoteCommandAck(
@@ -162,7 +162,7 @@ extension ProxyPageModel {
         pollInterval: Duration = ProxySyncPolicy.RemoteControl.commandAckPollInterval,
         acceptance: ((ProxyControlSnapshot) -> Bool)? = nil
     ) async throws -> ProxyControlSnapshot? {
-        guard let proxyControlCloudSyncService else { return nil }
+        guard let proxyControlRemoteCommandService else { return nil }
 
         for _ in 0..<pollLimit {
             if let acknowledgedSnapshot = acceptedAppliedRemoteSnapshot(
@@ -172,7 +172,7 @@ extension ProxyPageModel {
                 return acknowledgedSnapshot
             }
 
-            if let snapshot = try await proxyControlCloudSyncService.pullRemoteSnapshot() {
+            if let snapshot = try await proxyControlRemoteCommandService.pullRemoteSnapshot() {
                 let isAccepted = acceptance?(snapshot) ?? (snapshot.lastHandledCommandID == commandID)
                 applyRemoteSnapshot(snapshot)
                 if isAccepted {

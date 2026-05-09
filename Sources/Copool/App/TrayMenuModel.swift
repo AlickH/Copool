@@ -2,9 +2,6 @@ import Foundation
 import Combine
 
 extension Notification.Name {
-    static let copoolAccountsSnapshotPushDidArrive = Notification.Name("copool.accounts-snapshot.push")
-    static let copoolCurrentAccountSelectionPushDidArrive = Notification.Name("copool.current-account-selection.push")
-    static let copoolProxyControlPushDidArrive = Notification.Name("copool.proxy-control.push")
     static let copoolLocalProxySnapshotDidUpdate = Notification.Name("copool.proxy.snapshot.local-update")
 }
 
@@ -16,66 +13,38 @@ enum ProxyControlNotificationPayloadKey {
 final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtocol, AccountsLocalMutationSyncServiceProtocol {
     struct BackgroundRefreshPolicy: Sendable {
         let initialRefreshDelay: Duration
-        let cloudReconciliationInterval: Duration
         let usageRefreshInterval: Duration
         let refreshUsageOnRecurringTick: Bool
-        let cloudSyncMode: AccountsCloudSyncMode
-        let applyRemoteSelectionSwitchEffects: Bool
 
         init(
             initialRefreshDelay: Duration,
-            cloudReconciliationInterval: Duration,
             usageRefreshInterval: Duration,
-            refreshUsageOnRecurringTick: Bool,
-            cloudSyncMode: AccountsCloudSyncMode,
-            applyRemoteSelectionSwitchEffects: Bool
+            refreshUsageOnRecurringTick: Bool
         ) {
             self.initialRefreshDelay = initialRefreshDelay
-            self.cloudReconciliationInterval = cloudReconciliationInterval
             self.usageRefreshInterval = usageRefreshInterval
             self.refreshUsageOnRecurringTick = refreshUsageOnRecurringTick
-            self.cloudSyncMode = cloudSyncMode
-            self.applyRemoteSelectionSwitchEffects = applyRemoteSelectionSwitchEffects
         }
 
         static func forPlatform(_ platform: RuntimePlatform) -> BackgroundRefreshPolicy {
-            switch platform {
-            case .macOS:
-                return BackgroundRefreshPolicy(
-                    initialRefreshDelay: .milliseconds(700),
-                    cloudReconciliationInterval: .seconds(3),
-                    usageRefreshInterval: .seconds(30),
-                    refreshUsageOnRecurringTick: true,
-                    cloudSyncMode: .pushLocalAccounts,
-                    applyRemoteSelectionSwitchEffects: true
-                )
-            case .iOS:
-                return BackgroundRefreshPolicy(
-                    initialRefreshDelay: .milliseconds(700),
-                    cloudReconciliationInterval: .seconds(3),
-                    usageRefreshInterval: .seconds(30),
-                    refreshUsageOnRecurringTick: true,
-                    cloudSyncMode: .pullRemoteAccounts,
-                    applyRemoteSelectionSwitchEffects: true
-                )
-            }
+            _ = platform
+            return BackgroundRefreshPolicy(
+                initialRefreshDelay: .milliseconds(700),
+                usageRefreshInterval: .seconds(30),
+                refreshUsageOnRecurringTick: true
+            )
         }
     }
 
     let accountsCoordinator: AccountsCoordinator
     let settingsCoordinator: SettingsCoordinator
-    let cloudSyncService: AccountsCloudSyncServiceProtocol?
-    let currentAccountSelectionSyncService: CurrentAccountSelectionSyncServiceProtocol?
     let remoteAccountsMutationSyncService: RemoteAccountsMutationSyncServiceProtocol?
     let backgroundRefreshPolicy: BackgroundRefreshPolicy
     let dateProvider: DateProviding
     let snapshotFreshnessPolicy: AccountsSnapshotFreshnessPolicy
     let usageRefreshPlanningPolicy: AccountsUsageRefreshPlanningPolicy
-    var cloudReconciliationTask: Task<Void, Never>?
     var usageRefreshTask: Task<Void, Never>?
     var workspaceMetadataRefreshTask: Task<Void, Never>?
-    var accountsSnapshotPushCancellable: AnyCancellable?
-    var currentSelectionPushCancellable: AnyCancellable?
     var autoSmartSwitchEnabled = false
     var accountsRefreshActivityCount = 0
     var remoteUsageRefreshActivityCount = 0
@@ -90,8 +59,6 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
     init(
         accountsCoordinator: AccountsCoordinator,
         settingsCoordinator: SettingsCoordinator,
-        cloudSyncService: AccountsCloudSyncServiceProtocol?,
-        currentAccountSelectionSyncService: CurrentAccountSelectionSyncServiceProtocol?,
         remoteAccountsMutationSyncService: RemoteAccountsMutationSyncServiceProtocol? = nil,
         backgroundRefreshPolicy: BackgroundRefreshPolicy,
         dateProvider: DateProviding = SystemDateProvider(),
@@ -101,8 +68,6 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
     ) {
         self.accountsCoordinator = accountsCoordinator
         self.settingsCoordinator = settingsCoordinator
-        self.cloudSyncService = cloudSyncService
-        self.currentAccountSelectionSyncService = currentAccountSelectionSyncService
         self.remoteAccountsMutationSyncService = remoteAccountsMutationSyncService
         self.backgroundRefreshPolicy = backgroundRefreshPolicy
         self.dateProvider = dateProvider
@@ -112,7 +77,6 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
     }
 
     deinit {
-        cloudReconciliationTask?.cancel()
         usageRefreshTask?.cancel()
         workspaceMetadataRefreshTask?.cancel()
     }

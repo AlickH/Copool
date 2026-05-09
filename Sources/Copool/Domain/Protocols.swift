@@ -135,32 +135,15 @@ protocol LaunchAtStartupServiceProtocol: Sendable {
     func syncWithStoreValue(_ enabled: Bool) throws
 }
 
-protocol AccountsCloudSyncServiceProtocol: Sendable {
-    func pushLocalAccountsIfNeeded() async throws
-    func pullRemoteAccountsIfNeeded(
-        currentTime: Int64,
-        maximumSnapshotAgeSeconds: Int64
-    ) async throws -> AccountsCloudSyncPullResult
-    func ensurePushSubscriptionIfNeeded() async throws
-}
-
-protocol ProxyControlCloudSyncServiceProtocol: Sendable {
+protocol ProxyControlRemoteCommandServiceProtocol: Sendable {
     func pushLocalSnapshot(_ snapshot: ProxyControlSnapshot) async throws
     func pullRemoteSnapshot() async throws -> ProxyControlSnapshot?
     func enqueueCommand(_ command: ProxyControlCommand) async throws
     func pullPendingCommand() async throws -> ProxyControlCommand?
-    func ensurePushSubscriptionIfNeeded() async throws
 }
 
 protocol ProxyLocalCommandServiceProtocol: Sendable {
     func performLocalCommand(_ command: ProxyControlCommand) async throws -> ProxyControlSnapshot
-}
-
-protocol CurrentAccountSelectionSyncServiceProtocol: Sendable {
-    func recordLocalSelection(cardID: String) async throws
-    func pushLocalSelectionIfNeeded() async throws
-    func pullRemoteSelectionIfNeeded() async throws -> CurrentAccountSelectionPullResult
-    func ensurePushSubscriptionIfNeeded() async throws
 }
 
 @MainActor

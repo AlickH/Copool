@@ -37,11 +37,9 @@ extension AccountsPageModel {
     }
 
     func load() async {
-        async let cloudSyncAvailableTask = cloudSyncAvailabilityService?.isICloudAvailable() ?? true
         do {
             let accounts = try await coordinator.listAccounts()
-            let cloudSyncAvailable = await cloudSyncAvailableTask
-            await applyLoadedAccounts(accounts, cloudSyncAvailableTask: cloudSyncAvailable)
+            await applyReloadedAccounts(accounts)
 
             hasLoaded = true
         } catch {
@@ -75,21 +73,6 @@ extension AccountsPageModel {
         let isRefreshing = !refreshingAccountIDs.isEmpty
         guard isRemoteUsageRefreshing != isRefreshing else { return }
         isRemoteUsageRefreshing = isRefreshing
-    }
-
-    private func applyLoadedAccounts(
-        _ accounts: [AccountSummary],
-        cloudSyncAvailableTask: Bool
-    ) async {
-        if accounts.isEmpty {
-            isCloudSyncAvailable = cloudSyncAvailableTask
-        }
-
-        await applyReloadedAccounts(accounts)
-
-        if !accounts.isEmpty {
-            isCloudSyncAvailable = cloudSyncAvailableTask
-        }
     }
 
     private func applyReloadedAccounts(_ accounts: [AccountSummary]) async {

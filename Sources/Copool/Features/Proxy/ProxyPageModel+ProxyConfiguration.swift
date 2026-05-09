@@ -96,7 +96,7 @@ extension ProxyPageModel {
     }
 
     private func syncRemoteProxyConfiguration(_ configuration: ProxyConfiguration) async {
-        guard let proxyControlCloudSyncService else { return }
+        guard let proxyControlRemoteCommandService else { return }
 
         let command = makeProxyControlCommand(
             sourceDeviceID: "ios-proxy-control",
@@ -105,7 +105,7 @@ extension ProxyPageModel {
         )
 
         do {
-            try await proxyControlCloudSyncService.enqueueCommand(command)
+            try await proxyControlRemoteCommandService.enqueueCommand(command)
             lastRemoteCommandID = command.id
 
             if let acknowledgedSnapshot = try await waitForRemoteCommandAck(command.id) {

@@ -155,14 +155,6 @@ extension AccountsPageModel {
                 .filter(\.isVisibleInMainList)
                 .map(\.id)
         }
-        if runtimePlatform == .iOS {
-            return AccountsPageContentPresentation(
-                state: contentState,
-                pendingWorkspaceCards: [],
-                pendingWorkspaceError: nil,
-                isOverviewMode: areAllAccountsCollapsed
-            )
-        }
         let accountPendingCards = currentPendingCards()
         let pendingAuthorizationCards = pendingWorkspaceAuthorizations.map { candidate in
             PendingWorkspaceAuthorizationCardViewState(

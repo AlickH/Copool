@@ -44,11 +44,7 @@ struct AccountCardView: View {
     }
 
     private var accountCardInteractionPlatform: AccountCardInteractionPlatform {
-        #if os(macOS)
         .macOS
-        #else
-        .iOS
-        #endif
     }
 
     var body: some View {
@@ -57,14 +53,6 @@ struct AccountCardView: View {
                 enabled: interactionPresentation.canHoverSwitchOverlay,
                 isHoveringCollapsedSwitch: $isHoveringCollapsedSwitch
             )
-            #if os(iOS)
-            .onLongPressGesture(minimumDuration: AccountsAnimationRules.collapsedOverlayMinimumPressDuration) {
-                guard interactionPresentation.canRevealCollapsedSwitchOverlay else { return }
-                withAnimation(AccountsAnimationRules.cardHoverOverlay) {
-                    isCollapsedSwitchOverlayPresented = true
-                }
-            }
-            #endif
             .onChange(of: card.isCollapsed) { _, collapsed in
                 if !collapsed {
                     dismissCollapsedSwitchOverlay()

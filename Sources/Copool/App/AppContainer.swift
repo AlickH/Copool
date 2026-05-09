@@ -18,26 +18,13 @@ final class AppContainer {
     private let accountsWidgetSnapshotWriter: AccountsWidgetSnapshotWriter
     private let accountsWidgetDisplayModeStore: AccountsWidgetDisplayModeStore
     private let proxyCoordinator: ProxyCoordinator
-    private let proxyControlCloudSyncService: CloudKitProxyControlSyncService
     private var accountsWidgetSnapshotCancellable: AnyCancellable?
     private var accountsPageSnapshotCancellable: AnyCancellable?
     private var widgetUsageProgressDisplayMode: UsageProgressDisplayMode
 
-    lazy var proxyControlBridge: ProxyControlBridge = ProxyControlBridge(
-        proxyCoordinator: proxyCoordinator,
-        settingsCoordinator: settingsCoordinator,
-        cloudSyncService: proxyControlCloudSyncService,
-        performAccountsRefresh: { [weak trayModel] in
-            guard let trayModel else { return }
-            _ = try await trayModel.performManualRefresh()
-        }
-    )
-
     lazy var proxyModel: ProxyPageModel = ProxyPageModel(
         coordinator: proxyCoordinator,
         settingsCoordinator: settingsCoordinator,
-        proxyControlCloudSyncService: proxyControlCloudSyncService,
-        localProxyCommandService: proxyControlBridge,
         chooseIdentityFilePath: {
             #if canImport(AppKit)
             let panel = NSOpenPanel()
@@ -68,12 +55,6 @@ final class AppContainer {
             let editorAppService = EditorAppService()
             let opencodeSyncService = OpencodeAuthSyncService()
             let launchAtStartupService = LaunchAtStartupService()
-            let cloudSyncService = CloudKitAccountsSyncService(storeRepository: storeRepository)
-            let cloudSyncAvailabilityService = CloudSyncAvailabilityService()
-            let currentAccountSelectionSyncService = CloudKitCurrentAccountSelectionSyncService(
-                storeRepository: storeRepository,
-                authRepository: authRepository
-            )
             let accountsStoreChangeHandlerBox = AccountsStoreChangeHandlerBox()
             let accountsCoordinator = AccountsCoordinator(
                 storeRepository: storeRepository,
@@ -105,8 +86,6 @@ final class AppContainer {
                     sourceAccountStorePath: paths.accountStorePath
                 )
             )
-            let proxyControlCloudSyncService = CloudKitProxyControlSyncService()
-
             let settingsCoordinator = SettingsCoordinator(
                 settingsRepository: settingsRepository,
                 launchAtStartupService: launchAtStartupService
@@ -129,8 +108,6 @@ final class AppContainer {
             let trayModel = TrayMenuModel(
                 accountsCoordinator: accountsCoordinator,
                 settingsCoordinator: settingsCoordinator,
-                cloudSyncService: cloudSyncService,
-                currentAccountSelectionSyncService: currentAccountSelectionSyncService,
                 remoteAccountsMutationSyncService: remoteAccountsMutationSyncService,
                 backgroundRefreshPolicy: .forPlatform(PlatformCapabilities.currentPlatform),
                 initialAccounts: initialAccounts
@@ -149,10 +126,7 @@ final class AppContainer {
                 coordinator: accountsCoordinator,
                 settingsCoordinator: settingsCoordinator,
                 manualRefreshService: trayModel,
-                proxyControlCloudSyncService: proxyControlCloudSyncService,
                 localAccountsMutationSyncService: trayModel,
-                currentAccountSelectionSyncService: currentAccountSelectionSyncService,
-                cloudSyncAvailabilityService: cloudSyncAvailabilityService,
                 chooseAuthDocumentURL: {
                     #if canImport(AppKit)
                     let panel = NSOpenPanel()
@@ -197,7 +171,6 @@ final class AppContainer {
                 accountsWidgetSnapshotWriter: accountsWidgetSnapshotWriter,
                 accountsWidgetDisplayModeStore: accountsWidgetDisplayModeStore,
                 proxyCoordinator: proxyCoordinator,
-                proxyControlCloudSyncService: proxyControlCloudSyncService,
                 widgetUsageProgressDisplayMode: initialSettings.usageProgressDisplayMode,
                 accountsModel: accountsModel,
                 settingsModel: settingsModel,
@@ -217,7 +190,6 @@ final class AppContainer {
         accountsWidgetSnapshotWriter: AccountsWidgetSnapshotWriter,
         accountsWidgetDisplayModeStore: AccountsWidgetDisplayModeStore,
         proxyCoordinator: ProxyCoordinator,
-        proxyControlCloudSyncService: CloudKitProxyControlSyncService,
         widgetUsageProgressDisplayMode: UsageProgressDisplayMode,
         accountsModel: AccountsPageModel,
         settingsModel: SettingsPageModel,
@@ -227,7 +199,6 @@ final class AppContainer {
         self.accountsWidgetSnapshotWriter = accountsWidgetSnapshotWriter
         self.accountsWidgetDisplayModeStore = accountsWidgetDisplayModeStore
         self.proxyCoordinator = proxyCoordinator
-        self.proxyControlCloudSyncService = proxyControlCloudSyncService
         self.widgetUsageProgressDisplayMode = widgetUsageProgressDisplayMode
         self.accountsModel = accountsModel
         self.settingsModel = settingsModel

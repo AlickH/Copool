@@ -27,7 +27,6 @@
 "settings.deployment_mode" = "模式";
 "settings.deployment_mode.local_device" = "本機執行";
 "settings.deployment_mode.backend_service" = "後端代管";
-"settings.deployment_mode.hint" = "在 iOS 上，可將遠端部署與公網通道控制委派給後端服務。";
 "settings.section.language" = "語言";
 "settings.language" = "語言";
 "settings.usage_progress_display" = "進度條顯示";
@@ -81,7 +80,6 @@
 "accounts.action.expand_all" = "展開全部卡片";
 "accounts.empty.title" = "尚無帳號";
 "accounts.empty.message.no_accounts" = "尚無帳號，請先新增或匯入帳號。";
-"accounts.empty.message.enable_icloud" = "請先在系統設定中開啟 iCloud，已同步的帳號會自動顯示在這裡。";
 "accounts.error.load_failed" = "載入帳號失敗";
 "accounts.card.current" = "目前";
 "accounts.card.team.set_name" = "設定團隊名稱";
@@ -130,8 +128,6 @@
 "capability.status.unavailable" = "不可用";
 
 "proxy.section.api_proxy" = "API 代理";
-"proxy.callout.remote_control.title" = "Mac 遠端控制";
-"proxy.callout.remote_control.message" = "此頁面僅用於遠端控制 macOS 上運行的 API Proxy。請保持 Mac 端 Copool 處於運行狀態，以便接收控制命令並同步最新狀態。";
 "proxy.status.running" = "運行中";
 "proxy.status.stopped" = "已停止";
 "proxy.status_line_format" = "狀態：%@";
@@ -152,8 +148,6 @@
 "proxy.section.remote_servers" = "遠端伺服器";
 "proxy.section.remote_servers_backend" = "遠端伺服器（後端代管）";
 "proxy.remote.description" = "透過 SSH 在遠端 Linux 伺服器上部署和管理 API 代理節點。";
-"proxy.remote.backend_managed_message" = "遠端部署操作由後端服務代管執行。建議保持此模式，以便 iOS 用戶端統一查看狀態並保持操作一致。";
-"proxy.remote.unavailable_message" = "iOS 本機執行模式不支援 SSH/SCP 遠端管理。請切換到後端代管模式，或在 macOS 版 Copool 中執行。";
 "proxy.action.add_server" = "新增伺服器";
 "proxy.remote.field.name" = "名稱";
 "proxy.remote.field.host" = "主機";
@@ -174,7 +168,6 @@
 "proxy.section.public_access" = "公網訪問";
 "proxy.section.public_access_backend" = "公網訪問（後端代管）";
 "proxy.public.backend_managed_message" = "公網通道操作由後端服務代管執行。請在服務端設定 cloudflared，本應用繼續用於帳號與代理控制。";
-"proxy.public.unavailable_message" = "iOS 本機執行模式不支援 cloudflared 管理。請切換到後端代管模式，或在 macOS 版 Copool 中執行。";
 "proxy.toggle.enable_public_access" = "使用 cloudflared 啟用公網訪問";
 "proxy.switch.on" = "開";
 "proxy.switch.off" = "關";
@@ -398,10 +391,3 @@
 "proxy.remote.help.stop" = "Stop the running remote systemd service.";
 "proxy.remote.help.logs" = "Load recent journal logs from the remote service.";
 "proxy.remote.help.uninstall_remote" = "Stop and remove the remote service plus deployed binary and accounts file, while keeping the server record locally.";
-"accounts.action.paste_import" = "貼上匯入";
-"accounts.paste_import.title" = "貼上帳號資料";
-"accounts.paste_import.placeholder" = "依「郵箱----任意內容----rt_xxx」格式貼上一行或多行";
-"accounts.paste_import.submit" = "匯入";
-"error.accounts.paste_import_no_valid_lines" = "未找到可匯入的貼上帳號資料。";
-"error.accounts.paste_import_invalid_email_format" = "第 %lld 行郵箱格式無效。";
-"error.accounts.paste_import_invalid_refresh_token_format" = "第 %lld 行缺少有效的 refresh token。";

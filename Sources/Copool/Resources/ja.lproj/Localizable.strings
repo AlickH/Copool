@@ -27,7 +27,6 @@
 "settings.deployment_mode" = "モード";
 "settings.deployment_mode.local_device" = "ローカル実行";
 "settings.deployment_mode.backend_service" = "バックエンド委譲";
-"settings.deployment_mode.hint" = "iOS では、リモート配備と公開トンネル操作をバックエンドサービスに委譲できます。";
 "settings.section.language" = "言語";
 "settings.language" = "言語";
 "settings.usage_progress_display" = "進捗バー表示";
@@ -81,7 +80,6 @@
 "accounts.action.expand_all" = "全カードを展開";
 "accounts.empty.title" = "アカウントがありません";
 "accounts.empty.message.no_accounts" = "アカウントがありません。追加または取り込みを行ってください。";
-"accounts.empty.message.enable_icloud" = "先にシステム設定で iCloud を有効にしてください。同期されたアカウントがここに自動表示されます。";
 "accounts.error.load_failed" = "アカウントの読み込みに失敗しました";
 "accounts.card.current" = "現在";
 "accounts.card.team.set_name" = "Team 名を設定";
@@ -130,8 +128,6 @@
 "capability.status.unavailable" = "利用不可";
 
 "proxy.section.api_proxy" = "API プロキシ";
-"proxy.callout.remote_control.title" = "Mac リモート制御";
-"proxy.callout.remote_control.message" = "このページは macOS 上で動作している API プロキシを遠隔操作するためのものです。コマンド受信と最新状態の反映のため、Mac 側の Copool を起動したままにしてください。";
 "proxy.status.running" = "実行中";
 "proxy.status.stopped" = "停止";
 "proxy.status_line_format" = "ステータス: %@";
@@ -152,8 +148,6 @@
 "proxy.section.remote_servers" = "リモートサーバー";
 "proxy.section.remote_servers_backend" = "リモートサーバー（バックエンド委譲）";
 "proxy.remote.description" = "SSH 経由でリモート Linux サーバー上の API プロキシノードを管理します。";
-"proxy.remote.backend_managed_message" = "リモート配備操作はバックエンドサービスへ委譲されています。iOS クライアント間の運用整合性のため、このモードを維持してください。";
-"proxy.remote.unavailable_message" = "iOS のローカル実行モードでは SSH/SCP 管理は利用できません。バックエンド委譲へ切替えるか、macOS 版 Copool を使用してください。";
 "proxy.action.add_server" = "サーバー追加";
 "proxy.remote.field.name" = "名前";
 "proxy.remote.field.host" = "ホスト";
@@ -174,7 +168,6 @@
 "proxy.section.public_access" = "公開アクセス";
 "proxy.section.public_access_backend" = "公開アクセス（バックエンド委譲）";
 "proxy.public.backend_managed_message" = "公開トンネル操作はバックエンドサービスへ委譲されています。cloudflared はサーバー側で設定し、このアプリはアカウント/プロキシ制御に使用してください。";
-"proxy.public.unavailable_message" = "iOS のローカル実行モードでは cloudflared 管理は利用できません。バックエンド委譲へ切替えるか、macOS 版 Copool を使用してください。";
 "proxy.toggle.enable_public_access" = "cloudflared で公開アクセスを有効化";
 "proxy.switch.on" = "オン";
 "proxy.switch.off" = "オフ";
@@ -416,10 +409,3 @@
 "accounts.notice.workspace_authorized_format" = "ワークスペースを認証しました: %@";
 "error.accounts.sign_in_expired" = "ログインの有効期限が切れました。再度ログインしてください。";
 "error.accounts.workspace_deactivated" = "このワークスペースは現在無効です。";
-"accounts.action.paste_import" = "Paste import";
-"accounts.paste_import.title" = "Paste account rows";
-"accounts.paste_import.placeholder" = "Paste one or more lines in the format: email----anything----rt_xxx";
-"accounts.paste_import.submit" = "Import";
-"error.accounts.paste_import_no_valid_lines" = "インポート可能な貼り付けアカウントが見つかりません。";
-"error.accounts.paste_import_invalid_email_format" = "%lld 行目のメール形式が無効です。";
-"error.accounts.paste_import_invalid_refresh_token_format" = "%lld 行目に有効な refresh token がありません。";

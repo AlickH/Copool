@@ -2,14 +2,10 @@ import Foundation
 
 extension AccountsPageModel {
     static func makeViewState(
-        accounts: [AccountSummary],
-        cloudSyncAvailable: Bool
+        accounts: [AccountSummary]
     ) -> ViewState<[AccountSummary]> {
         if accounts.isEmpty {
-            let messageKey = cloudSyncAvailable
-                ? "accounts.empty.message.no_accounts"
-                : "accounts.empty.message.enable_icloud"
-            return .empty(message: L10n.tr(messageKey))
+            return .empty(message: L10n.tr("accounts.empty.message.no_accounts"))
         }
         return .content(accounts)
     }
@@ -51,10 +47,7 @@ extension AccountsPageModel {
             collapsedAccountIDs = nextCollapsed
         }
 
-        let nextState = AccountsPageModel.makeViewState(
-            accounts: displayAccounts,
-            cloudSyncAvailable: isCloudSyncAvailable
-        )
+        let nextState = AccountsPageModel.makeViewState(accounts: displayAccounts)
         if state != nextState {
             state = nextState
         }
@@ -67,34 +60,6 @@ extension AccountsPageModel {
     func applyWorkspaceDirectory(_ entries: [WorkspaceDirectoryEntry]) {
         if workspaceDirectory != entries {
             workspaceDirectory = entries
-        }
-    }
-
-    func syncCurrentAccountSelection(cardID: String) async {
-        guard let currentAccountSelectionSyncService else { return }
-        do {
-            AccountSwitchDebugLog.write(
-                "accountsPage.syncCurrentSelection.begin",
-                "cardID=\(cardID)"
-            )
-            try await currentAccountSelectionSyncService.recordLocalSelection(cardID: cardID)
-            try await currentAccountSelectionSyncService.pushLocalSelectionIfNeeded()
-            AccountSwitchDebugLog.write(
-                "accountsPage.syncCurrentSelection.end",
-                "cardID=\(cardID)"
-            )
-        } catch {
-            AccountSwitchDebugLog.write(
-                "accountsPage.syncCurrentSelection.error",
-                "cardID=\(cardID) error=\(error.localizedDescription)"
-            )
-            notice = NoticeMessage(style: .error, text: error.localizedDescription)
-        }
-    }
-
-    func syncCurrentAccountSelectionInBackground(cardID: String) {
-        Task {
-            await syncCurrentAccountSelection(cardID: cardID)
         }
     }
 

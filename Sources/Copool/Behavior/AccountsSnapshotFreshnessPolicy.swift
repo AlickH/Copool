@@ -81,12 +81,6 @@ struct AccountsUsageRefreshPlanningPolicy: Sendable {
     }
 }
 
-enum AccountsCloudSyncMode: Sendable {
-    case disabled
-    case pushLocalAccounts
-    case pullRemoteAccounts
-}
-
 private extension UsageSnapshot {
     var windows: [UsageWindow] {
         [fiveHour, oneWeek].compactMap { $0 }

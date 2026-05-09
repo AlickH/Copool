@@ -20,19 +20,6 @@ extension ProxyPageModel {
         remoteSnapshotTask = nil
     }
 
-    func configureProxyPushHandlingIfNeeded() {
-        guard proxyPushCancellable == nil else { return }
-
-        proxyPushCancellable = NotificationCenter.default
-            .publisher(for: .copoolProxyControlPushDidArrive)
-            .sink { [weak self] _ in
-                guard let self else { return }
-                Task { @MainActor in
-                    await self.refreshRemoteSnapshotAfterPush()
-                }
-            }
-    }
-
     func configureLocalSnapshotHandlingIfNeeded() {
         guard runtimePlatform == .macOS else { return }
         guard localSnapshotCancellable == nil else { return }
@@ -47,19 +34,12 @@ extension ProxyPageModel {
             }
     }
 
-    func ensureProxyPushSubscriptionIfNeeded() async {
-        guard let proxyControlCloudSyncService else { return }
-        do {
-            try await proxyControlCloudSyncService.ensurePushSubscriptionIfNeeded()
-        } catch {}
-    }
-
     @discardableResult
     func refreshRemoteSnapshot(showErrors: Bool) async -> Bool {
-        guard let proxyControlCloudSyncService else { return false }
+        guard let proxyControlRemoteCommandService else { return false }
 
         do {
-            if let snapshot = try await proxyControlCloudSyncService.pullRemoteSnapshot() {
+            if let snapshot = try await proxyControlRemoteCommandService.pullRemoteSnapshot() {
                 return applyRemoteSnapshot(snapshot)
             }
         } catch {
@@ -143,7 +123,7 @@ extension ProxyPageModel {
         showErrors: Bool,
         showLoading: Bool = false
     ) async {
-        guard let proxyControlCloudSyncService else { return }
+        guard let proxyControlRemoteCommandService else { return }
 
         if showLoading {
             loading = true
@@ -160,7 +140,7 @@ extension ProxyPageModel {
         )
 
         do {
-            try await proxyControlCloudSyncService.enqueueCommand(command)
+            try await proxyControlRemoteCommandService.enqueueCommand(command)
             lastRemoteCommandID = command.id
 
             if let acknowledgedSnapshot = try await waitForRemoteCommandAck(command.id) {

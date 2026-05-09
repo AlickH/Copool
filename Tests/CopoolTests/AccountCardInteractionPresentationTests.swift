@@ -17,21 +17,6 @@ final class AccountCardInteractionPresentationTests: XCTestCase {
         XCTAssertTrue(presentation.isCollapsedSwitchOverlayVisible)
     }
 
-    func testIOSLongPressStateControlsCollapsedOverlayVisibility() {
-        let presentation = AccountCardInteractionPresentation(
-            isCollapsed: true,
-            isCurrent: false,
-            switching: false,
-            isHoveringCollapsedSwitch: false,
-            isCollapsedSwitchOverlayPresented: true,
-            platform: .iOS
-        )
-
-        XCTAssertFalse(presentation.canHoverSwitchOverlay)
-        XCTAssertTrue(presentation.canRevealCollapsedSwitchOverlay)
-        XCTAssertTrue(presentation.isCollapsedSwitchOverlayVisible)
-    }
-
     func testSwitchingKeepsOverlayVisibleButPreventsReveal() {
         let presentation = AccountCardInteractionPresentation(
             isCollapsed: true,
@@ -39,7 +24,7 @@ final class AccountCardInteractionPresentationTests: XCTestCase {
             switching: true,
             isHoveringCollapsedSwitch: false,
             isCollapsedSwitchOverlayPresented: false,
-            platform: .iOS
+            platform: .macOS
         )
 
         XCTAssertFalse(presentation.canRevealCollapsedSwitchOverlay)

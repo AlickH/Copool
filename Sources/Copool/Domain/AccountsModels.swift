@@ -222,28 +222,6 @@ struct CurrentAccountSelection: Codable, Equatable, Sendable {
     }
 }
 
-struct CurrentAccountSelectionPullResult: Equatable, Sendable {
-    var didUpdateSelection: Bool
-    var changedCurrentAccount: Bool
-    var cardID: String?
-
-    static let noChange = CurrentAccountSelectionPullResult(
-        didUpdateSelection: false,
-        changedCurrentAccount: false,
-        cardID: nil
-    )
-}
-
-struct AccountsCloudSyncPullResult: Equatable, Sendable {
-    var didUpdateAccounts: Bool
-    var remoteSyncedAt: Int64?
-
-    static let noChange = AccountsCloudSyncPullResult(
-        didUpdateAccounts: false,
-        remoteSyncedAt: nil
-    )
-}
-
 struct StoredAccount: Codable, Equatable, Identifiable {
     var id: String
     var label: String
