@@ -343,79 +343,32 @@ private struct LiquidProgressRingTrack: View {
     let metrics: LiquidRingMetrics
 
     var body: some View {
-        GeometryReader { geometry in
-            let palette = LiquidGroovePalette(colorScheme: colorScheme)
-
-            ZStack {
-                if #available(iOS 26.0, macOS 26.0, *) {
-                    Circle()
-                        .fill(.clear)
-                        .glassEffect(.regular.tint(palette.glassTint), in: .circle)
-                        .mask {
-                            Circle()
-                                .inset(by: metrics.trackInset)
-                                .strokeBorder(.white, lineWidth: metrics.trackWidth)
-                        }
-                } else {
-                    Circle()
-                        .inset(by: metrics.trackInset)
-                        .strokeBorder(palette.glassTint, lineWidth: metrics.trackWidth)
-                }
-
+        Circle()
+            .inset(by: metrics.trackInset)
+            .strokeBorder(trackColor, lineWidth: metrics.trackWidth)
+            .overlay {
                 Circle()
                     .inset(by: metrics.trackInset)
-                    .strokeBorder(palette.coreGradient, lineWidth: metrics.trackWidth)
-
-                Circle()
-                    .inset(by: metrics.trackInset)
-                    .strokeBorder(palette.topEdge, lineWidth: 1)
-                    .blur(radius: 0.35)
-                    .mask {
-                        ringMask(
-                            LinearGradient(
-                                colors: [Color.black, Color.clear],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                    }
-
-                Circle()
-                    .inset(by: metrics.trackInset)
-                    .strokeBorder(palette.bottomEdge, lineWidth: 1)
-                    .blur(radius: 0.45)
-                    .mask {
-                        ringMask(
-                            LinearGradient(
-                                colors: [Color.clear, Color.black],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                    }
-
-                Circle()
-                    .inset(by: metrics.trackInset)
-                    .strokeBorder(palette.centerGlow, lineWidth: max(2.6, metrics.trackWidth * 0.42))
-                    .blur(radius: 2.1)
-                    .mask {
-                        ringMask(
-                            LinearGradient(
-                                colors: [Color.clear, Color.black, Color.clear],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                    }
-                    .opacity(0.52)
+                    .strokeBorder(borderColor, lineWidth: 1)
             }
+    }
+
+    private var trackColor: Color {
+        switch colorScheme {
+        case .dark:
+            Color.white.opacity(0.10)
+        default:
+            Color.black.opacity(0.08)
         }
     }
 
-    private func ringMask(_ style: some ShapeStyle) -> some View {
-        Circle()
-            .inset(by: metrics.trackInset)
-            .strokeBorder(style, lineWidth: metrics.trackWidth)
+    private var borderColor: Color {
+        switch colorScheme {
+        case .dark:
+            Color.white.opacity(0.06)
+        default:
+            Color.black.opacity(0.06)
+        }
     }
 }
 
@@ -432,69 +385,15 @@ private struct LiquidProgressRingFill: View {
                 startDot(in: geometry.size)
             } else {
                 ringSegment(fillGradient, lineWidth: metrics.fillWidth)
-                    .shadow(color: tint.opacity(0.16), radius: 2.8, y: 0.9)
-                    .overlay {
-                        ringSegment(topHighlightGradient, lineWidth: metrics.highlightWidth)
-                            .blur(radius: 0.2)
-                    }
-                    .overlay {
-                        ringSegment(innerLiquidGradient, lineWidth: max(2.2, metrics.fillWidth * 0.72))
-                            .blur(radius: 0.22)
-                            .blendMode(.screen)
-                    }
-                    .overlay {
-                        ringSegment(bottomShadeGradient, lineWidth: max(1.6, metrics.fillWidth * 0.9))
-                            .opacity(0.38)
-                    }
             }
         }
     }
 
     private var fillGradient: LinearGradient {
         LinearGradient(
-            stops: [
-                .init(color: tint.opacity(0.34), location: 0),
-                .init(color: tint.opacity(0.92), location: 0.18),
-                .init(color: tint.opacity(1), location: 0.46),
-                .init(color: tint.opacity(0.84), location: 0.76),
-                .init(color: tint.opacity(0.58), location: 1)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-    }
-
-    private var topHighlightGradient: LinearGradient {
-        LinearGradient(
-            stops: [
-                .init(color: Color.white.opacity(0.42), location: 0),
-                .init(color: Color.white.opacity(0.2), location: 0.2),
-                .init(color: Color.white.opacity(0.06), location: 0.52),
-                .init(color: Color.clear, location: 1)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-    }
-
-    private var innerLiquidGradient: LinearGradient {
-        LinearGradient(
-            stops: [
-                .init(color: tint.opacity(0.22), location: 0),
-                .init(color: tint.opacity(0.08), location: 0.38),
-                .init(color: Color.clear, location: 1)
-            ],
-            startPoint: .top,
-            endPoint: .bottom
-        )
-    }
-
-    private var bottomShadeGradient: LinearGradient {
-        LinearGradient(
             colors: [
-                Color.clear,
-                Color.black.opacity(0.08),
-                Color.black.opacity(0.14)
+                tint.opacity(0.82),
+                tint.opacity(0.96)
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -537,21 +436,6 @@ private struct LiquidProgressRingFill: View {
         return Circle()
             .fill(fillGradient)
             .frame(width: metrics.dotDiameter, height: metrics.dotDiameter)
-            .overlay {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.28),
-                                Color.clear
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .padding(0.7)
-            }
-            .shadow(color: tint.opacity(0.14), radius: 2.6, y: 1)
             .position(point)
     }
 }
