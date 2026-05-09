@@ -15,7 +15,6 @@ struct RemoteProxyAccountsPayloadBuilder {
             do {
                 let store = try decodeAccountsStore(from: path)
                 mergeAccounts(from: store.accounts, into: &mergedStore)
-                mergeCurrentAccountID(from: store.currentAccountID, accounts: store.accounts, into: &mergedStore)
                 let usable = store.accounts.filter(isProxyUsable(account:)).count
                 loadDiagnostics.append("\(path.path): total=\(store.accounts.count), usable=\(usable)")
             } catch {
@@ -69,24 +68,14 @@ struct RemoteProxyAccountsPayloadBuilder {
         return existing
     }
 
-    private func mergeCurrentAccountID(
-        from incoming: String?,
-        accounts: [StoredAccount],
-        into merged: inout AccountsStore
-    ) {
-        guard let incoming,
-              accounts.contains(where: { $0.id == incoming }),
-              merged.accounts.contains(where: { $0.id == incoming }) else {
-            return
-        }
-
-        merged.currentAccountID = incoming
-    }
-
     private func encodeRemoteCompatibleStore(_ store: AccountsStore) throws -> Data {
+        var remoteStore = store
+        remoteStore.currentAccountID = nil
+        remoteStore.currentSelection = nil
+
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        return try encoder.encode(store)
+        return try encoder.encode(remoteStore)
     }
 
     private func isProxyUsable(account: StoredAccount) -> Bool {

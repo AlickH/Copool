@@ -55,7 +55,7 @@ extension AccountsPageModel {
             )
             applyAccounts(accounts)
             await refreshPendingWorkspaceAuthorizations(from: accounts)
-            publishAndSyncLocalAccountsMutation(accounts)
+            publishLocalAccounts(accounts)
         } catch {
             notice = NoticeMessage(style: .error, text: error.localizedDescription)
         }

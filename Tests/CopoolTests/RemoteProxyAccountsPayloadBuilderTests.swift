@@ -54,7 +54,7 @@ final class RemoteProxyAccountsPayloadBuilderTests: XCTestCase {
         XCTAssertEqual(builtStore.accounts[0].email, "test@example.com")
     }
 
-    func testBuildPreservesCurrentSelection() throws {
+    func testBuildClearsLocalCurrentSelectionForRemoteAutonomy() throws {
         let fileManager = FileManager.default
         let tempDirectory = fileManager.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
         try fileManager.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
@@ -103,7 +103,7 @@ final class RemoteProxyAccountsPayloadBuilderTests: XCTestCase {
         ).build()
 
         let builtStore = try JSONDecoder().decode(AccountsStore.self, from: payload)
-        XCTAssertEqual(builtStore.currentAccountID, "acct-current")
+        XCTAssertNil(builtStore.currentAccountID)
         XCTAssertNil(builtStore.currentSelection)
     }
 

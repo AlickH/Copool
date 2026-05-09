@@ -25,6 +25,7 @@ pub(crate) struct ApiProxyRuntimeHandle {
     pub(crate) api_key: Arc<RwLock<String>>,
     pub(crate) shutdown_tx: Option<oneshot::Sender<()>>,
     pub(crate) task: JoinHandle<()>,
+    pub(crate) usage_refresh_task: JoinHandle<()>,
     pub(crate) shared: Arc<Mutex<ApiProxyRuntimeSnapshot>>,
 }
 

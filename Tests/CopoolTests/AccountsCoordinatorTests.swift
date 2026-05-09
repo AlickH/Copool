@@ -1977,7 +1977,7 @@ final class AccountsCoordinatorTests: XCTestCase {
     }
 
     @MainActor
-    func testAccountsPageModelSingleAccountRefreshTargetsOnlyOneAccountAndSyncsMutation() async {
+    func testAccountsPageModelSingleAccountRefreshTargetsOnlyOneAccountWithoutRemoteSync() async {
         let now: Int64 = 1_763_216_000
         let storeRepository = InMemoryAccountsStoreRepository(
             store: AccountsStore(
@@ -2023,11 +2023,7 @@ final class AccountsCoordinatorTests: XCTestCase {
         let requestedAccountIDs = await usageService.readRequestedAccountIDs()
         XCTAssertEqual(requestedAccountIDs, ["account-2"])
 
-        for _ in 0..<10 where syncSpy.syncCallCount == 0 {
-            try? await Task.sleep(for: .milliseconds(10))
-        }
-
-        XCTAssertEqual(syncSpy.syncCallCount, 1)
+        XCTAssertEqual(syncSpy.syncCallCount, 0)
         XCTAssertTrue(model.refreshingAccountIDs.isEmpty)
         if case .content(let accounts) = model.state {
             XCTAssertEqual(accounts.count, 2)

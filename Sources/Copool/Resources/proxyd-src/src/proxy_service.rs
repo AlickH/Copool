@@ -40,7 +40,6 @@ use crate::auth::extract_auth;
 use crate::auth::refresh_chatgpt_auth_tokens;
 use crate::auth::write_active_codex_auth;
 use crate::models::ApiProxyStatus;
-use crate::models::CurrentAccountSelection;
 use crate::models::StoredAccount;
 use crate::models::UsageSnapshot;
 use crate::models::UsageWindow;
@@ -51,6 +50,7 @@ use crate::state::AppState;
 use crate::store::account_store_path_from_data_dir;
 use crate::store::load_store_from_path;
 use crate::store::save_store_to_path;
+use crate::usage::fetch_usage_snapshot;
 use crate::usage::resolve_chatgpt_base_origin;
 use crate::utils::now_unix_seconds;
 use crate::utils::set_private_permissions;
@@ -124,6 +124,7 @@ const REQUEST_MODEL_MAPPINGS: &[(&str, &str)] = &[
     ("gpt-5.4", "gpt-5.4"),
     ("gpt5.4", "gpt-5.4"),
 ];
+const USAGE_REFRESH_INTERVAL_SECONDS: u64 = 60;
 
 #[derive(Clone)]
 pub(crate) struct ProxyStorageContext {
@@ -137,12 +138,10 @@ struct ProxyCandidate {
     id: String,
     label: String,
     account_id: String,
-    account_key: String,
     access_token: String,
     auth_json: Value,
     plan_type: Option<String>,
     added_at: i64,
-    is_preferred_current: bool,
     usage: Option<UsageSnapshot>,
 }
 
@@ -389,15 +388,20 @@ pub(crate) async fn start_api_proxy_with_runtime(
         .layer(DefaultBodyLimit::max(request_body_limit))
         .with_state(context.clone());
 
+    let server_context = context.clone();
     let task = tokio::spawn(async move {
         let server = axum::serve(listener, router).with_graceful_shutdown(async move {
             let _ = shutdown_rx.await;
         });
 
         if let Err(error) = server.await {
-            let mut snapshot = context.shared.lock().await;
+            let mut snapshot = server_context.shared.lock().await;
             snapshot.last_error = Some(format!("代理服务异常退出: {error}"));
         }
+    });
+    let usage_refresh_context = context.clone();
+    let usage_refresh_task = tokio::spawn(async move {
+        run_usage_refresh_loop(usage_refresh_context).await;
     });
 
     let handle = ApiProxyRuntimeHandle {
@@ -405,6 +409,7 @@ pub(crate) async fn start_api_proxy_with_runtime(
         api_key: shared_api_key,
         shutdown_tx: Some(shutdown_tx),
         task,
+        usage_refresh_task,
         shared,
     };
     let status = status_from_handle_state(snapshot_handle_state(&handle)).await;
@@ -443,6 +448,7 @@ pub(crate) async fn stop_api_proxy_with_runtime(
     if let Some(shutdown_tx) = handle.shutdown_tx.take() {
         let _ = shutdown_tx.send(());
     }
+    handle.usage_refresh_task.abort();
     let _ = handle.task.await;
 
     let snapshot = handle.shared.lock().await.clone();
@@ -1567,32 +1573,22 @@ async fn load_proxy_candidates(
 ) -> Result<Vec<ProxyCandidate>, String> {
     let _guard = storage.store_lock.lock().await;
     let store = load_store_from_path(&account_store_path_from_data_dir(&storage.data_dir))?;
-    let current_selection = store.current_selection.clone();
 
     let mut candidates = store
         .accounts
         .into_iter()
-        .filter_map(|account| account_to_proxy_candidate(account, current_selection.as_ref()))
+        .filter_map(account_to_proxy_candidate)
         .collect::<Vec<_>>();
     candidates.sort_by(compare_proxy_candidates);
     Ok(candidates)
 }
 
-fn account_to_proxy_candidate(
-    account: StoredAccount,
-    current_selection: Option<&CurrentAccountSelection>,
-) -> Option<ProxyCandidate> {
+fn account_to_proxy_candidate(account: StoredAccount) -> Option<ProxyCandidate> {
     let extracted = extract_auth(&account.auth_json).ok()?;
-    let account_key = account_identity_key(
-        account.principal_id.as_deref(),
-        account.email.as_deref(),
-        &account.account_id,
-    );
     Some(ProxyCandidate {
         id: account.id,
         label: account.label,
         account_id: extracted.account_id,
-        account_key: account_key.clone(),
         access_token: extracted.access_token,
         auth_json: account.auth_json,
         plan_type: account
@@ -1602,22 +1598,11 @@ fn account_to_proxy_candidate(
             .or(account.plan_type)
             .or(extracted.plan_type),
         added_at: account.added_at,
-        is_preferred_current: current_selection
-            .map(|selection| current_selection_matches(selection, &account_key, &account.account_id))
-            .unwrap_or(false),
         usage: account.usage,
     })
 }
 
 fn compare_proxy_candidates(left: &ProxyCandidate, right: &ProxyCandidate) -> Ordering {
-    match right
-        .is_preferred_current
-        .cmp(&left.is_preferred_current)
-    {
-        Ordering::Equal => {}
-        ordering => return ordering,
-    }
-
     match remaining_score(right).cmp(&remaining_score(left)) {
         Ordering::Equal => {}
         ordering => return ordering,
@@ -1642,41 +1627,6 @@ fn remaining_score(candidate: &ProxyCandidate) -> i32 {
     let week = remaining_percent(candidate.usage.as_ref().and_then(|usage| usage.one_week.as_ref()));
     let five = remaining_percent(candidate.usage.as_ref().and_then(|usage| usage.five_hour.as_ref()));
     week * 7 + five * 3
-}
-
-fn normalized_identifier(value: Option<&str>) -> Option<String> {
-    value
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .map(|value| {
-            if value.contains('@') {
-                value.to_ascii_lowercase()
-            } else {
-                value.to_string()
-            }
-        })
-}
-
-fn normalized_account_id(value: &str) -> String {
-    value.trim().to_string()
-}
-
-fn account_identity_key(principal_id: Option<&str>, email: Option<&str>, account_id: &str) -> String {
-    let principal = normalized_identifier(principal_id)
-        .or_else(|| normalized_identifier(email))
-        .unwrap_or_else(|| normalized_account_id(account_id));
-    format!("{}|{}", principal, normalized_account_id(account_id))
-}
-
-fn current_selection_matches(
-    selection: &CurrentAccountSelection,
-    account_key: &str,
-    account_id: &str,
-) -> bool {
-    if let Some(selection_key) = normalized_identifier(selection.account_key.as_deref()) {
-        return selection_key == *account_key;
-    }
-    normalized_account_id(&selection.account_id) == normalized_account_id(account_id)
 }
 
 async fn order_proxy_candidates_for_runtime(
@@ -1715,10 +1665,7 @@ fn compare_runtime_proxy_candidates(
     left: &ProxyCandidate,
     right: &ProxyCandidate,
 ) -> Ordering {
-    match right
-        .is_preferred_current
-        .cmp(&left.is_preferred_current)
-    {
+    match remaining_score(right).cmp(&remaining_score(left)) {
         Ordering::Equal => {}
         ordering => return ordering,
     }
@@ -1726,8 +1673,84 @@ fn compare_runtime_proxy_candidates(
     let left_sticky = sticky_account_id == Some(left.account_id.as_str());
     let right_sticky = sticky_account_id == Some(right.account_id.as_str());
     match right_sticky.cmp(&left_sticky) {
-        Ordering::Equal => compare_proxy_candidates(left, right),
-        ordering => ordering,
+        Ordering::Equal => {}
+        ordering => return ordering,
+    }
+
+    match left.added_at.cmp(&right.added_at) {
+        Ordering::Equal => {}
+        ordering => return ordering,
+    }
+
+    left.id.cmp(&right.id)
+}
+
+async fn sleep_usage_refresh_interval() {
+    tokio::time::sleep(std::time::Duration::from_secs(
+        USAGE_REFRESH_INTERVAL_SECONDS,
+    ))
+    .await;
+}
+
+async fn run_usage_refresh_loop(context: Arc<ProxyContext>) {
+    refresh_all_proxy_account_usage(&context.storage).await;
+
+    loop {
+        sleep_usage_refresh_interval().await;
+        refresh_all_proxy_account_usage(&context.storage).await;
+    }
+}
+
+async fn refresh_all_proxy_account_usage(storage: &ProxyStorageContext) {
+    let candidates = match load_proxy_candidates(storage).await {
+        Ok(candidates) => candidates,
+        Err(error) => {
+            log::warn!("刷新远端账号额度前读取账号失败: {error}");
+            return;
+        }
+    };
+
+    for candidate in candidates {
+        let result = fetch_usage_snapshot(&candidate.access_token, &candidate.account_id).await;
+        persist_candidate_usage_result(storage, &candidate.account_id, result).await;
+    }
+}
+
+async fn persist_candidate_usage_result(
+    storage: &ProxyStorageContext,
+    account_id: &str,
+    result: Result<UsageSnapshot, String>,
+) {
+    let _guard = storage.store_lock.lock().await;
+    let store_path = account_store_path_from_data_dir(&storage.data_dir);
+    let mut store = match load_store_from_path(&store_path) {
+        Ok(store) => store,
+        Err(error) => {
+            log::warn!("刷新远端账号额度后读取账号失败: {error}");
+            return;
+        }
+    };
+
+    let Some(account) = store
+        .accounts
+        .iter_mut()
+        .find(|account| account.account_id == account_id)
+    else {
+        return;
+    };
+
+    match result {
+        Ok(usage) => {
+            account.usage = Some(usage);
+            account.usage_error = None;
+        }
+        Err(error) => {
+            account.usage_error = Some(error);
+        }
+    }
+
+    if let Err(error) = save_store_to_path(&store_path, &store) {
+        log::warn!("保存远端账号额度失败: {error}");
     }
 }
 
@@ -1780,30 +1803,12 @@ async fn refresh_proxy_candidate_auth(
         id: candidate.id.clone(),
         label: candidate.label.clone(),
         account_id: extracted.account_id,
-        account_key: candidate.account_key.clone(),
         access_token: extracted.access_token,
         auth_json: refreshed_auth_json,
         plan_type: candidate.plan_type.clone().or(extracted.plan_type),
         added_at: candidate.added_at,
-        is_preferred_current: candidate.is_preferred_current,
         usage: candidate.usage.clone(),
     })
-}
-
-async fn persist_current_selection(
-    storage: &ProxyStorageContext,
-    candidate: &ProxyCandidate,
-) -> Result<(), String> {
-    let _guard = storage.store_lock.lock().await;
-    let store_path = account_store_path_from_data_dir(&storage.data_dir);
-    let mut store = load_store_from_path(&store_path)?;
-    store.current_selection = Some(CurrentAccountSelection {
-        account_id: candidate.account_id.clone(),
-        selected_at: now_unix_seconds() * 1000,
-        source_device_id: "remote-proxy".to_string(),
-        account_key: Some(candidate.account_key.clone()),
-    });
-    save_store_to_path(&store_path, &store)
 }
 
 async fn persist_refreshed_candidate_auth(
@@ -3039,7 +3044,6 @@ mod tests {
     use super::compare_runtime_proxy_candidates;
     use super::convert_completed_response_to_chat_completion;
     use super::convert_openai_chat_request_to_codex;
-    use super::current_selection_matches;
     use super::extract_completed_response_from_sse;
     use super::map_client_model_to_upstream;
     use super::MODELS;
@@ -3052,7 +3056,6 @@ mod tests {
     use super::rewrite_sse_event_data_models_for_client;
     use super::translate_sse_event_to_chat_chunk;
     use super::ChatStreamState;
-    use crate::models::CurrentAccountSelection;
     use crate::models::UsageSnapshot;
     use crate::models::UsageWindow;
     use super::SseEvent;
@@ -3692,57 +3695,44 @@ data: {"type":"response.completed","response":{"id":"resp_123","created_at":1,"m
     }
 
     #[test]
-    fn current_selection_prefers_matching_account_key() {
-        let selection = CurrentAccountSelection {
-            account_id: "acc-b".to_string(),
-            selected_at: 1,
-            source_device_id: "remote-proxy".to_string(),
-            account_key: Some("user@example.com|acc-b".to_string()),
-        };
+    fn compare_proxy_candidates_prefers_remaining_then_age() {
+        let richer = make_proxy_candidate("richer", "acc-a", Some(5.0), Some(5.0), 10);
+        let older = make_proxy_candidate("older", "acc-c", None, None, 5);
+        let newer = make_proxy_candidate("newer", "acc-d", None, None, 15);
 
-        assert!(current_selection_matches(
-            &selection,
-            "user@example.com|acc-b",
-            "acc-b"
-        ));
-        assert!(!current_selection_matches(
-            &selection,
-            "user@example.com|acc-a",
-            "acc-a"
-        ));
-    }
-
-    #[test]
-    fn compare_proxy_candidates_prefers_current_then_remaining_then_age() {
-        let preferred = make_proxy_candidate("preferred", "acc-b", true, None, None, 20);
-        let richer = make_proxy_candidate("richer", "acc-a", false, Some(5.0), Some(5.0), 10);
-        let older = make_proxy_candidate("older", "acc-c", false, None, None, 5);
-        let newer = make_proxy_candidate("newer", "acc-d", false, None, None, 15);
-
-        assert_eq!(compare_proxy_candidates(&preferred, &richer), std::cmp::Ordering::Less);
         assert_eq!(compare_proxy_candidates(&richer, &older), std::cmp::Ordering::Less);
         assert_eq!(compare_proxy_candidates(&older, &newer), std::cmp::Ordering::Less);
     }
 
     #[test]
-    fn compare_runtime_proxy_candidates_prefers_current_selection_over_sticky_account() {
-        let sticky = make_proxy_candidate("sticky", "acc-a", false, None, None, 1);
-        let selected = make_proxy_candidate("selected", "acc-b", true, None, None, 2);
+    fn compare_runtime_proxy_candidates_prefers_remaining_over_sticky_account() {
+        let sticky = make_proxy_candidate("sticky", "acc-a", None, None, 1);
+        let richer = make_proxy_candidate("richer", "acc-b", Some(1.0), Some(1.0), 2);
 
         assert_eq!(
-            compare_runtime_proxy_candidates(Some("acc-a"), &selected, &sticky),
+            compare_runtime_proxy_candidates(Some("acc-a"), &richer, &sticky),
             std::cmp::Ordering::Less
         );
         assert_eq!(
-            compare_runtime_proxy_candidates(Some("acc-a"), &sticky, &selected),
+            compare_runtime_proxy_candidates(Some("acc-a"), &sticky, &richer),
             std::cmp::Ordering::Greater
+        );
+    }
+
+    #[test]
+    fn compare_proxy_candidates_ignores_local_current_selection_for_remote_autonomy() {
+        let selected_low_remaining = make_proxy_candidate("selected", "acc-a", Some(99.0), Some(99.0), 1);
+        let richer = make_proxy_candidate("richer", "acc-b", Some(1.0), Some(1.0), 2);
+
+        assert_eq!(
+            compare_proxy_candidates(&richer, &selected_low_remaining),
+            std::cmp::Ordering::Less
         );
     }
 
     fn make_proxy_candidate(
         id: &str,
         account_id: &str,
-        is_preferred_current: bool,
         one_week_used: Option<f64>,
         five_hour_used: Option<f64>,
         added_at: i64,
@@ -3751,12 +3741,10 @@ data: {"type":"response.completed","response":{"id":"resp_123","created_at":1,"m
             id: id.to_string(),
             label: id.to_string(),
             account_id: account_id.to_string(),
-            account_key: format!("{}|{}", account_id, account_id),
             access_token: "token".to_string(),
             auth_json: json!({}),
             plan_type: None,
             added_at,
-            is_preferred_current,
             usage: Some(UsageSnapshot {
                 fetched_at: 0,
                 plan_type: None,
