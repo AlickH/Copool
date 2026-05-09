@@ -8,12 +8,6 @@ Copool is a SwiftUI app for macOS and iOS that manages Codex/ChatGPT auth accoun
 
 Copool 是一个面向 macOS 和 iOS 的 SwiftUI 应用，用于管理 Codex/ChatGPT 授权账号、按用量智能切换，以及本地/远程 API 代理工作流。
 
-The iOS app is only a controller and status viewer for the macOS app.
-
-iOS 版仅作为 macOS 版的控制器和状态展示器。
-
-<a href="https://testflight.apple.com/join/dDySzkA8"><img src="./testflight.webp" alt="TestFlight" width="228" /></a>
-
 ## Screenshots / 截图
 
 <img src="./account.png" alt="Accounts Overview" width="560" />
