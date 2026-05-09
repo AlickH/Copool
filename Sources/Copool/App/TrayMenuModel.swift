@@ -30,7 +30,7 @@ final class TrayMenuModel: ObservableObject, AccountsManualRefreshServiceProtoco
             _ = platform
             return BackgroundRefreshPolicy(
                 initialRefreshDelay: .milliseconds(700),
-                usageRefreshInterval: .seconds(30),
+                usageRefreshInterval: .seconds(10),
                 refreshUsageOnRecurringTick: true
             )
         }

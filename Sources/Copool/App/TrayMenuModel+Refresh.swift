@@ -61,9 +61,12 @@ extension TrayMenuModel {
             guard let self else { return }
             guard self.backgroundRefreshPolicy.refreshUsageOnRecurringTick else { return }
             try? await Task.sleep(for: self.backgroundRefreshPolicy.initialRefreshDelay)
+            var tick = 0
+            await self.refreshRecurringUsage(tick: tick)
             while !Task.isCancelled {
-                await self.refreshNow(forceUsageRefresh: true)
                 try? await Task.sleep(for: self.backgroundRefreshPolicy.usageRefreshInterval)
+                tick += 1
+                await self.refreshRecurringUsage(tick: tick)
             }
         }
     }
@@ -148,6 +151,33 @@ extension TrayMenuModel {
             accounts: refreshedAccounts,
             didAutoSwitch: false
         )
+    }
+
+    func refreshRecurringUsage(tick: Int) async {
+        guard !isRefreshingAccounts else { return }
+        do {
+            beginAccountsRefreshActivity()
+            defer { endAccountsRefreshActivity() }
+            let settings = try await settingsCoordinator.currentSettings()
+            applySettings(settings)
+
+            let latestAccounts = try await accountsCoordinator.listAccounts(refreshWorkspaceMetadata: false)
+            let targetAccountIDs = usageRefreshPlanningPolicy.targetAccountIDsForRecurringTick(
+                tick,
+                from: latestAccounts
+            )
+            let localRefreshResult = try await refreshLocalAccounts(
+                forceUsageRefresh: true,
+                prefersSerialUsageRefresh: false,
+                bypassUsageThrottle: false,
+                targetAccountIDs: targetAccountIDs,
+                onPartialUpdate: nil
+            )
+            accounts = localRefreshResult.accounts
+            notice = nil
+        } catch {
+            notice = error.localizedDescription
+        }
     }
 
     func scheduleWorkspaceMetadataRefresh(forceRemoteCheck: Bool) {

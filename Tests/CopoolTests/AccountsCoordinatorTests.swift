@@ -76,6 +76,31 @@ final class AccountsCoordinatorTests: XCTestCase {
         )
     }
 
+    func testAccountsUsageRefreshPlanningUsesActiveThenFullRecurringTicks() {
+        let now: Int64 = 1_763_216_000
+        let policy = AccountsUsageRefreshPlanningPolicy(nonCurrentResetLeadTimeSeconds: 60)
+        let accounts = [
+            makeAccountSummary(
+                id: "acct-current",
+                accountID: "account-current",
+                isCurrent: true,
+                usage: makeUsageSnapshot(fetchedAt: now - 300, fiveHourResetAt: now + 600)
+            ),
+            makeAccountSummary(
+                id: "acct-idle",
+                accountID: "account-idle",
+                isCurrent: false,
+                usage: makeUsageSnapshot(fetchedAt: now - 300, fiveHourResetAt: now + 600)
+            )
+        ]
+
+        XCTAssertEqual(
+            policy.targetAccountIDsForRecurringTick(1, from: accounts),
+            ["acct-current"]
+        )
+        XCTAssertNil(policy.targetAccountIDsForRecurringTick(6, from: accounts))
+    }
+
     func testListAccountsBackfillsWorkspaceNameFromRemoteMetadata() async throws {
         let now: Int64 = 1_763_216_000
         let storeRepository = InMemoryAccountsStoreRepository(
@@ -4752,10 +4777,10 @@ final class AccountsCoordinatorTests: XCTestCase {
         XCTAssertEqual(codexService.launchCallCount, 1)
         XCTAssertEqual(try storeRepository.loadStore().currentSelection?.cardID, "acct-2")
     }
-    func testBackgroundRefreshPolicyForMacUsesThirtySecondUsageRefresh() {
+    func testBackgroundRefreshPolicyForMacUsesTenSecondActiveUsageRefresh() {
         let policy = TrayMenuModel.BackgroundRefreshPolicy.forPlatform(.macOS)
 
-        XCTAssertEqual(policy.usageRefreshInterval, .seconds(30))
+        XCTAssertEqual(policy.usageRefreshInterval, .seconds(10))
     }
 
     @MainActor

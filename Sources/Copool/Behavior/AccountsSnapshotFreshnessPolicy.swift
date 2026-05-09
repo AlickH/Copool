@@ -36,9 +36,11 @@ struct AccountsSnapshotFreshnessPolicy: Sendable {
 
 struct AccountsUsageRefreshPlanningPolicy: Sendable {
     let nonCurrentResetLeadTimeSeconds: Int64
+    let fullRefreshTickInterval: Int
 
-    init(nonCurrentResetLeadTimeSeconds: Int64 = 60) {
+    init(nonCurrentResetLeadTimeSeconds: Int64 = 60, fullRefreshTickInterval: Int = 6) {
         self.nonCurrentResetLeadTimeSeconds = nonCurrentResetLeadTimeSeconds
+        self.fullRefreshTickInterval = fullRefreshTickInterval
     }
 
     func targetAccountIDs(
@@ -61,6 +63,20 @@ struct AccountsUsageRefreshPlanningPolicy: Sendable {
             deduped.append(id)
         }
         return deduped
+    }
+
+    func targetAccountIDsForRecurringTick(
+        _ tick: Int,
+        from accounts: [AccountSummary]
+    ) -> [String]? {
+        if tick % fullRefreshTickInterval == 0 {
+            return nil
+        }
+
+        guard let currentAccount = accounts.first(where: \.isCurrent) else {
+            return []
+        }
+        return [currentAccount.id]
     }
 
     private func shouldRefreshNonCurrentAccount(
