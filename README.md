@@ -86,6 +86,10 @@ This project is a Swift-native migration and redesign inspired by the original T
 
 ## License / 许可证
 
-Please follow the upstream license and your organization’s compliance requirements when reusing code from referenced projects.
+Copool, including its original Swift implementation, is available under the [MIT License](LICENSE).
 
-复用参考项目代码时，请遵循上游许可证与所在组织的合规要求。
+Portions inspired by or derived from [`170-carry/codex-tools`](https://github.com/170-carry/codex-tools) remain subject to its MIT License and copyright notice. Third-party dependencies and bundled components remain subject to their respective licenses.
+
+Copool（包括原创 Swift 实现）采用 [MIT 许可证](LICENSE)。
+
+受 [`170-carry/codex-tools`](https://github.com/170-carry/codex-tools) 启发或衍生的部分继续遵循其 MIT 许可证及版权声明。第三方依赖与随附组件仍遵循各自的许可证。
